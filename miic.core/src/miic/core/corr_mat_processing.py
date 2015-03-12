@@ -1311,53 +1311,53 @@ def _rotate_corr_dict(cmd):
     
     RR = deepcopy(cmd['EE'])
     RR['stats_tr1']['channel'] = RR['stats_tr1']['channel'][:-1] + 'R'
-    RR['stats_tr2']['channel'] = RR['stats_tr1']['channel'][:-1] + 'R'
+    RR['stats_tr2']['channel'] = RR['stats_tr2']['channel'][:-1] + 'R'
     RR['stats']['channel'] = RR['stats_tr1']['channel']+'-'+RR['stats_tr2']['channel']
     RR['corr_data'] = (c1*c2*cmd['EE']['corr_data'] - c1*s2*cmd['EN']['corr_data'] - 
                        s1*c2*cmd['NE']['corr_data'] + s1*s2*cmd['NN']['corr_data'])
     
     RT = deepcopy(cmd['EE'])
     RT['stats_tr1']['channel'] = RT['stats_tr1']['channel'][:-1] + 'R'
-    RT['stats_tr2']['channel'] = RT['stats_tr1']['channel'][:-1] + 'T'
+    RT['stats_tr2']['channel'] = RT['stats_tr2']['channel'][:-1] + 'T'
     RT['stats']['channel'] = RT['stats_tr1']['channel']+'-'+RT['stats_tr2']['channel']
     RT['corr_data'] = (c1*s2*cmd['EE']['corr_data'] + c1*c2*cmd['EN']['corr_data'] - 
                        s1*s2*cmd['NE']['corr_data'] - s1*c2*cmd['NN']['corr_data'])
     
     RZ = deepcopy(cmd['EE'])
     RZ['stats_tr1']['channel'] = RZ['stats_tr1']['channel'][:-1] + 'R'
-    RZ['stats_tr2']['channel'] = RZ['stats_tr1']['channel'][:-1] + 'Z'
+    RZ['stats_tr2']['channel'] = RZ['stats_tr2']['channel'][:-1] + 'Z'
     RZ['stats']['channel'] = RZ['stats_tr1']['channel']+'-'+RZ['stats_tr2']['channel']
     RZ['corr_data'] = (c1*cmd['EZ']['corr_data'] - s1*cmd['NZ']['corr_data'])
 
     TR = deepcopy(cmd['EE'])
     TR['stats_tr1']['channel'] = TR['stats_tr1']['channel'][:-1] + 'T'
-    TR['stats_tr2']['channel'] = TR['stats_tr1']['channel'][:-1] + 'R'
+    TR['stats_tr2']['channel'] = TR['stats_tr2']['channel'][:-1] + 'R'
     TR['stats']['channel'] = TR['stats_tr1']['channel']+'-'+TR['stats_tr2']['channel']
     TR['corr_data'] = (s1*c2*cmd['EE']['corr_data'] - s1*s2*cmd['EN']['corr_data'] + 
                        c1*c2*cmd['NE']['corr_data'] - c1*s2*cmd['NN']['corr_data'])
     
     TT = deepcopy(cmd['EE'])
     TT['stats_tr1']['channel'] = TT['stats_tr1']['channel'][:-1] + 'T'
-    TT['stats_tr2']['channel'] = TT['stats_tr1']['channel'][:-1] + 'T'
+    TT['stats_tr2']['channel'] = TT['stats_tr2']['channel'][:-1] + 'T'
     TT['stats']['channel'] = TT['stats_tr1']['channel']+'-'+TT['stats_tr2']['channel']
     TT['corr_data'] = (s1*s2*cmd['EE']['corr_data'] + s1*c2*cmd['EN']['corr_data'] + 
                        c1*s2*cmd['NE']['corr_data'] + c1*c2*cmd['NN']['corr_data'])
     
     TZ = deepcopy(cmd['EE'])
     TZ['stats_tr1']['channel'] = TZ['stats_tr1']['channel'][:-1] + 'T'
-    TZ['stats_tr2']['channel'] = TZ['stats_tr1']['channel'][:-1] + 'Z'
+    TZ['stats_tr2']['channel'] = TZ['stats_tr2']['channel'][:-1] + 'Z'
     TZ['stats']['channel'] = TZ['stats_tr1']['channel']+'-'+TZ['stats_tr2']['channel']
     TZ['corr_data'] = s1*cmd['EZ']['corr_data'] + c1*cmd['NZ']['corr_data']
     
     ZR = deepcopy(cmd['EE'])
     ZR['stats_tr1']['channel'] = ZR['stats_tr1']['channel'][:-1] + 'Z'
-    ZR['stats_tr2']['channel'] = ZR['stats_tr1']['channel'][:-1] + 'R'
+    ZR['stats_tr2']['channel'] = ZR['stats_tr2']['channel'][:-1] + 'R'
     ZR['stats']['channel'] = ZR['stats_tr1']['channel']+'-'+ZR['stats_tr2']['channel']
     ZR['corr_data'] = c2*cmd['ZE']['corr_data'] - s2*cmd['ZE']['corr_data']
     
     ZT = deepcopy(cmd['EE'])
     ZT['stats_tr1']['channel'] = ZT['stats_tr1']['channel'][:-1] + 'Z'
-    ZT['stats_tr2']['channel'] = ZT['stats_tr1']['channel'][:-1] + 'T'
+    ZT['stats_tr2']['channel'] = ZT['stats_tr2']['channel'][:-1] + 'T'
     ZT['stats']['channel'] = ZT['stats_tr1']['channel']+'-'+ZT['stats_tr2']['channel']
     ZT['corr_data'] = s2*cmd['ZE']['corr_data'] + c2*cmd['ZN']['corr_data']
     
