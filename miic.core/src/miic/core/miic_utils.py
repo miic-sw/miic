@@ -11,7 +11,12 @@ GNU Lesser General Public License, Version 3
 (http://www.gnu.org/copyleft/lesser.html)
 
 Created on Oct 5, 2011
+
+Changes:
+- convert npts from type used in obspy future.types.newint.newint
+  back to long as new types stumble savemat  (21/07/2015 F Tilmann)
 """
+
 
 # Main imports
 import os
@@ -40,6 +45,7 @@ except ImportError:
     
 # Obspy imports
 from obspy.core import Stream, Trace, UTCDateTime
+
 
 ##############################################################################
 # Exceptions                                                                 #
@@ -393,7 +399,6 @@ def convert_to_matlab(st,
         base_name = 'trace'
 
     for tr in st:
-
         # It is less efficient to do that trace by trace but we do not know
         # if all of them have the same starting time or not.
         if seconds != 0:
@@ -427,7 +432,7 @@ def convert_to_matlab(st,
                         'sampling_rate': tr.stats_tr1.sampling_rate,
                         'starttime': '%s' % tr.stats_tr1.starttime,
                         'endtime': '%s' % tr.stats_tr1.endtime,
-                        'npts': tr.stats_tr1.npts}
+                        'npts': long(tr.stats_tr1.npts)}
             if 'sac' in tr.stats_tr1:
                 _tr1dict['stla'] = tr.stats_tr1.sac.stla
                 _tr1dict['stlo'] = tr.stats_tr1.sac.stlo
@@ -446,7 +451,7 @@ def convert_to_matlab(st,
                         'sampling_rate': tr.stats_tr2.sampling_rate,
                         'starttime': '%s' % tr.stats_tr2.starttime,
                         'endtime': '%s' % tr.stats_tr2.endtime,
-                        'npts': tr.stats_tr2.npts}
+                        'npts': long(tr.stats_tr2.npts)}
             if 'sac' in tr.stats_tr2:
                 _tr2dict['stla'] = tr.stats_tr2.sac.stla
                 _tr2dict['stlo'] = tr.stats_tr2.sac.stlo
@@ -463,7 +468,7 @@ def convert_to_matlab(st,
                       'sampling_rate': tr.stats.sampling_rate,
                       'starttime': '%s' % tr.stats.starttime,
                       'endtime': '%s' % tr.stats.endtime,
-                      'npts': tr.stats.npts}
+                      'npts': long(tr.stats.npts)}
             if 'sac' in tr.stats:
                 _stats['stla'] = tr.stats.sac.stla
                 _stats['stlo'] = tr.stats.sac.stlo
@@ -484,10 +489,7 @@ def convert_to_matlab(st,
 
         time = '%s' % t
         time = time.replace('-', '').replace('.', '').replace(':', '')
-
-        sio.savemat(os.path.join(base_dir, time + '_' + filename), mat_struct,
-                    oned_as='column')
-
+        sio.savemat(os.path.join(base_dir, time + '_' + filename), mat_struct,oned_as='column')
 
 if BC_UI:
     class _convert_to_matlab_view(HasTraits):
@@ -1634,7 +1636,7 @@ def _stats_dict_from_obj(stats):
                 'sampling_rate': stats.sampling_rate,
                 'starttime': '%s' % stats.starttime,
                 'endtime': '%s' % stats.endtime,
-                'npts': stats.npts}
+                'npts': long(stats.npts)}
     if 'sac' in stats:
         stats_dict['stla'] = stats.sac.stla
         stats_dict['stlo'] = stats.sac.stlo
