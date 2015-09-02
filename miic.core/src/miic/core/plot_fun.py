@@ -664,8 +664,11 @@ def plot_trace_distance_section(traces, scale=0, azim=0,
         start = tr.stats['starttime'].datetime
         end = tr.stats['endtime'].datetime
         dist = tr.stats['sac']['dist']
-        azi = 2. * np.arctan(np.tan((tr.stats['sac']['az'] - azim) *
-                                    np.pi / 360.))
+        if azim:
+            azi = 2. * np.arctan(np.tan((tr.stats['sac']['az'] - azim) *
+                                        np.pi / 360.))
+        else:
+            azi = 0
         if abs(azi) > (np.pi / 2):
             tim = arange(tr.stats['npts'])[-1::-1] / \
                 tr.stats['sampling_rate'] + (zerotime - end).total_seconds()
@@ -692,12 +695,16 @@ def plot_trace_distance_section(traces, scale=0, azim=0,
             plt.fill(tim, ndata / max(data) * scale + dist, 'b', linewidth=0)
 
         plt.plot(tim, data * scale + dist, 'k', linewidth=0.5)
+        if 'arrivals' in tr.stats['sac']:
+            for phase in tr.stats['sac']['arrivals']:
+                #print phase['time']-zerotime, phase['name']
+                plt.plot((phase['time'].datetime-zerotime).total_seconds(),dist,marker=phase['style'],color=phase['color'])
         if annotate:
             plt.annotate(tr.stats['station'], xy=(max(tim), dist),
                          horizontalalignment='right',
                          verticalalignment='middle')
-        if title:
-            plt.title(title)
+    if title:
+        plt.title(title)
 
     plt.ylabel('Distance [km]')
     plt.xlabel('Correlation time [s]')

@@ -439,7 +439,7 @@ def stream_stack_distance_intervals(st, interval):
     for ii in bins:
         sst.append(Trace(data=np.zeros(max(npts),dtype=np.float64),header={
             'network':'stack','station':str(ii),'location':'',
-            'channel':st[0].stats['channel'],'starttime':st[0].stats['starttime'],
+            'channel':st[0].stats['channel'],'starttime':st[0].stats['starttime'],'sampling_rate':st[0].stats['sampling_rate'],
             'sac':{'dist':ii,'az':0,'evla':0.,'evlo':0.,'stla':ii/(np.pi*6371000)*180.,'stlo':0.}}))
     count = np.zeros_like(bins)
     for tr in st:
