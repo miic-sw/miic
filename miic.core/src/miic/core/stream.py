@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 @author:
 Eraldo Pomponi
@@ -22,14 +23,14 @@ import os
 
 
 # ETS imports
-try:
-    BC_UI = True
-    from traits.api import HasTraits, File, Int, Bool, Enum, Button, \
-        Float, Dict
-    from traitsui.api import View, Item, Include, HGroup, VGroup, Tabbed
-except ImportError:
-    BC_UI = False
-    pass
+#try:
+#    BC_UI = True
+#    from traits.api import HasTraits, File, Int, Bool, Enum, Button, \
+#        Float, Dict
+#    from traitsui.api import View, Item, Include, HGroup, VGroup, Tabbed
+#except ImportError:
+BC_UI = False
+#    pass
     
 # Obspy import
 from obspy import read
@@ -92,7 +93,7 @@ def stream_add_lat_lon_ele(st, df):
     for tr in st:
         selector = _Selector(tr.id)
         tr_geo_info = df.select(selector, axis=0)
-        if tr_geo_info.index:
+        if tr_geo_info.index.size > 0:
             if 'sac' not in tr.stats:
                 tr.stats['sac'] = {}
                 tr.stats.sac['stla'] = tr_geo_info['latitude'][0]
@@ -719,19 +720,25 @@ def read_from_filesystem(ID,starttime,endtime,fs):
     format string is required in one directory level the need to be
     separated within a sublist.
 
-    A format string for the ID can be followed by a braces including two
-    strings that will be used to replace the first string with the second.
-    This cna be used if the filename contains part of the ID in a different
-    form.
+    A format string for the ID can be followed by a pair of braces including
+    two strings that will be used to replace the first string with the
+    second. This cna be used if the filename contains part of the ID in a
+    different form.
 
     :Exapmple:
 
     Example for a station 'GJE' in network 'HEJSL' with channel 'BHZ' and
     location '00' with the start time 2010-12-24_11:36:30 and
-    fs = ['base_dir','%Y','%b','%NET,['%j','_','%STA'','_T_','%CHA('BH','')',
+    fs = ['base_dir','%Y','%b','%NET,['%j','_','%STA'','_T_',"%CHA('BH','')",
                                   '.mseed']]
     will be translated in a linux filename
     'base_dir/2010/Nov/HEJSL/317_GJE_T_Z.mseed'
+
+    :Note:
+
+    If the data contain traces of different channels in the same file with
+    different start and endtimes the routine will not work properly when the
+    period spans multiple files.
     """
 
     # translate file structure string
@@ -739,12 +746,12 @@ def read_from_filesystem(ID,starttime,endtime,fs):
     st = _read_filepattern(fpattern, starttime, endtime)
 
     # if trace starts too late have a look in the previous section
-    if (st[0].stats.starttime-st[0].stats.delta).datetime > starttime:
-        fpattern = _adjacent_filepattern(ID,starttime,fs,-1)
+    if (len(st)==0) or ((st[0].stats.starttime-st[0].stats.delta).datetime > starttime):
+        fpattern, _ = _adjacent_filepattern(ID,starttime,fs,-1)
         st += _read_filepattern(fpattern, starttime, endtime)
         st.merge()
     thistime = starttime
-    while (st[0].stats.endtime.datetime < endtime) & (thistime < endtime):
+    while ((len(st)==0) or (st[0].stats.endtime.datetime < endtime)) & (thistime < endtime):
         fpattern, thistime = _adjacent_filepattern(ID,thistime,fs,1)
         if thistime == starttime:
             break
@@ -763,14 +770,14 @@ def _read_filepattern(fpattern, starttime, endtime):
     endtimes = []
     # first only read the header information
     for fname in flist:
-        st = read(fname,headonly=True).merge()
+        st = read(fname,headonly=True)
         starttimes.append(st[0].stats.starttime.datetime)
-        endtimes.append(st[0].stats.endtime.datetime)
-    # now read the stream from the files that contain the perior
+        endtimes.append(st[-1].stats.endtime.datetime)
+    # now read the stream from the files that contain the period
     st = Stream()
     for ind,fname in enumerate(flist):
         if (starttimes[ind] < endtime) and (endtimes[ind] > starttime):
-            st += read(fname,starttime=starttime,endtime=endtime)
+            st += read(fname,starttime=UTCDateTime(starttime),endtime=UTCDateTime(endtime))
     st.merge()
     return st
 
@@ -797,7 +804,7 @@ def _adjacent_filepattern(ID,starttime,fs,inc):
                     thistime = starttime + inc * datetime.timedelta(hours=1)
                 elif tpart == '%p':
                     thistime = starttime + inc * datetime.timedelta(hours=12)
-                elif tpart in ['%a','%A','%w','%d','j']:
+                elif tpart in ['%a','%A','%w','%d','%j']:
                     thistime = starttime + inc * datetime.timedelta(days=1)
                 elif tpart in ['%U','%W']:
                     thistime = starttime + inc * datetime.timedelta(days=7)
@@ -835,7 +842,7 @@ def _adjacent_filepattern(ID,starttime,fs,inc):
                                                      starttime.second,
                                                      starttime.microsecond)
     fname = _current_filepattern(ID,thistime,fs)
-    return fname
+    return fname, thistime
 
 
 def _current_filepattern(ID,starttime,fs):
@@ -877,7 +884,7 @@ def _fs_translate(part,ID,starttime):
     if trans:
         transl = trans[1:-1].split(',')
         assert len(transl) == 2, "%s is not valid for replacement" % trans
-        res = res.replace(transl[0],transl[1])
+        res = res.replace(transl[0].replace("'",""),transl[1].replace("'",""))
     return res
 
 
