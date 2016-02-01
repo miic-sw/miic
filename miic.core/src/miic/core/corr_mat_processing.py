@@ -22,6 +22,7 @@ from scipy.io import savemat
 from datetime import datetime, timedelta
 from glob import glob1
 from os.path import join
+import os
 
 # ETS imports
 try:
@@ -1727,7 +1728,8 @@ if BC_UI:
 def corr_mat_create_from_traces(base_dir, save_dir, corr_length=0,
                                 basename='trace', suffix='',
                                 networks='*', stations='*',
-                                locations='*', channels='*'):
+                                locations='*', channels='*',
+                                delete_trace_files=False):
     """ Create correlation matrix files from a set or correlation trace files
 
     Search the directory ``base_dir`` for files matching the following pattern
@@ -1735,7 +1737,7 @@ def corr_mat_create_from_traces(base_dir, save_dir, corr_length=0,
     where time is a string indicating the time used to construct the
     respective correlation trace and the other parts refer to the seedID and
     can be resticted by setting the keyword arguments according to glob. If
-    the default ``*`` is used every netwirk, station, location, channel
+    the default ``*`` is used every network, station, location, channel
     combination will be used. If files are found that differ only in the
     ``time`` part of the filename the are grouped together and put in a
     correlation matrix which is saved in ``save_dir``. The length of the
@@ -1763,6 +1765,10 @@ def corr_mat_create_from_traces(base_dir, save_dir, corr_length=0,
     :param locations: identification of the location combination e.g. '0-0'
     :type channels: string
     :param channels: identification of the channel combination e.g. 'HHZ-HHZ'
+
+    :type delete_trace_files: Bool
+    :param delete_trace_files: if True all files whos tarces are put in matrices
+        are deleted.
 
     """
     default_var_name = 'corr_trace'
@@ -1838,6 +1844,7 @@ def corr_mat_create_from_traces(base_dir, save_dir, corr_length=0,
         X = None
         time_vect = []
         sampling_rate = None
+        files_used = []
         # loop over all the files found in base_dir
         for ii, tIDstr in enumerate(IDstr):
 
@@ -1845,8 +1852,8 @@ def corr_mat_create_from_traces(base_dir, save_dir, corr_length=0,
             if tIDstr == tcombination:
 
                 # load the file
-                dat = mat_to_ndarray(join(base_dir,
-                                          timestr[ii] + '_' + tIDstr))
+                cfilename = join(base_dir,timestr[ii] + '_' + tIDstr)
+                dat = mat_to_ndarray(cfilename)
                 dat['stats'] = flatten_recarray(dat['stats'])
 
                 # check for consistent sampling rates
@@ -1906,7 +1913,7 @@ def corr_mat_create_from_traces(base_dir, save_dir, corr_length=0,
                             print 'Variable not found'
                             pass
 
-                    # keep only central part of length length if given
+                    # keep only central part of length if given
                     if corr_length != 0:
                         print 'stats time', stats['sampling_rate']
                         trace_length = int(corr_length * sampling_rate)
@@ -1938,6 +1945,8 @@ def corr_mat_create_from_traces(base_dir, save_dir, corr_length=0,
                     else:
                         X = np.vstack((X, np.atleast_2d(result1).T))
 
+                    files_used.append(cfilename)
+
         corr_mat = {'corr_data': X,
                     'time': time_vect,
                     'stats': stats,
@@ -1956,6 +1965,11 @@ def corr_mat_create_from_traces(base_dir, save_dir, corr_length=0,
              corr_mat['corr_data'].shape[1])
 
         savemat(join(save_dir, ofname[comb_idx]), corr_mat, oned_as='row')
+
+        # delete files
+        if delete_trace_files:
+            for del_file in files_used:
+                os.remove(del_file)
 
 
 if BC_UI:

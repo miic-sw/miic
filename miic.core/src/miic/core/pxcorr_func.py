@@ -394,8 +394,8 @@ def calc_cross_combis(st, method='betweenStations'):
         ``'betweenStations'``: Traces are combined if either their station or
             their network names are different.
         ``'betweenComponents'``: Traces are combined if their components (last
-            letter of channel name) names are different and either their
-            station or their network names are different.
+            letter of channel name) names are different and their station and
+            network names are identical (single station cross-correlation).
     """
 
     combis = []
@@ -410,14 +410,13 @@ def calc_cross_combis(st, method='betweenStations'):
         for ii in range(len(st)):
             for jj in range(ii+1,len(st)):
                 # do not calculate auto- or self-correlations
-                if (((st[ii].stats['network'] != st[jj].stats['network']) or 
-                     (st[ii].stats['station'] != st[jj].stats['station'])) and
+                if ((st[ii].stats['network'] == st[jj].stats['network']) and 
+                    (st[ii].stats['station'] == st[jj].stats['station']) and
                     (st[ii].stats['channel'][-1] != st[jj].stats['channel'][-1])):
                     combis.append((ii,jj))
     else:
         raise ValueError("Method has to be one of ('betweenStations' or" 
                          "'betweenComponents').")
-
     return combis
 
 
