@@ -1115,13 +1115,13 @@ def corr_mat_from_corr_stream(st):
     starttime = st[0].stats['starttime']
     sampling_rate = st[0].stats['sampling_rate']
     npts = st[0].stats['npts']
-    
     corr_mat = {'stats':_stats_dict_from_obj(st[0].stats),
                 'stats_tr1':_stats_dict_from_obj(st[0].stats_tr1),
                 'stats_tr2':_stats_dict_from_obj(st[0].stats_tr2),
-                'corr_data':st[0].data,
-                'time':[]}
-    for ind,tr in enumerate(st[1:]):
+                'corr_data':np.zeros((len(st),len(st[0].data))),
+                'time':np.zeros(len(st),dtype=datetime)}
+    for ind,tr in enumerate(st):
+        corr_mat['time'][ind] = '%s' % tr.stats_tr1['starttime']
         tID = tr.stats['network']+'.'+tr.stats['station']+'.'+tr.stats['location']+'.'+tr.stats['channel']
         if tID != ID:
             print "ID %s of trace %d does not match the first trace %s." % (tID, ind, ID)
@@ -1135,11 +1135,7 @@ def corr_mat_from_corr_stream(st):
             print "Sampling rate of trace %d does not match the first trace %s." % (ind, sampling_rate)
             continue
         
-        corr_mat['corr_data'] = np.vstack((corr_mat['corr_data'],tr.data))
-        corr_mat['time'].append('%s' % tr.stats['starttime'])
-    
-    # convert list of times to an array
-    corr_mat['time'] = np.array(corr_mat['time'])
+        corr_mat['corr_data'][ind,:] = tr.data
     
     return corr_mat
 

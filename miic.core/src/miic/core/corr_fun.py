@@ -214,10 +214,9 @@ def combine_stats(tr1, tr2):
         stats.sac['dist'] = dist / 1000
         stats.sac['az'] = az
         stats.sac['baz'] = baz
-    except KeyError:
+    except AttributeError:
         stats.pop('sac')
-        print "Problem processing the geo information. Stats dictionary \
-            not extended"
+        print "No station coordinates provided."
 
     return stats
 

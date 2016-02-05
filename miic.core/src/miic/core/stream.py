@@ -798,7 +798,9 @@ def _adjacent_filepattern(ID,starttime,fs,inc):
         if not isinstance(part,list):
             part = [part]
         for tpart in part[-1::-1]:
-            if (tpart not in IDformat) and ('%' in tpart) and (flag == 0):
+            if (not ((('(' in tpart) and (')' in tpart)) or (tpart in IDformat))
+                                        and ('%' in tpart)
+                                        and (flag == 0)):
                 flag = 1
                 if tpart in ['%H','%I']:
                     thistime = starttime + inc * datetime.timedelta(hours=1)
