@@ -688,7 +688,7 @@ def trace_sym_pad_shrink_to_npts(tr, npts):
 
 IDformat = ['%NET','%STA','%LOC','%CHA']
 
-def read_from_filesystem(ID,starttime,endtime,fs):
+def read_from_filesystem(ID,starttime,endtime,fs,trim=True):
     """Function to read data from a filesystem with a give file structure
     just by specifying ID and time interval.
 
@@ -700,6 +700,11 @@ def read_from_filesystem(ID,starttime,endtime,fs):
     :type endtime: datetime.datetime
     :param fs: file structure descriptor
     :type fs: list
+    :param trim: switch for trimming of the stream
+    :type trim: bool
+
+    If the switch for trimming is False the whole stream in the files is
+    returned.
 
     **File structure descriptor**
     fs is a list of strings or other lists indicating the elements in the
@@ -743,26 +748,27 @@ def read_from_filesystem(ID,starttime,endtime,fs):
 
     # translate file structure string
     fpattern = _current_filepattern(ID,starttime,fs)
-    st = _read_filepattern(fpattern, starttime, endtime)
+    st = _read_filepattern(fpattern, starttime, endtime,trim)
 
     # if trace starts too late have a look in the previous section
     if (len(st)==0) or ((st[0].stats.starttime-st[0].stats.delta).datetime > starttime):
         fpattern, _ = _adjacent_filepattern(ID,starttime,fs,-1)
-        st += _read_filepattern(fpattern, starttime, endtime)
+        st += _read_filepattern(fpattern, starttime, endtime,trim)
         st.merge()
     thistime = starttime
     while ((len(st)==0) or (st[0].stats.endtime.datetime < endtime)) & (thistime < endtime):
         fpattern, thistime = _adjacent_filepattern(ID,thistime,fs,1)
         if thistime == starttime:
             break
-        st += _read_filepattern(fpattern, starttime, endtime)
+        st += _read_filepattern(fpattern, starttime, endtime,trim)
         st.merge()
-    st.trim(starttime=UTCDateTime(starttime),endtime=UTCDateTime(endtime))
+    if trim:
+        st.trim(starttime=UTCDateTime(starttime),endtime=UTCDateTime(endtime))
     st = st.select(id=ID)
     return st
 
 
-def _read_filepattern(fpattern, starttime, endtime):
+def _read_filepattern(fpattern, starttime, endtime, trim):
     """Read a stream from files whose names match a given pattern.
     """
     flist = glob.glob(fpattern)
@@ -777,7 +783,10 @@ def _read_filepattern(fpattern, starttime, endtime):
     st = Stream()
     for ind,fname in enumerate(flist):
         if (starttimes[ind] < endtime) and (endtimes[ind] > starttime):
-            st += read(fname,starttime=UTCDateTime(starttime),endtime=UTCDateTime(endtime))
+            if trim:
+                st += read(fname,starttime=UTCDateTime(starttime),endtime=UTCDateTime(endtime))
+            else:
+                st += read(fname)
     st.merge()
     return st
 
