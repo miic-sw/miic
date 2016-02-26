@@ -831,9 +831,9 @@ def corr_mat_normalize(corr_mat, starttime=None, endtime=None,
 
     # calculate normalization factors
     if normtype == 'energy':
-        norm = np.sum(nmat['corr_data'][:, start:end] ** 2, 1)
+        norm = np.sqrt(np.mean(nmat['corr_data'][:, start:end] ** 2, 1))
     elif normtype == 'abssum':
-        norm = np.sum(np.abs(nmat['corr_data'][:, start:end]), 1)
+        norm = np.mean(np.abs(nmat['corr_data'][:, start:end]), 1)
     elif normtype == 'max':
         norm = np.max(nmat['corr_data'][:, start:end], axis=1)
     elif normtype == 'absmax':
