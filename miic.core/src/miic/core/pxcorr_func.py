@@ -71,7 +71,8 @@ def pxcorr(comm,A,**kwargs):
     ## correlation        
     csize = len(kwargs['combinations'])
     irfftsize = (fftsize-1)*2
-    sampleToSave = np.ceil(kwargs['lengthToSave'] * kwargs['sampling_rate'])
+    sampleToSave = int(np.ceil(kwargs['lengthToSave'] *
+                               kwargs['sampling_rate']))
     C = np.zeros((sampleToSave*2+1,csize),dtype=np.float64)
 
     center = irfftsize // 2
@@ -351,8 +352,8 @@ def stream_pxcorr(st,options,comm=None):
             npts.append(tr.stats['npts'])
         npts = np.max(np.array(npts))
     else:
-	starttime = None
-	npts = None
+        starttime = None
+        npts = None
     starttime = comm.bcast(starttime, root=0)
     npts = comm.bcast(npts, root=0)
     # fill matrix with noise data
@@ -396,27 +397,29 @@ def calc_cross_combis(st, method='betweenStations'):
         ``'betweenComponents'``: Traces are combined if their components (last
             letter of channel name) names are different and their station and
             network names are identical (single station cross-correlation).
+        ``'autoComponents'```: Traces are combined only with themselves.
     """
 
     combis = []
     if method == 'betweenStations':
         for ii in range(len(st)):
             for jj in range(ii+1,len(st)):
-                # do not calculate auto- or self-correlations
                 if ((st[ii].stats['network'] != st[jj].stats['network']) or 
                     (st[ii].stats['station'] != st[jj].stats['station'])):
                     combis.append((ii,jj))
     elif method == 'betweenComponents':
         for ii in range(len(st)):
             for jj in range(ii+1,len(st)):
-                # do not calculate auto- or self-correlations
                 if ((st[ii].stats['network'] == st[jj].stats['network']) and 
                     (st[ii].stats['station'] == st[jj].stats['station']) and
                     (st[ii].stats['channel'][-1] != st[jj].stats['channel'][-1])):
                     combis.append((ii,jj))
+    elif method == 'autoComponents':
+        for ii in range(len(st)):
+            combis.append((ii,ii))
     else:
-        raise ValueError("Method has to be one of ('betweenStations' or" 
-                         "'betweenComponents').")
+        raise ValueError("Method has to be one of ('betweenStations', " 
+                         "'betweenComponents' or 'autoComponents').")
     return combis
 
 
