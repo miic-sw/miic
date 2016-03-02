@@ -250,9 +250,23 @@ def zeroPadding(A,args,params):
 
 def spectralWhitening(B,args,params):
     """ Spectal whitening of a matrix containing the Fourier-transformed time
-    series in the columns
+    series in the columns. If the args dictionary contains a key joint_norm
+    that is True the normalization assumes that three component traces are
+    present and normlized sets of three trace by their mean amplitude spectrum.
+    This is useful when ZNE componets should be rotated in ZRT later on.
     """
-    B /= np.abs(B) 
+    absB = np.absolute(B)
+    print 'args', args
+    if 'joint_norm' in args.keys():
+        print 'joint_norm in args'
+        if args['joint_norm'] == True:
+            assert B.shape[0] % 3 != 0, "for joint normalization the number\
+                      of traces needs to the multiple of 3: %d" % B.shape[0]
+            for ii in np.arange(0,B.shape[1],3):
+                print 'ii', ii
+                absB[:,ii:ii+3] = np.tile(np.atleast_2d(np.mean(absB[:,ii:ii+3],axis=1)).T,[1,3])
+            print 'here', absB
+    B /= absB
     # remove zero freq component 
     #B[0,:] = 0.j
     return B
