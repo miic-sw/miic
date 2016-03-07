@@ -1,0 +1,6 @@
+miic.core.inversion.inversion_with_missed_data
+==============================================
+
+.. currentmodule:: miic.core.inversion
+
+.. autofunction:: inversion_with_missed_data

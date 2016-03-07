@@ -1,0 +1,6 @@
+miic.core.miic_utils.dict_sel
+=============================
+
+.. currentmodule:: miic.core.miic_utils
+
+.. autofunction:: dict_sel

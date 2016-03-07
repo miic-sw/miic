@@ -1,0 +1,6 @@
+miic.core.stretch_mod.multi_ref_vchange_and_align
+=================================================
+
+.. currentmodule:: miic.core.stretch_mod
+
+.. autofunction:: multi_ref_vchange_and_align

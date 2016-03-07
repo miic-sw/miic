@@ -1,0 +1,572 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>miic.core.inversion &mdash; MIIC 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="top" title="MIIC 1.0 documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MIIC 1.0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for miic.core.inversion</h1><div class="highlight"><pre>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">@author:</span>
+<span class="sd">Eraldo Pomponi</span>
+
+<span class="sd">@copyright:</span>
+<span class="sd">The MIIC Development Team (eraldo.pomponi@uni-leipzig.de)</span>
+
+<span class="sd">@license:</span>
+<span class="sd">GNU Lesser General Public License, Version 3</span>
+<span class="sd">(http://www.gnu.org/copyleft/lesser.html)</span>
+
+<span class="sd">Created on Nov 8, 2011</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="c"># Main imports</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">numpy.linalg</span> <span class="kn">import</span> <span class="n">LinAlgError</span>
+<span class="kn">from</span> <span class="nn">scipy.ndimage</span> <span class="kn">import</span> <span class="n">correlate1d</span>
+<span class="kn">from</span> <span class="nn">scipy</span> <span class="kn">import</span> <span class="n">stats</span>
+<span class="kn">from</span> <span class="nn">pandas</span> <span class="kn">import</span>  <span class="n">DataFrame</span>
+<span class="kn">from</span> <span class="nn">cPickle</span> <span class="kn">import</span> <span class="n">Pickler</span>
+<span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
+
+<span class="c"># ETS imports</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">BC_UI</span> <span class="o">=</span> <span class="bp">True</span>
+    <span class="kn">from</span> <span class="nn">traits.api</span> <span class="kn">import</span> <span class="n">HasTraits</span><span class="p">,</span> <span class="n">Int</span><span class="p">,</span> <span class="n">Str</span><span class="p">,</span> <span class="n">File</span><span class="p">,</span> <span class="n">Float</span><span class="p">,</span> <span class="n">Bool</span>
+    <span class="kn">from</span> <span class="nn">traitsui.api</span> <span class="kn">import</span> <span class="n">View</span><span class="p">,</span> <span class="n">Item</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="n">BC_UI</span> <span class="o">=</span> <span class="bp">False</span>
+    <span class="k">pass</span>
+    
+<span class="c"># Local import</span>
+<span class="kn">from</span> <span class="nn">miic.core.miic_utils</span> <span class="kn">import</span> <span class="n">combinations</span><span class="p">,</span> <span class="n">extract_stations_info</span><span class="p">,</span> \
+    <span class="n">dcs_check</span>
+
+<span class="c">#==============================================================================</span>
+<span class="c"># For backward compatibility</span>
+<span class="c">#==============================================================================</span>
+<span class="kn">from</span> <span class="nn">miic.core.miic_utils</span> <span class="kn">import</span> <span class="n">load_pickled_Series_DataFrame_Panel</span><span class="p">,</span> \
+    <span class="n">get_values_DataFrame</span><span class="p">,</span> <span class="n">find_stations_name</span><span class="p">,</span> \
+    <span class="n">from_comb_to_stations_list</span><span class="p">,</span> <span class="n">from_str_comb_to_list</span>
+    
+<span class="k">if</span> <span class="n">BC_UI</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">miic.core.miic_utils</span> <span class="kn">import</span> <span class="n">_load_pickled_Series_DataFrame_Panel_view</span><span class="p">,</span> \
+        <span class="n">_get_values_DataFrame_view</span>
+<span class="c">#------------------------------------------------------------------------------</span>
+
+
+<div class="viewcode-block" id="quantify_vchange_drop"><a class="viewcode-back" href="../../../modules/autogen/miic.core.inversion.quantify_vchange_drop.html#miic.core.inversion.quantify_vchange_drop">[docs]</a><span class="k">def</span> <span class="nf">quantify_vchange_drop</span><span class="p">(</span><span class="n">vc_curve</span><span class="p">,</span> <span class="n">time_win_len</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Rolling interval (instead of point) derivative</span>
+
+<span class="sd">    For each t0 it calculates the simple (x_t1 - x_t2) where t0 spans the</span>
+<span class="sd">    whole timeserie vc_curve and x_t1 and x_t2 are its average on two time</span>
+<span class="sd">    windows of length time_win_len symmetric respect to t0. At the border</span>
+<span class="sd">    the time series is reflected so that any long term trend should not be</span>
+<span class="sd">    altered.</span>
+
+<span class="sd">    :type vc_curve: :class:`~numpy.ndarray`</span>
+<span class="sd">    :param vc_curve: The velocity change curve (when 2D one timeseries on each</span>
+<span class="sd">        column)</span>
+<span class="sd">    :type time_win_len: int</span>
+<span class="sd">    :param time_win_len: Time window length (on each side)</span>
+
+<span class="sd">    :rtype: :class:`~numpy.ndarray`</span>
+<span class="sd">    :param vdrop: Velocity change point drop on the chosen time basis</span>
+<span class="sd">        (2*timw_win_len days)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">rolling_mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="mi">2</span> <span class="o">*</span> <span class="n">time_win_len</span><span class="p">,),</span> <span class="n">dtype</span><span class="o">=</span><span class="s">&#39;f&#39;</span><span class="p">)</span>
+    <span class="n">rolling_mask</span><span class="p">[:</span><span class="n">time_win_len</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+    <span class="k">print</span> <span class="n">rolling_mask</span>
+    <span class="n">vdrop</span> <span class="o">=</span> <span class="n">correlate1d</span><span class="p">(</span><span class="n">vc_curve</span><span class="p">,</span> <span class="n">rolling_mask</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s">&#39;reflect&#39;</span><span class="p">)</span>\
+         <span class="o">/</span> <span class="n">time_win_len</span>
+    <span class="k">return</span> <span class="n">vdrop</span>
+
+</div>
+<span class="k">if</span> <span class="n">BC_UI</span><span class="p">:</span>
+    <span class="k">class</span> <span class="nc">_quantify_vchange_drop_view</span><span class="p">(</span><span class="n">HasTraits</span><span class="p">):</span>
+        <span class="n">time_win_len</span> <span class="o">=</span> <span class="n">Int</span>
+        <span class="n">trait_view</span> <span class="o">=</span> <span class="n">View</span><span class="p">(</span><span class="n">Item</span><span class="p">(</span><span class="s">&#39;time_win_len&#39;</span><span class="p">))</span>
+
+
+<div class="viewcode-block" id="hard_threshold_dv"><a class="viewcode-back" href="../../../modules/autogen/miic.core.inversion.hard_threshold_dv.html#miic.core.inversion.hard_threshold_dv">[docs]</a><span class="k">def</span> <span class="nf">hard_threshold_dv</span><span class="p">(</span><span class="n">dv</span><span class="p">,</span> <span class="n">corr</span><span class="p">,</span> <span class="n">threshold</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Put dv[corr &lt; threshould] to nan</span>
+
+<span class="sd">    This function removes all the velocity_change values that are related with</span>
+<span class="sd">    correlation values less then threshold to limit the study to those points</span>
+<span class="sd">    in time that are reliable in terms of accuracy of the proposed model.</span>
+
+<span class="sd">    :type dv: :class:`~pandas.DataFrame`</span>
+<span class="sd">    :param dv: DataFrame that stores the velocity change</span>
+<span class="sd">    :type corr: :class:`~pandas.DataFrame`</span>
+<span class="sd">    :param corr: DataFrame that stores the correlation values</span>
+<span class="sd">    :type threshold: float</span>
+<span class="sd">    :param threshold: threshold for the correlation value to accept the</span>
+<span class="sd">        velocity change has meaningful.</span>
+
+<span class="sd">    :return: **dv**</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">dv</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="n">corr</span><span class="o">.</span><span class="n">values</span> <span class="o">&lt;</span> <span class="n">threshold</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+
+    <span class="k">return</span> <span class="n">dv</span>
+
+</div>
+<span class="k">if</span> <span class="n">BC_UI</span><span class="p">:</span>
+    <span class="k">class</span> <span class="nc">_hard_threshold_dv_view</span><span class="p">(</span><span class="n">HasTraits</span><span class="p">):</span>
+        <span class="n">threshold</span> <span class="o">=</span> <span class="n">Float</span><span class="p">(</span><span class="mf">0.7</span><span class="p">)</span>
+        <span class="n">trait_view</span> <span class="o">=</span> <span class="n">View</span><span class="p">(</span><span class="n">Item</span><span class="p">(</span><span class="s">&#39;threshold&#39;</span><span class="p">))</span>
+
+
+<div class="viewcode-block" id="resolution_matrix"><a class="viewcode-back" href="../../../modules/autogen/miic.core.inversion.resolution_matrix.html#miic.core.inversion.resolution_matrix">[docs]</a><span class="k">def</span> <span class="nf">resolution_matrix</span><span class="p">(</span><span class="n">n_stations</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Simple resolution matrix creation</span>
+
+<span class="sd">    It creates the simplest resolution matrix that describe an</span>
+<span class="sd">    &quot;Approximate resolution kernel by a double-delta function&quot;.</span>
+<span class="sd">    This matrix as as much rows as possible combination pairs and</span>
+<span class="sd">    as much columns as different stations and, on each row, just</span>
+<span class="sd">    two values are 1 in the position of the corresponding pair of</span>
+<span class="sd">    stations.</span>
+
+<span class="sd">    :type n_stations: int</span>
+<span class="sd">    :param n_stations: Number of stations available</span>
+
+<span class="sd">    :rtype: 2D :class:`~numpy.ndarray`</span>
+<span class="sd">    :return: **M**: Resolution matrix for the forward problem O=M*R where O</span>
+<span class="sd">        is the vector of observed velocity change and R is the vector of real</span>
+<span class="sd">        velocity change</span>
+<span class="sd">    :rtype: 2D :class:`~numpy.ndarray`</span>
+<span class="sd">    :return: **M_inv**: The term (M&#39;*M)^(-1) * M&#39; useful in the inverse model</span>
+<span class="sd">        calculation</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">comb</span> <span class="o">=</span> <span class="n">combinations</span><span class="p">(</span><span class="n">n_stations</span><span class="p">,</span> <span class="s">&#39;Full-corr&#39;</span><span class="p">)</span>
+    <span class="n">M</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">comb</span><span class="p">),</span> <span class="n">n_stations</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="s">&#39;f&#39;</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">j</span><span class="p">,</span> <span class="n">k</span><span class="p">))</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">comb</span><span class="p">):</span>
+        <span class="n">M</span><span class="p">[</span><span class="n">i</span><span class="p">][[</span><span class="n">j</span><span class="p">,</span> <span class="n">k</span><span class="p">]]</span> <span class="o">=</span> <span class="mf">1.0</span>
+
+    <span class="n">to_invert</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">M</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">M</span><span class="p">)</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">M_inv</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="n">to_invert</span><span class="p">),</span> <span class="n">M</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">LinAlgError</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">M_inv</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">pinv</span><span class="p">(</span><span class="n">to_invert</span><span class="p">),</span> <span class="n">M</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+            <span class="n">M_inv</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">M_inv</span><span class="p">)]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span>
+
+    <span class="k">return</span> <span class="n">M</span><span class="p">,</span> <span class="n">M_inv</span>
+
+</div>
+<span class="k">if</span> <span class="n">BC_UI</span><span class="p">:</span>
+    <span class="k">class</span> <span class="nc">_resolution_matrix_view</span><span class="p">(</span><span class="n">HasTraits</span><span class="p">):</span>
+        <span class="n">n_stations</span> <span class="o">=</span> <span class="n">Int</span>
+        <span class="n">trait_view</span> <span class="o">=</span> <span class="n">View</span><span class="p">(</span><span class="n">Item</span><span class="p">(</span><span class="s">&#39;n_stations&#39;</span><span class="p">))</span>
+
+
+<div class="viewcode-block" id="invert"><a class="viewcode-back" href="../../../modules/autogen/miic.core.inversion.invert.html#miic.core.inversion.invert">[docs]</a><span class="k">def</span> <span class="nf">invert</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">O</span><span class="p">,</span> <span class="n">M_inv</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Invert the simple forward problem O=MR</span>
+
+<span class="sd">    In this case, where the matrix M is well-conditioned the inversion</span>
+<span class="sd">    is done simple as R = (M&#39;*M)^(-1) * M&#39; * O</span>
+
+<span class="sd">    :type M: 2D :class:`~numpy.ndarray`</span>
+<span class="sd">    :param M: Resolution matrix for the forward problem O=M*R</span>
+<span class="sd">    :type O: 1D :class:`~numpy.ndarray`</span>
+<span class="sd">    :param O: Vector of observed velocity change</span>
+<span class="sd">    :type M_inv: 2D :class:`~numpy.ndarray` (optional)</span>
+<span class="sd">    :param M_inv: The term (M&#39;*M)^(-1) * M&#39; useful in the inverse</span>
+<span class="sd">        model calculation</span>
+
+<span class="sd">    :rtype:  1D :class:`~numpy.ndarray`</span>
+<span class="sd">    :return: **R**: Vector of real velocity change</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="n">M_inv</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+
+        <span class="n">to_invert</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">M</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">M</span><span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">M_inv</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="n">to_invert</span><span class="p">),</span> <span class="n">M</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">LinAlgError</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">M_inv</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">pinv</span><span class="p">(</span><span class="n">to_invert</span><span class="p">),</span> <span class="n">M</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+                <span class="n">M_inv</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">M_inv</span><span class="p">)]</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">Exception</span>
+
+    <span class="n">R</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">M_inv</span><span class="p">,</span> <span class="n">O</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">R</span>
+
+</div>
+<span class="k">if</span> <span class="n">BC_UI</span><span class="p">:</span>
+    <span class="k">class</span> <span class="nc">_invert_view</span><span class="p">(</span><span class="n">HasTraits</span><span class="p">):</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="n">Str</span><span class="p">(</span><span class="s">&quot;Inversion: R = (M&#39;*M)^(-1) * M&#39; * O &quot;</span><span class="p">)</span>
+        <span class="n">trait_view</span> <span class="o">=</span> <span class="n">View</span><span class="p">(</span><span class="n">Item</span><span class="p">(</span><span class="s">&#39;msg&#39;</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="s">&#39;readonly&#39;</span><span class="p">))</span>
+
+
+<div class="viewcode-block" id="reconstruction_error"><a class="viewcode-back" href="../../../modules/autogen/miic.core.inversion.reconstruction_error.html#miic.core.inversion.reconstruction_error">[docs]</a><span class="k">def</span> <span class="nf">reconstruction_error</span><span class="p">(</span><span class="n">O</span><span class="p">,</span> <span class="n">M</span><span class="p">,</span> <span class="n">R</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Reconstruction error calculation</span>
+
+<span class="sd">    For a general inverse problem of the form R = (M&#39;*M)^(-1) * M&#39; * O, it</span>
+<span class="sd">    calculates the reconstruction error O - rec_O where rec_O = M * R.</span>
+
+<span class="sd">    :type O: 1D :class:`~numpy.ndarray`</span>
+<span class="sd">    :param O: Vector of observed velocity change</span>
+<span class="sd">    :type M: 2D :class:`~numpy.ndarray`</span>
+<span class="sd">    :param M: Resolution matrix for the forward problem O=M*R</span>
+<span class="sd">    :type R: 1D :class:`~numpy.ndarray`</span>
+<span class="sd">    :param R: Vector of real velocity change</span>
+
+<span class="sd">    :rtype: 1D :class:`~numpy.ndarray`</span>
+<span class="sd">    :return: **rec_error**: reconstruction error</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">rec_O</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">R</span><span class="p">)</span>
+    <span class="n">rec_error</span> <span class="o">=</span> <span class="n">O</span> <span class="o">-</span> <span class="n">rec_O</span>
+
+    <span class="k">return</span> <span class="n">rec_error</span>
+
+</div>
+<div class="viewcode-block" id="resolution_matrix_reduced"><a class="viewcode-back" href="../../../modules/autogen/miic.core.inversion.resolution_matrix_reduced.html#miic.core.inversion.resolution_matrix_reduced">[docs]</a><span class="k">def</span> <span class="nf">resolution_matrix_reduced</span><span class="p">(</span><span class="n">str_comb</span><span class="p">,</span> <span class="n">stations</span><span class="p">,</span> <span class="n">stats_df</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Simple resolution matrix creation</span>
+
+<span class="sd">    It creates the simplest resolution matrix that describe an</span>
+<span class="sd">    &quot;Approximate resolution kernel by a double-delta function&quot;.</span>
+<span class="sd">    This matrix as as much rows as possible combination pairs and</span>
+<span class="sd">    as much columns as different stations and, on each row, just</span>
+<span class="sd">    two values are 1 in the position of the corresponding pair of</span>
+<span class="sd">    stations. This version accept a list of combinations in string</span>
+<span class="sd">    form that are parsed and that defines the valid combinations.</span>
+<span class="sd">    Its size is reduced to just those columns that are not null (all zero)</span>
+<span class="sd">    so that the next calculations are optimized in this sense and</span>
+<span class="sd">    to create an invertible matrix. Trace of which stations where</span>
+<span class="sd">    adopted is kept outside this function.</span>
+<span class="sd">    This function also returns the geographical information regarding</span>
+<span class="sd">    the points in space involved in the inversion process.</span>
+<span class="sd">    This is a feature that has been added to keep the interface consistent</span>
+<span class="sd">    with other possible kernels that, in every case, should return the</span>
+<span class="sd">    geographical information necessary to &#39;locate&#39; the results of the</span>
+<span class="sd">    inversion  process.</span>
+
+<span class="sd">    :type str_comb: list of string</span>
+<span class="sd">    :param str_comb: List of combinations to use</span>
+<span class="sd">        (e.g. [&#39;UV01-UV05&#39;,&#39;UV11-UV12&#39;]</span>
+<span class="sd">    :type stations: list of string</span>
+<span class="sd">    :param stations: Ordered list of stations name</span>
+<span class="sd">    :type stats_df: :py:class:`~pandas.DataFrame`</span>
+<span class="sd">    :param stats_df: Stats DataFrame</span>
+
+<span class="sd">    :rtype: 2D :class:`~numpy.ndarray`</span>
+<span class="sd">    :return: **M** : Resolution matrix for the forward problem O=M*R where O is</span>
+<span class="sd">            the vector of observed velocity change and R is the vector of real</span>
+<span class="sd">            velocity change.</span>
+<span class="sd">        **points_geo_info**: DataFrame containing the geographical information</span>
+<span class="sd">            about the points that are associated with R in the model O=M*R.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">n_stations</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">stations</span><span class="p">)</span>
+
+    <span class="n">comb</span> <span class="o">=</span> <span class="n">from_str_comb_to_list</span><span class="p">(</span><span class="n">str_comb</span><span class="p">,</span> <span class="n">stations</span><span class="p">)</span>
+    <span class="n">M</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">comb</span><span class="p">),</span> <span class="n">n_stations</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="s">&#39;f&#39;</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">j</span><span class="p">,</span> <span class="n">k</span><span class="p">))</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">comb</span><span class="p">):</span>
+        <span class="n">M</span><span class="p">[</span><span class="n">i</span><span class="p">][[</span><span class="n">j</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">k</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]]</span> <span class="o">=</span> <span class="mf">1.0</span>
+
+    <span class="n">ss</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="n">M</span> <span class="o">=</span> <span class="n">M</span><span class="p">[:,</span> <span class="n">ss</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">]</span>
+
+    <span class="n">M_inv</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">M</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">M</span><span class="p">)),</span> <span class="n">M</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">stats_df</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">points_geo_info</span> <span class="o">=</span> <span class="n">extract_stations_info</span><span class="p">(</span><span class="n">stats_df</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">M</span><span class="p">,</span> <span class="n">M_inv</span><span class="p">,</span> <span class="n">points_geo_info</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">M</span><span class="p">,</span> <span class="n">M_inv</span>
+
+</div>
+<div class="viewcode-block" id="inversion_with_missed_data"><a class="viewcode-back" href="../../../modules/autogen/miic.core.inversion.inversion_with_missed_data.html#miic.core.inversion.inversion_with_missed_data">[docs]</a><span class="k">def</span> <span class="nf">inversion_with_missed_data</span><span class="p">(</span><span class="n">dcs_dict</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                               <span class="n">dcs_filename</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                               <span class="n">threshold</span><span class="o">=</span><span class="mf">0.6</span><span class="p">,</span>
+                               <span class="n">window</span><span class="o">=</span><span class="s">&#39;win-0&#39;</span><span class="p">,</span>
+                               <span class="n">save_dir</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Simple inversion with hard thresholded velocity changes data.</span>
+
+<span class="sd">    This function does the inversion to estimate the &quot;real&quot; velocity changes</span>
+<span class="sd">    adopting just those observed velocity changes that are associated to</span>
+<span class="sd">    correlation values grater then ``threshold``.</span>
+
+<span class="sd">    :type dcs_dict:</span>
+<span class="sd">    :type dcs_filename: string</span>
+<span class="sd">    :param dcs_filename: Filename of stored dictionary that contains the</span>
+<span class="sd">        observed velocity change dv Panel, its corresponding correlation Panel</span>
+<span class="sd">        and the stats DataFrame with the meta-information about the stations</span>
+<span class="sd">        where the data have been collected.</span>
+<span class="sd">    :type corr_filename: string</span>
+<span class="sd">    :param corr_filename: Filename of the observed correlation values stored in</span>
+<span class="sd">        a DataFrame pickled object</span>
+<span class="sd">    :type threshold: float</span>
+<span class="sd">    :param threshold: Minimum correlation value necessary to assume the</span>
+<span class="sd">        associated velocity change meaningful</span>
+<span class="sd">    :type n_stations: int</span>
+<span class="sd">    :param n_stations: Number of stations</span>
+<span class="sd">    :type window: list of string</span>
+<span class="sd">    :param window: If the velocity change were calculated on different time-lag</span>
+<span class="sd">        windows, write here the window of interest (e.g. &#39;win-0&#39;)</span>
+<span class="sd">    :type save_dir: string</span>
+<span class="sd">    :param save_dir: If passed save the resulting dictionary in</span>
+<span class="sd">        &#39;adv_dict.pickle&#39; file.</span>
+
+<span class="sd">    :rtype: dictionary</span>
+<span class="sd">    :return: **adv**: Dictionary with the following keys:</span>
+<span class="sd">        *apparent_dv*: It is the calculated &quot;Real&quot; velocity change</span>
+<span class="sd">            estimation sored in a DataFrame obj.</span>
+<span class="sd">        *points_geo_info*: DataFrame containing the geographical information</span>
+<span class="sd">            about all the stations involved in the inversion process.</span>
+<span class="sd">        *residuals*: The residuals calculated, at each time, for a general</span>
+<span class="sd">            inverse problem of the form R = (M&#39;*M)^(-1) * M&#39; * O, it consist of</span>
+<span class="sd">            the reconstruction error O - rec_O where rec_O = M * R.</span>
+
+<span class="sd">    .. rubric:: Notes</span>
+
+<span class="sd">    ver. pandas &gt;= 0.7 required</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="n">dcs_dict</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">dcs_filename</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">print</span> <span class="s">&quot;One of dcs_dict and dcs_filename MUST be not None&quot;</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span>
+
+        <span class="n">dcs_dict</span> <span class="o">=</span> <span class="n">load_pickled_Series_DataFrame_Panel</span><span class="p">(</span><span class="n">dcs_filename</span><span class="p">)</span>
+
+    <span class="n">check_state</span> <span class="o">=</span> <span class="n">dcs_check</span><span class="p">(</span><span class="n">dcs_dict</span><span class="p">)</span>
+
+    <span class="c"># Check if the dv dictionary is &quot;correct&quot;</span>
+    <span class="k">if</span> <span class="n">check_state</span><span class="p">[</span><span class="s">&#39;is_incomplete&#39;</span><span class="p">]:</span>
+        <span class="k">print</span> <span class="s">&quot;Error: Incomplete dcs_dict&quot;</span>
+        <span class="k">print</span> <span class="s">&quot;Possible errors:&quot;</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">check_state</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="ow">is</span> <span class="ow">not</span> <span class="s">&#39;is_incomplete&#39;</span><span class="p">:</span>
+                <span class="k">print</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s">: </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">check_state</span><span class="p">[</span><span class="n">key</span><span class="p">])</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span>
+
+    <span class="n">dv</span> <span class="o">=</span> <span class="n">dcs_dict</span><span class="p">[</span><span class="s">&#39;dvP&#39;</span><span class="p">][</span><span class="n">window</span><span class="p">]</span>
+    <span class="n">corr</span> <span class="o">=</span> <span class="n">dcs_dict</span><span class="p">[</span><span class="s">&#39;corrP&#39;</span><span class="p">][</span><span class="n">window</span><span class="p">]</span>
+    <span class="n">stats</span> <span class="o">=</span> <span class="n">dcs_dict</span><span class="p">[</span><span class="s">&#39;stats&#39;</span><span class="p">]</span>
+
+    <span class="n">stations</span> <span class="o">=</span> <span class="n">find_stations_name</span><span class="p">(</span><span class="n">dv</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+
+    <span class="n">apparent_dv</span> <span class="o">=</span> <span class="n">DataFrame</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="n">dv</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="n">stations</span><span class="p">)</span>
+    <span class="n">residuals</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">dv</span><span class="p">)</span>
+    <span class="n">points_geo_info</span> <span class="o">=</span> <span class="bp">None</span>
+
+    <span class="k">for</span> <span class="n">row_index</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">dv</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
+
+        <span class="n">mask</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">corr</span><span class="o">.</span><span class="n">ix</span><span class="p">[</span><span class="n">row_index</span><span class="p">])</span> <span class="o">&gt;</span> <span class="n">threshold</span>
+
+        <span class="n">cdv</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+
+        <span class="n">list_stations_available</span> <span class="o">=</span> \
+            <span class="n">from_comb_to_stations_list</span><span class="p">(</span><span class="n">dv</span><span class="o">.</span><span class="n">columns</span><span class="p">[</span><span class="n">mask</span><span class="p">],</span> <span class="n">stations</span><span class="p">)</span>
+
+        <span class="n">x</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">list_stations_available</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">x</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="c"># It is reduntant to get the geographical information</span>
+                <span class="c"># at every iteration but it is kept in this way to have</span>
+                <span class="c"># a uniform interface that can suite even other kernels</span>
+                <span class="c"># respect to the simple one adopted here.</span>
+                <span class="n">M</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">points_geo_info</span> <span class="o">=</span> \
+                    <span class="n">resolution_matrix_reduced</span><span class="p">(</span><span class="n">dv</span><span class="o">.</span><span class="n">columns</span><span class="p">[</span><span class="n">mask</span><span class="p">],</span> \
+                                              <span class="n">stations</span><span class="p">,</span> <span class="n">stats</span><span class="p">)</span>
+            <span class="k">except</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">LinAlgError</span><span class="p">:</span>
+                <span class="k">print</span> <span class="s">&quot;singular matrix&quot;</span>
+                <span class="k">print</span> <span class="n">M</span>
+                <span class="k">continue</span>
+
+            <span class="c"># Calculate the real dv for this specific time</span>
+            <span class="n">CR</span> <span class="o">=</span> <span class="n">invert</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">cdv</span><span class="p">)</span>
+
+            <span class="c"># Calculate the residuals</span>
+            <span class="n">cres</span> <span class="o">=</span> <span class="n">reconstruction_error</span><span class="p">(</span><span class="n">cdv</span><span class="p">,</span> <span class="n">M</span><span class="p">,</span> <span class="n">CR</span><span class="p">)</span>
+
+            <span class="c"># real_dv.ix[row_index, list(list_stations_available)] = CR</span>
+            <span class="n">apparent_dv</span><span class="o">.</span><span class="n">ix</span><span class="p">[</span><span class="n">row_index</span><span class="p">,</span>
+                           <span class="n">stations</span><span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="n">list_stations_available</span><span class="p">)]]</span> <span class="o">=</span> <span class="n">CR</span>
+
+            <span class="n">residuals</span><span class="o">.</span><span class="n">ix</span><span class="p">[</span><span class="n">row_index</span><span class="p">,</span> <span class="n">mask</span><span class="p">]</span> <span class="o">=</span> <span class="n">cres</span>
+
+    <span class="n">adv</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;apparent_dv&#39;</span><span class="p">:</span> <span class="n">apparent_dv</span><span class="p">,</span>
+           <span class="s">&#39;residuals&#39;</span><span class="p">:</span> <span class="n">residuals</span><span class="p">}</span>
+
+    <span class="k">if</span> <span class="n">points_geo_info</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">adv</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s">&#39;points_geo_info&#39;</span><span class="p">:</span> <span class="n">points_geo_info</span><span class="p">})</span>
+
+    <span class="k">if</span> <span class="n">save_dir</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">save_dir</span><span class="p">,</span> <span class="s">&#39;adv_dict.pickle&#39;</span><span class="p">),</span> <span class="s">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f_out</span><span class="p">:</span>
+            <span class="n">p</span> <span class="o">=</span> <span class="n">Pickler</span><span class="p">(</span><span class="n">f_out</span><span class="p">)</span>
+            <span class="n">p</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">adv</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">adv</span>
+
+</div>
+<span class="k">if</span> <span class="n">BC_UI</span><span class="p">:</span>
+    <span class="k">class</span> <span class="nc">_inversion_with_missed_data_macro_view</span><span class="p">(</span><span class="n">HasTraits</span><span class="p">):</span>
+        <span class="n">dcs_filename</span> <span class="o">=</span> <span class="n">File</span><span class="p">()</span>
+        <span class="n">threshold</span> <span class="o">=</span> <span class="n">Float</span><span class="p">(</span><span class="mf">0.7</span><span class="p">)</span>
+        <span class="n">window</span> <span class="o">=</span> <span class="n">Str</span><span class="p">(</span><span class="s">&#39;win-0&#39;</span><span class="p">)</span>
+        <span class="n">save_as_file</span> <span class="o">=</span> <span class="n">Bool</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
+        <span class="n">save_file_name</span> <span class="o">=</span> <span class="n">File</span><span class="p">()</span>
+    
+        <span class="n">trait_view</span> <span class="o">=</span> <span class="n">View</span><span class="p">(</span><span class="n">Item</span><span class="p">(</span><span class="s">&#39;dcs_filename&#39;</span><span class="p">),</span>
+                          <span class="n">Item</span><span class="p">(</span><span class="s">&#39;threshold&#39;</span><span class="p">),</span>
+                          <span class="n">Item</span><span class="p">(</span><span class="s">&#39;window&#39;</span><span class="p">),</span>
+                          <span class="n">Item</span><span class="p">(</span><span class="s">&#39;save_as_file&#39;</span><span class="p">),</span>
+                          <span class="n">Item</span><span class="p">(</span><span class="s">&#39;save_file_name&#39;</span><span class="p">,</span> \
+                               <span class="n">enabled_when</span><span class="o">=</span><span class="s">&#39;save_as_file==True&#39;</span><span class="p">))</span>
+    
+
+<span class="k">def</span> <span class="nf">compare_residuals_with_homogeneous_model</span><span class="p">(</span><span class="n">adv</span><span class="p">,</span> <span class="n">dcs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Test significance of inversion model.</span>
+
+<span class="sd">    Compare the residuals of a model with estimates local changes to</span>
+<span class="sd">    a model with spatially homogeneous velocity changes. The function</span>
+<span class="sd">    calculates the sums of squared residuals divided by their numbers</span>
+<span class="sd">    of degrees of freedom (df). For the homogeneous model df is the</span>
+<span class="sd">    number of measurements minus one. For the other model df is the number os</span>
+<span class="sd">    measurements minus the number of model parameters. The function calculates</span>
+<span class="sd">    the probability that the new model has the same variance as the homogeneous</span>
+<span class="sd">    model. Using a confidence limit of 95% one can reject the null hypothesis</span>
+<span class="sd">    that the variances are equal if the resulting probability is above 0.95.</span>
+
+<span class="sd">    :type adv: dict of type inverted change</span>
+<span class="sd">    :param adv: inverted velocity changes and residuals</span>
+
+<span class="sd">    :type dcs: dict of type measured change</span>
+<span class="sd">    :param dcs: velocity change, correlation and stats dictionary</span>
+
+<span class="sd">    :rtype: pandas Dataframe</span>
+<span class="sd">    :return: Dataframe containing in the columns the summed squared residuals</span>
+<span class="sd">        for the inverted model and model0 i.e. model with homogeneous changes</span>
+<span class="sd">        and the probability p</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c"># Substract from every curve its mean to a void constant offset in the RSS</span>
+    <span class="n">dcs</span><span class="p">[</span><span class="s">&#39;dvP&#39;</span><span class="p">][</span><span class="s">&#39;win-0&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">dcs</span><span class="p">[</span><span class="s">&#39;dvP&#39;</span><span class="p">][</span><span class="s">&#39;win-0&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">dcs</span><span class="p">[</span><span class="s">&#39;dvP&#39;</span><span class="p">][</span><span class="s">&#39;win-0&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="c"># calculate residuals for homogeneous model</span>
+    <span class="n">mod0_res</span> <span class="o">=</span> <span class="n">dcs</span><span class="p">[</span><span class="s">&#39;dvP&#39;</span><span class="p">][</span><span class="s">&#39;win-0&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">dcs</span><span class="p">[</span><span class="s">&#39;dvP&#39;</span><span class="p">][</span><span class="s">&#39;win-0&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="c"># copy residuals for new model</span>
+    <span class="n">new_res</span> <span class="o">=</span> <span class="n">adv</span><span class="p">[</span><span class="s">&#39;residuals&#39;</span><span class="p">]</span>
+
+    <span class="c"># number of degrees of freedom</span>
+    <span class="n">mod0_df</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">mod0_res</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+    <span class="n">new_df</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">adv</span><span class="p">[</span><span class="s">&#39;residuals&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">adv</span><span class="p">[</span><span class="s">&#39;apparent_dv&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+
+    <span class="c"># estimate variances</span>
+    <span class="n">mod0_RSS</span> <span class="o">=</span> <span class="p">(</span><span class="n">mod0_res</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">new_RSS</span> <span class="o">=</span> <span class="p">(</span><span class="n">new_res</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="n">mod0_var</span> <span class="o">=</span> <span class="n">mod0_RSS</span> <span class="o">/</span> <span class="n">mod0_df</span>
+    <span class="n">new_var</span> <span class="o">=</span> <span class="n">new_RSS</span> <span class="o">/</span> <span class="n">new_df</span>
+
+    <span class="n">f_dat</span> <span class="o">=</span> <span class="n">mod0_var</span> <span class="o">/</span> <span class="n">new_var</span>
+
+    <span class="n">rv</span> <span class="o">=</span> <span class="n">stats</span><span class="o">.</span><span class="n">f</span><span class="o">.</span><span class="n">cdf</span><span class="p">(</span><span class="n">f_dat</span><span class="p">,</span> <span class="n">mod0_df</span><span class="p">,</span> <span class="n">new_df</span><span class="p">)</span>
+
+    <span class="n">compare</span> <span class="o">=</span> <span class="n">DataFrame</span><span class="p">({</span><span class="s">&#39;mod0_RSS&#39;</span><span class="p">:</span> <span class="n">mod0_RSS</span><span class="p">,</span> <span class="s">&#39;new_RSS&#39;</span><span class="p">:</span> <span class="n">new_RSS</span><span class="p">,</span> <span class="s">&#39;p&#39;</span><span class="p">:</span> <span class="n">rv</span><span class="p">})</span>
+
+    <span class="k">return</span> <span class="n">compare</span>
+
+
+
+<span class="c"># EOF</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MIIC 1.0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2012, Eraldo Pomponi.
+      Last updated on 2016-03-07T14:54:14.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </div>
+  </body>
+</html>

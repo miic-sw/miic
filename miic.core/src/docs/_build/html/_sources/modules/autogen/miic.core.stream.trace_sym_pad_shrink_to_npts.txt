@@ -1,0 +1,6 @@
+miic.core.stream.trace_sym_pad_shrink_to_npts
+=============================================
+
+.. currentmodule:: miic.core.stream
+
+.. autofunction:: trace_sym_pad_shrink_to_npts

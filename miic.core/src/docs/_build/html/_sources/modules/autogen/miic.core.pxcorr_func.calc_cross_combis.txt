@@ -1,0 +1,6 @@
+miic.core.pxcorr_func.calc_cross_combis
+=======================================
+
+.. currentmodule:: miic.core.pxcorr_func
+
+.. autofunction:: calc_cross_combis

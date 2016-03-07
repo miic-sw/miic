@@ -1,0 +1,448 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>miic.core.normalization &mdash; MIIC 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="top" title="MIIC 1.0 documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MIIC 1.0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for miic.core.normalization</h1><div class="highlight"><pre>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">@author:</span>
+<span class="sd">Eraldo Pomponi</span>
+<span class="sd">Mohammad Javad Fallahi</span>
+
+<span class="sd">@copyright:</span>
+<span class="sd">The MIIC Development Team (eraldo.pomponi@uni-leipzig.de)</span>
+
+<span class="sd">@license:</span>
+<span class="sd">GNU Lesser General Public License, Version 3</span>
+<span class="sd">(http://www.gnu.org/copyleft/lesser.html)</span>
+
+<span class="sd">Created on Nov 1, 2011False</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="c"># Main imports</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">numpy.fft</span> <span class="kn">import</span> <span class="n">fft</span><span class="p">,</span> <span class="n">ifft</span>
+<span class="kn">from</span> <span class="nn">multiprocessing</span> <span class="kn">import</span> <span class="n">Pool</span>
+
+
+<span class="c"># ETS imports</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">BC_UI</span> <span class="o">=</span> <span class="bp">True</span>
+    <span class="kn">from</span> <span class="nn">traits.api</span> <span class="kn">import</span> <span class="n">HasTraits</span><span class="p">,</span> <span class="n">Int</span><span class="p">,</span> <span class="n">Str</span><span class="p">,</span> <span class="n">Bool</span>
+    <span class="kn">from</span> <span class="nn">traitsui.api</span> <span class="kn">import</span> <span class="n">View</span><span class="p">,</span> <span class="n">Item</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="n">BC_UI</span> <span class="o">=</span> <span class="bp">False</span>
+    <span class="k">pass</span>
+
+<span class="c"># Obspy imports</span>
+<span class="kn">from</span> <span class="nn">obspy.core</span> <span class="kn">import</span> <span class="n">Stream</span>
+<span class="kn">from</span> <span class="nn">obspy.signal.invsim</span> <span class="kn">import</span> <span class="n">cosTaper</span>
+
+<span class="c">##############################################################################</span>
+<span class="c"># Exceptions                                                                 #</span>
+<span class="c">##############################################################################</span>
+
+
+<span class="k">class</span> <span class="nc">InputError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Exception for Input errors.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
+        <span class="ne">Exception</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_tr_gen</span><span class="p">(</span><span class="n">st</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; A generator that extract the traces form a Strem object</span>
+
+<span class="sd">    :type st: :py:class:`~obspy.core.stream.Stream`</span>
+<span class="sd">    :param st: Stream where to take the traces</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">st</span><span class="p">:</span>
+        <span class="k">yield</span> <span class="n">st</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">_AppendST</span><span class="p">:</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">st</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">st</span> <span class="o">=</span> <span class="n">st</span>
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">trs</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">tr</span> <span class="ow">in</span> <span class="n">trs</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">st</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tr</span><span class="p">)</span>
+
+
+<span class="c"># Temporal normalization</span>
+<div class="viewcode-block" id="temp_norm"><a class="viewcode-back" href="../../../modules/autogen/miic.core.normalization.temp_norm.html#miic.core.normalization.temp_norm">[docs]</a><span class="k">def</span> <span class="nf">temp_norm</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">N</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Computes the running-absolute-mean normalization of 1D numpy array x</span>
+
+<span class="sd">    This function computes the running average of the absolute value of the</span>
+<span class="sd">    data (array x) in a normalization time window of fixed length (2N+1) and</span>
+<span class="sd">    weights the data at the center of the window by the inverse of this</span>
+<span class="sd">    average.</span>
+<span class="sd">    A one-sample window (N = 0) is equivalent to one-bit normalization.</span>
+
+<span class="sd">    :type x: :class:`~numpy.ndarray`</span>
+<span class="sd">    :param x: 1d array</span>
+<span class="sd">    :type N: int</span>
+<span class="sd">    :param N: 2N+1 : width of the normalization window</span>
+
+<span class="sd">    :rtype: :class:`~numpy.ndarray`</span>
+<span class="sd">    :return: **nx**: Running-absolute-mean normalization of x</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">w</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+    <span class="n">nx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+
+    <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="n">n</span> <span class="o">&lt;</span> <span class="n">N</span><span class="p">:</span>
+            <span class="n">w</span><span class="p">[</span><span class="n">n</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">x</span><span class="p">[:</span><span class="n">n</span> <span class="o">+</span> <span class="n">N</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]))</span>
+            <span class="k">if</span> <span class="n">w</span><span class="p">[</span><span class="n">n</span><span class="p">]</span> <span class="o">!=</span> <span class="mf">0.</span><span class="p">:</span>
+                <span class="n">nx</span><span class="p">[</span><span class="n">n</span><span class="p">]</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="n">n</span><span class="p">]</span> <span class="o">/</span> <span class="nb">float</span><span class="p">(</span><span class="n">w</span><span class="p">[</span><span class="n">n</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">w</span><span class="p">[</span><span class="n">n</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="n">n</span> <span class="o">-</span> <span class="n">N</span><span class="p">:</span><span class="n">n</span> <span class="o">+</span> <span class="n">N</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]))</span>
+            <span class="k">if</span> <span class="n">w</span><span class="p">[</span><span class="n">n</span><span class="p">]</span> <span class="o">!=</span> <span class="mf">0.</span><span class="p">:</span>
+                <span class="n">nx</span><span class="p">[</span><span class="n">n</span><span class="p">]</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="n">n</span><span class="p">]</span> <span class="o">/</span> <span class="nb">float</span><span class="p">(</span><span class="n">w</span><span class="p">[</span><span class="n">n</span><span class="p">])</span>
+
+    <span class="k">return</span> <span class="n">nx</span>
+
+</div>
+<span class="k">if</span> <span class="n">BC_UI</span><span class="p">:</span>
+    <span class="k">class</span> <span class="nc">_temp_norm_view</span><span class="p">(</span><span class="n">HasTraits</span><span class="p">):</span>
+    
+        <span class="n">N</span> <span class="o">=</span> <span class="n">Int</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+    
+        <span class="n">trait_view</span> <span class="o">=</span> <span class="n">View</span><span class="p">(</span><span class="n">Item</span><span class="p">(</span><span class="s">&#39;N&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">&#39;Norm. Win size&#39;</span><span class="p">))</span>
+
+
+<span class="k">class</span> <span class="nc">_StTempNorm</span><span class="p">:</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">N</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">N</span> <span class="o">=</span> <span class="n">N</span>
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tr</span><span class="p">):</span>
+        <span class="n">tr</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">temp_norm</span><span class="p">(</span><span class="n">tr</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">N</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">tr</span>
+
+
+<div class="viewcode-block" id="stream_temp_norm"><a class="viewcode-back" href="../../../modules/autogen/miic.core.normalization.stream_temp_norm.html#miic.core.normalization.stream_temp_norm">[docs]</a><span class="k">def</span> <span class="nf">stream_temp_norm</span><span class="p">(</span><span class="n">st</span><span class="p">,</span> <span class="n">N</span><span class="p">,</span> <span class="n">parallel</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">processes</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Computes the running-absolute-mean normaliz. of all Traces in st</span>
+
+<span class="sd">    .. note::</span>
+
+<span class="sd">    This operation is performed in place on the actual data arrays. The</span>
+<span class="sd">    raw data is not accessible anymore afterwards. To keep your</span>
+<span class="sd">    original data, use :func:`~miic.core.alpha_mod.stream_copy` to create</span>
+<span class="sd">    a copy of your stream object.</span>
+<span class="sd">    This function can also work in parallel an all or a specified number of</span>
+<span class="sd">    cores available in the hosting machine.</span>
+
+<span class="sd">    :type st: :class:`~obspy.core.trace.Stream`</span>
+<span class="sd">    :param st: The container for the Traces that we want to normalize them</span>
+<span class="sd">        in time domain</span>
+<span class="sd">    :type N: int</span>
+<span class="sd">    :param N: 2N+1 : width of the normalization window</span>
+<span class="sd">    :type parallel: bool (Default: True)</span>
+<span class="sd">    :pram parallel: If the filtering will be run in parallel or not</span>
+<span class="sd">    :type processes: int</span>
+<span class="sd">    :pram processes: Number of processes to start (if None it will be equal</span>
+<span class="sd">        to the number of cores available in the hosting machine)</span>
+
+<span class="sd">    :rtype: :class:`~obspy.core.trace.Stream`</span>
+<span class="sd">    :return: **st_tnorm**: The resulting object containing the normalized</span>
+<span class="sd">        version of all Traces in signals</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">st</span><span class="p">,</span> <span class="n">Stream</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="n">InputError</span><span class="p">(</span><span class="s">&quot;&#39;signals&#39; must be an </span><span class="se">\</span>
+<span class="s">            &#39;obspy.core.stream.Stream&#39; object&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">parallel</span><span class="p">:</span>
+        <span class="n">trs</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="n">_StTempNorm</span><span class="p">(</span><span class="n">N</span><span class="p">),</span> <span class="n">_tr_gen</span><span class="p">(</span><span class="n">st</span><span class="p">))</span>
+        <span class="n">st</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">trs</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">processes</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">processes</span> <span class="o">=</span> <span class="bp">None</span>
+
+        <span class="n">p</span> <span class="o">=</span> <span class="n">Pool</span><span class="p">(</span><span class="n">processes</span><span class="o">=</span><span class="n">processes</span><span class="p">)</span>
+
+        <span class="n">p</span><span class="o">.</span><span class="n">map_async</span><span class="p">(</span><span class="n">_StTempNorm</span><span class="p">(</span><span class="n">N</span><span class="p">),</span>
+                    <span class="n">_tr_gen</span><span class="p">(</span><span class="n">st</span><span class="p">),</span>
+                    <span class="n">callback</span><span class="o">=</span><span class="n">_AppendST</span><span class="p">(</span><span class="n">st</span><span class="p">))</span>
+
+        <span class="n">p</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>
+
+    <span class="n">st_tnorm</span> <span class="o">=</span> <span class="n">st</span>
+
+    <span class="k">return</span> <span class="n">st_tnorm</span>
+
+</div>
+<span class="k">if</span> <span class="n">BC_UI</span><span class="p">:</span>
+    <span class="k">class</span> <span class="nc">_stream_temp_norm_view</span><span class="p">(</span><span class="n">HasTraits</span><span class="p">):</span>
+    
+        <span class="n">msg</span> <span class="o">=</span> <span class="n">Str</span><span class="p">(</span><span class="s">&quot;&quot;&quot;The 1-bit normalization is done in place on the actual</span>
+<span class="s">                   stream&quot;&quot;&quot;</span><span class="p">)</span>
+        <span class="n">N</span> <span class="o">=</span> <span class="n">Int</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+        <span class="n">paralllel</span> <span class="o">=</span> <span class="n">Bool</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
+        <span class="n">processes</span> <span class="o">=</span> <span class="n">Int</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    
+        <span class="n">trait_view</span> <span class="o">=</span> <span class="n">View</span><span class="p">(</span><span class="n">Item</span><span class="p">(</span><span class="s">&#39;N&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">&#39;Norm. Win size&#39;</span><span class="p">),</span>
+                          <span class="n">Item</span><span class="p">(</span><span class="s">&#39;parallel&#39;</span><span class="p">),</span>
+                          <span class="n">Item</span><span class="p">(</span><span class="s">&#39;processes&#39;</span><span class="p">),</span>
+                          <span class="n">Item</span><span class="p">(</span><span class="s">&#39;msg&#39;</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="s">&#39;readonly&#39;</span><span class="p">))</span>
+    
+
+<span class="k">class</span> <span class="nc">_St1BitNorm</span><span class="p">:</span>
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tr</span><span class="p">):</span>
+        <span class="n">tr</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sign</span><span class="p">(</span><span class="n">tr</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">tr</span>
+
+
+<div class="viewcode-block" id="stream_1bit_norm"><a class="viewcode-back" href="../../../modules/autogen/miic.core.normalization.stream_1bit_norm.html#miic.core.normalization.stream_1bit_norm">[docs]</a><span class="k">def</span> <span class="nf">stream_1bit_norm</span><span class="p">(</span><span class="n">st</span><span class="p">,</span> <span class="n">parallel</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">processes</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Compute the 1-bit normalization of all Traces in the Stream object</span>
+
+<span class="sd">    .. note::</span>
+
+<span class="sd">    This operation is performed in place on the actual data arrays. The</span>
+<span class="sd">    raw data is not accessible anymore afterwards. To keep your</span>
+<span class="sd">    original data, use :func:`~miic.core.alpha_mod.stream_copy` to create</span>
+<span class="sd">    a copy of your stream object.</span>
+<span class="sd">    This function can also work in parallel an all or a specified number of</span>
+<span class="sd">    cores available in the hosting machine.</span>
+
+<span class="sd">    :type st: :class:`~obspy.core.trace.Stream`</span>
+<span class="sd">    :param st: Stream to be normalized</span>
+<span class="sd">    :type parallel: bool (Default: True)</span>
+<span class="sd">    :pram parallel: If the filtering will be run in parallel or not</span>
+<span class="sd">    :type processes: int</span>
+<span class="sd">    :pram processes: Number of processes to start (if None it will be equal</span>
+<span class="sd">        to the number of cores available in the hosting machine)</span>
+
+<span class="sd">    :rtype: :class:`~obspy.core.trace.Stream`</span>
+<span class="sd">    :return: **st_1norm**: Copy of the original Stream obj with normalized</span>
+<span class="sd">        traces</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">st</span><span class="p">,</span> <span class="n">Stream</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="n">InputError</span><span class="p">(</span><span class="s">&quot;&#39;st&#39; must be a &#39;obspy.core.stream.Stream&#39; object&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">parallel</span><span class="p">:</span>
+        <span class="n">trs</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="n">_St1BitNorm</span><span class="p">(),</span> <span class="n">_tr_gen</span><span class="p">(</span><span class="n">st</span><span class="p">))</span>
+        <span class="n">st</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">trs</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">processes</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">processes</span> <span class="o">=</span> <span class="bp">None</span>
+
+        <span class="n">p</span> <span class="o">=</span> <span class="n">Pool</span><span class="p">(</span><span class="n">processes</span><span class="o">=</span><span class="n">processes</span><span class="p">)</span>
+
+        <span class="n">p</span><span class="o">.</span><span class="n">map_async</span><span class="p">(</span><span class="n">_St1BitNorm</span><span class="p">(),</span>
+                    <span class="n">_tr_gen</span><span class="p">(</span><span class="n">st</span><span class="p">),</span>
+                    <span class="n">callback</span><span class="o">=</span><span class="n">_AppendST</span><span class="p">(</span><span class="n">st</span><span class="p">))</span>
+
+        <span class="n">p</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>
+
+    <span class="n">st_1norm</span> <span class="o">=</span> <span class="n">st</span>
+
+    <span class="k">return</span> <span class="n">st_1norm</span>
+
+</div>
+<span class="k">if</span> <span class="n">BC_UI</span><span class="p">:</span>
+    <span class="k">class</span> <span class="nc">_stream_1bit_norm_view</span><span class="p">(</span><span class="n">HasTraits</span><span class="p">):</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="n">Str</span><span class="p">(</span><span class="s">&quot;&quot;&quot;The 1-bit normalization is done in place on the actual</span>
+<span class="s">                   stream&quot;&quot;&quot;</span><span class="p">)</span>
+        <span class="n">parallel</span> <span class="o">=</span> <span class="n">Bool</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
+        <span class="n">processes</span> <span class="o">=</span> <span class="n">Int</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    
+        <span class="n">trait_view</span> <span class="o">=</span> <span class="n">View</span><span class="p">(</span><span class="n">Item</span><span class="p">(</span><span class="s">&#39;parallel&#39;</span><span class="p">),</span>
+                          <span class="n">Item</span><span class="p">(</span><span class="s">&#39;processes&#39;</span><span class="p">),</span>
+                          <span class="n">Item</span><span class="p">(</span><span class="s">&#39;msg&#39;</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="s">&#39;readonly&#39;</span><span class="p">))</span>
+    
+
+<div class="viewcode-block" id="spect_norm"><a class="viewcode-back" href="../../../modules/autogen/miic.core.normalization.spect_norm.html#miic.core.normalization.spect_norm">[docs]</a><span class="k">def</span> <span class="nf">spect_norm</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Computes the spectral normalization of  1D numpy array x</span>
+
+<span class="sd">    This function divides the amplitude of the x spectrum by its absolute value</span>
+
+<span class="sd">    :type x: :class:`~numpy.ndarray`</span>
+<span class="sd">    :param x: 1d array</span>
+
+<span class="sd">    :rtype: :class:`~numpy.ndarray`</span>
+<span class="sd">    :return: **x_copy**: Whitened version of x</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">x_copy</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+    <span class="n">x_copy</span> <span class="o">*=</span> <span class="n">cosTaper</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">x_copy</span><span class="p">),</span> <span class="mf">0.01</span><span class="p">)</span>
+
+    <span class="n">FFT</span> <span class="o">=</span> <span class="n">fft</span><span class="p">(</span><span class="n">x_copy</span><span class="p">)</span>
+
+    <span class="n">x_copy</span> <span class="o">=</span> <span class="n">ifft</span><span class="p">(</span><span class="n">FFT</span> <span class="o">/</span> <span class="nb">abs</span><span class="p">(</span><span class="n">FFT</span><span class="p">))</span><span class="o">.</span><span class="n">real</span>
+
+    <span class="k">return</span> <span class="n">x_copy</span>
+
+</div>
+<span class="k">if</span> <span class="n">BC_UI</span><span class="p">:</span>
+    <span class="k">class</span> <span class="nc">_spect_norm_view</span><span class="p">(</span><span class="n">HasTraits</span><span class="p">):</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="n">Str</span><span class="p">(</span><span class="s">&#39;The spectral normalization is done on a copy of the array&#39;</span><span class="p">)</span>
+        <span class="n">trait_view</span> <span class="o">=</span> <span class="n">View</span><span class="p">(</span><span class="n">Item</span><span class="p">(</span><span class="s">&#39;msg&#39;</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="s">&#39;readonly&#39;</span><span class="p">))</span>
+
+
+<span class="k">class</span> <span class="nc">_StSpectNorm</span><span class="p">:</span>
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tr</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">npts</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">tr</span><span class="o">.</span><span class="n">data</span> <span class="o">*=</span> <span class="n">cosTaper</span><span class="p">(</span><span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">npts</span><span class="p">,</span> <span class="mf">0.01</span><span class="p">)</span>
+                <span class="n">FFT</span> <span class="o">=</span> <span class="n">fft</span><span class="p">(</span><span class="n">tr</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+                <span class="n">tr</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">ifft</span><span class="p">(</span><span class="n">FFT</span> <span class="o">/</span> <span class="nb">abs</span><span class="p">(</span><span class="n">FFT</span><span class="p">))</span><span class="o">.</span><span class="n">real</span>
+        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+            <span class="k">print</span> <span class="s">&quot;ERROR&quot;</span>
+            <span class="k">print</span> <span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">npts</span>
+        <span class="k">return</span> <span class="n">tr</span>
+
+
+<div class="viewcode-block" id="stream_spect_norm"><a class="viewcode-back" href="../../../modules/autogen/miic.core.normalization.stream_spect_norm.html#miic.core.normalization.stream_spect_norm">[docs]</a><span class="k">def</span> <span class="nf">stream_spect_norm</span><span class="p">(</span><span class="n">st</span><span class="p">,</span> <span class="n">parallel</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">processes</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Computes the spectral normalization of all Traces in st</span>
+
+<span class="sd">    .. note::</span>
+
+<span class="sd">    This operation is performed in place on the actual data arrays. The</span>
+<span class="sd">    raw data is not accessible anymore afterwards. To keep your</span>
+<span class="sd">    original data, use :func:`~miic.core.alpha_mod.stream_copy` to create</span>
+<span class="sd">    a copy of your stream object.</span>
+<span class="sd">    This function can also work in parallel an all or a specified number of</span>
+<span class="sd">    cores available in the hosting machine.</span>
+
+<span class="sd">    :type st: :class:`~obspy.core.trace.Stream`</span>
+<span class="sd">    :param st: The container for the Traces that we want to normalize</span>
+<span class="sd">        their spectrum</span>
+<span class="sd">    :type parallel: bool (Default: True)</span>
+<span class="sd">    :pram parallel: If the filtering will be run in parallel or not</span>
+<span class="sd">    :type processes: int</span>
+<span class="sd">    :pram processes: Number of processes to start (if None it will be equal</span>
+<span class="sd">        to the number of cores available in the hosting machine)</span>
+
+<span class="sd">    :rtype: :class:`~obspy.core.trace.Stream`</span>
+<span class="sd">    :return: **st_spnorm**: The resulting object containing the whitened</span>
+<span class="sd">        version of all Traces in st</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">st</span><span class="p">,</span> <span class="n">Stream</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="n">InputError</span><span class="p">(</span><span class="s">&quot;&#39;signals&#39; must be an </span><span class="se">\</span>
+<span class="s">            &#39;obspy.core.stream.Stream&#39; object&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">parallel</span><span class="p">:</span>
+        <span class="n">trs</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="n">_StSpectNorm</span><span class="p">(),</span> <span class="n">_tr_gen</span><span class="p">(</span><span class="n">st</span><span class="p">))</span>
+        <span class="n">st</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">trs</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">processes</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">processes</span> <span class="o">=</span> <span class="bp">None</span>
+
+        <span class="n">p</span> <span class="o">=</span> <span class="n">Pool</span><span class="p">(</span><span class="n">processes</span><span class="o">=</span><span class="n">processes</span><span class="p">)</span>
+
+        <span class="n">p</span><span class="o">.</span><span class="n">map_async</span><span class="p">(</span><span class="n">_StSpectNorm</span><span class="p">(),</span>
+                    <span class="n">_tr_gen</span><span class="p">(</span><span class="n">st</span><span class="p">),</span>
+                    <span class="n">callback</span><span class="o">=</span><span class="n">_AppendST</span><span class="p">(</span><span class="n">st</span><span class="p">))</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>
+
+    <span class="n">st_spnorm</span> <span class="o">=</span> <span class="n">st</span>
+    <span class="k">return</span> <span class="n">st_spnorm</span>
+
+</div>
+<span class="k">if</span> <span class="n">BC_UI</span><span class="p">:</span>
+    <span class="k">class</span> <span class="nc">_stream_spect_norm_view</span><span class="p">(</span><span class="n">HasTraits</span><span class="p">):</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="n">Str</span><span class="p">(</span><span class="s">&quot;&quot;&quot;The spectral normalization is done in place on the actual</span>
+<span class="s">                   stream&quot;&quot;&quot;</span><span class="p">)</span>
+        <span class="n">paralllel</span> <span class="o">=</span> <span class="n">Bool</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
+        <span class="n">processes</span> <span class="o">=</span> <span class="n">Int</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    
+        <span class="n">trait_view</span> <span class="o">=</span> <span class="n">View</span><span class="p">(</span><span class="n">Item</span><span class="p">(</span><span class="s">&#39;parallel&#39;</span><span class="p">),</span>
+                          <span class="n">Item</span><span class="p">(</span><span class="s">&#39;processes&#39;</span><span class="p">),</span>
+                          <span class="n">Item</span><span class="p">(</span><span class="s">&#39;msg&#39;</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="s">&#39;readonly&#39;</span><span class="p">))</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MIIC 1.0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2012, Eraldo Pomponi.
+      Last updated on 2016-03-07T14:54:14.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </div>
+  </body>
+</html>

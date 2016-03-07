@@ -1,0 +1,154 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>miic.core.miic_utils.comb_with_missed_stations &mdash; MIIC 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="MIIC 1.0 documentation" href="../../index.html" />
+    <link rel="up" title="Utilities" href="../miic_utils.html" />
+    <link rel="next" title="miic.core.miic_utils.nd_save" href="miic.core.miic_utils.nd_save.html" />
+    <link rel="prev" title="miic.core.miic_utils.combinations" href="miic.core.miic_utils.combinations.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="miic.core.miic_utils.nd_save.html" title="miic.core.miic_utils.nd_save"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="miic.core.miic_utils.combinations.html" title="miic.core.miic_utils.combinations"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">MIIC 1.0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../core.html" >MIIC Library Reference</a> &raquo;</li>
+          <li class="nav-item nav-item-2"><a href="../miic_utils.html" accesskey="U">Utilities</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/modules/autogen/miic.core.miic_utils.comb_with_missed_stations.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="miic-core-miic-utils-comb-with-missed-stations">
+<h1>miic.core.miic_utils.comb_with_missed_stations<a class="headerlink" href="#miic-core-miic-utils-comb-with-missed-stations" title="Permalink to this headline">¶</a></h1>
+<dl class="function">
+<dt id="miic.core.miic_utils.comb_with_missed_stations">
+<code class="descname">comb_with_missed_stations</code><span class="sig-paren">(</span><em>n_stations</em>, <em>std_comb</em>, <em>missed_stations</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/miic/core/miic_utils.html#comb_with_missed_stations"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#miic.core.miic_utils.comb_with_missed_stations" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create the list of combinations.</p>
+<p>Create the list of possible combinations between a specified number
+of stations. Two different possibility are available: <code class="docutils literal"><span class="pre">Auto-corr</span></code> and
+<code class="docutils literal"><span class="pre">Full-corr</span></code>. The former generates a list of tuples of this form (n,n)
+while the latter generates all the possible tuples of this form (n,m)
+where <code class="docutils literal"><span class="pre">n!=m</span></code> and <code class="docutils literal"><span class="pre">0</span> <span class="pre">&lt;=</span> <span class="pre">n</span> <span class="pre">&lt;</span> <span class="pre">n_trace</span></code> and <code class="docutils literal"><span class="pre">0</span> <span class="pre">&lt;=</span> <span class="pre">m</span> <span class="pre">&lt;</span> <span class="pre">n_trace</span></code>.
+It handles missed stations so that every station listed in the
+<code class="docutils literal"><span class="pre">missed_stations</span></code> parameter will not be included in the final list of
+combinations.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>n_trace</strong> (<em>int</em>) &#8211; Number of traces</li>
+<li><strong>std_comb</strong> (<em>enum</em>) &#8211; Type of combination to generate. It can be one of:
+[&#8216;Auto-corr&#8217;,&#8217;Full-corr&#8217;]</li>
+<li><strong>missed_stations</strong> (<em>list</em>) &#8211; Missed stations list (e.g. [2,5,6])</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first">list of tuples</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><strong>comb</strong>: List of possible combinations. For example,
+if <code class="docutils literal"><span class="pre">n_trace==3</span></code> and <code class="docutils literal"><span class="pre">std_comb=='Auto-corr'</span></code> -&gt;
+comb = [(0,0),(1,1),(2,2)]</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="miic.core.miic_utils.nd_save.html" title="miic.core.miic_utils.nd_save"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="miic.core.miic_utils.combinations.html" title="miic.core.miic_utils.combinations"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">MIIC 1.0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../core.html" >MIIC Library Reference</a> &raquo;</li>
+          <li class="nav-item nav-item-2"><a href="../miic_utils.html" >Utilities</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2012, Eraldo Pomponi.
+      Last updated on 2016-03-02T16:12:50.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </div>
+  </body>
+</html>

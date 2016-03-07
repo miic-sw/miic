@@ -1,0 +1,170 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>miic.core.stream.stream_downsample &mdash; MIIC 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="MIIC 1.0 documentation" href="../../index.html" />
+    <link rel="up" title="Manipulation of Data Streams" href="../stream.html" />
+    <link rel="next" title="miic.core.stream.stream_filter" href="miic.core.stream.stream_filter.html" />
+    <link rel="prev" title="miic.core.stream.stream_save_sac" href="miic.core.stream.stream_save_sac.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="miic.core.stream.stream_filter.html" title="miic.core.stream.stream_filter"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="miic.core.stream.stream_save_sac.html" title="miic.core.stream.stream_save_sac"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">MIIC 1.0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../core.html" >MIIC Library Reference</a> &raquo;</li>
+          <li class="nav-item nav-item-2"><a href="../stream.html" accesskey="U">Manipulation of Data Streams</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/modules/autogen/miic.core.stream.stream_downsample.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="miic-core-stream-stream-downsample">
+<h1>miic.core.stream.stream_downsample<a class="headerlink" href="#miic-core-stream-stream-downsample" title="Permalink to this headline">¶</a></h1>
+<dl class="function">
+<dt id="miic.core.stream.stream_downsample">
+<code class="descname">stream_downsample</code><span class="sig-paren">(</span><em>st</em>, <em>final_freq</em>, <em>no_filter=False</em>, <em>strict_length=False</em>, <em>parallel=True</em>, <em>processes=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/miic/core/stream.html#stream_downsample"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#miic.core.stream.stream_downsample" title="Permalink to this definition">¶</a></dt>
+<dd><p>Downsample all the traces in the input stream to a desired frequency.</p>
+<p>This function downsample all the traces in the input stream <code class="docutils literal"><span class="pre">st</span></code> to a
+desired frequency. The decimation_factor is rounded to the closest integer
+in case of a rational value.
+It is also possible to decide if the anti-aliasing filter is applied or not
+before downsampling through the <code class="docutils literal"><span class="pre">no_filter</span></code> flag.
+If the length of the data array modulo decimation_factor is not zero then
+the endtime of the trace is changing on sub-sample scale. To abort
+downsampling in case of changing endtimes set strict_length=True.</p>
+<p>This operation is performed in place on the actual data arrays. The
+raw data is not accessible anymore afterwards. To keep your
+original data, use <a class="reference internal" href="../alpha_mod.html#miic.core.alpha_mod.stream_copy" title="miic.core.alpha_mod.stream_copy"><code class="xref py py-func docutils literal"><span class="pre">stream_copy()</span></code></a> to create
+a copy of your stream object.
+This function can also work in parallel an all or a specified number of
+cores available in the hosting machine. It must also be noticed that a
+decimation_factor grater than 16 is not allowed so, in case it is
+effectively higher, it is bounded to 16.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>st</strong> (<code class="xref py py-class docutils literal"><span class="pre">Stream</span></code>) &#8211; The container for the Traces that we want to downsample</li>
+<li><strong>final_freq</strong> (<em>float</em>) &#8211; Desired final frequency</li>
+<li><strong>no_filter</strong> (<em>bool, optional</em>) &#8211; If <code class="docutils literal"><span class="pre">True</span></code> no anti-aliasing low-pass filter is applied.
+Defaults to False.</li>
+<li><strong>strict_length</strong> (<em>bool, optional</em>) &#8211; Leave traces unchanged for which endtime of trace
+would change. Defaults to False. (for more details see:
+<code class="xref py py-class docutils literal"><span class="pre">decimate</span></code>)</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Pram parallel:</th><td class="field-body"><p class="first">If the filtering will be run in parallel or not</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Pram processes:</th><td class="field-body"><p class="first">Number of processes to start (if None it will be equal
+to the number of cores available in the hosting machine)</p>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first"><code class="xref py py-class docutils literal"><span class="pre">Stream</span></code></p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><strong>st_down</strong>: Downsampled Stream.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="miic.core.stream.stream_filter.html" title="miic.core.stream.stream_filter"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="miic.core.stream.stream_save_sac.html" title="miic.core.stream.stream_save_sac"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">MIIC 1.0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../core.html" >MIIC Library Reference</a> &raquo;</li>
+          <li class="nav-item nav-item-2"><a href="../stream.html" >Manipulation of Data Streams</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2012, Eraldo Pomponi.
+      Last updated on 2016-03-07T14:54:14.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </div>
+  </body>
+</html>

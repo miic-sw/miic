@@ -1,0 +1,6 @@
+miic.core.miic_utils.dv_check
+=============================
+
+.. currentmodule:: miic.core.miic_utils
+
+.. autofunction:: dv_check

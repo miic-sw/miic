@@ -1,0 +1,6 @@
+miic.core.pxcorr_func.rfftfreq
+==============================
+
+.. currentmodule:: miic.core.pxcorr_func
+
+.. autofunction:: rfftfreq

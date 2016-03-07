@@ -1,0 +1,6 @@
+miic.core.miic_utils.stream_detrend
+===================================
+
+.. currentmodule:: miic.core.miic_utils
+
+.. autofunction:: stream_detrend

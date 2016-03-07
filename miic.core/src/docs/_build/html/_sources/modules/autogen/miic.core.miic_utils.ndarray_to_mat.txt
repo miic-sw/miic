@@ -1,0 +1,6 @@
+miic.core.miic_utils.ndarray_to_mat
+===================================
+
+.. currentmodule:: miic.core.miic_utils
+
+.. autofunction:: ndarray_to_mat

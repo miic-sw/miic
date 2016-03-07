@@ -1,0 +1,17 @@
+Efficient parallel correlation of traces
+========================================
+
+.. currentmodule:: miic.core.pxcorr_fun
+.. automodule:: miic.core.pxcorr_fun
+
+    .. comment to end block
+
+    Correlation
+    -----------
+    .. autosummary::
+        :toctree: autogen
+        :nosignatures:
+        
+        ~rfftfreq
+        ~stream_pxcorr
+        ~calc_cross_combis

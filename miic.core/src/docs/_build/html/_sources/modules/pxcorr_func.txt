@@ -1,0 +1,45 @@
+Efficient parallel correlation of traces
+========================================
+
+This module implements a suite of functions that allow 
+
+
+.. currentmodule:: miic.core.pxcorr_func
+.. automodule:: miic.core.pxcorr_func
+
+    .. comment to end block
+
+    Time domain preprocessing
+    -------------------------
+    .. autosummary::
+        :toctree: autogen
+        :nosignatures:
+        
+        ~detrend
+        ~TDnormalization
+        ~taper
+        ~clip
+        ~TDfilter
+        ~normalizeStandardDeviation
+        ~signBitNormalization
+        ~zeroPadding
+        
+    Frequency domain preprocessing
+    ------------------------------
+    .. autosummary::
+        :toctree: autogen
+        :nosignatures:
+        
+        ~spectralWhitening
+        ~stream_pxcorr
+        ~calc_cross_combis
+        ~FDsignBitNormalization
+        
+        
+    Correlation
+    -----------
+    .. autosummary::
+        :toctree: autogen
+        :nosignatures:
+
+        ~stream_pxcorr

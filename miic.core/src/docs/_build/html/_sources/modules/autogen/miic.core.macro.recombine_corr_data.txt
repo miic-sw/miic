@@ -1,0 +1,6 @@
+miic.core.macro.recombine_corr_data
+===================================
+
+.. currentmodule:: miic.core.macro
+
+.. autofunction:: recombine_corr_data

@@ -1,0 +1,998 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>miic.core.stream &mdash; MIIC 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="top" title="MIIC 1.0 documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MIIC 1.0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for miic.core.stream</h1><div class="highlight"><pre>
+<span class="c"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">@author:</span>
+<span class="sd">Eraldo Pomponi</span>
+
+<span class="sd">@copyright:</span>
+<span class="sd">The MIIC Development Team (eraldo.pomponi@uni-leipzig.de)</span>
+
+<span class="sd">@license:</span>
+<span class="sd">GNU Lesser General Public License, Version 3</span>
+<span class="sd">(http://www.gnu.org/copyleft/lesser.html)</span>
+
+<span class="sd">Created on Apr 2, 2012</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="c"># Main imports</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">multiprocessing</span> <span class="kn">import</span> <span class="n">Pool</span>
+<span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
+<span class="kn">import</span> <span class="nn">datetime</span>
+<span class="kn">import</span> <span class="nn">glob</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">os</span>
+
+
+<span class="c"># ETS imports</span>
+<span class="c">#try:</span>
+<span class="c">#    BC_UI = True</span>
+<span class="c">#    from traits.api import HasTraits, File, Int, Bool, Enum, Button, \</span>
+<span class="c">#        Float, Dict</span>
+<span class="c">#    from traitsui.api import View, Item, Include, HGroup, VGroup, Tabbed</span>
+<span class="c">#except ImportError:</span>
+<span class="n">BC_UI</span> <span class="o">=</span> <span class="bp">False</span>
+<span class="c">#    pass</span>
+    
+<span class="c"># Obspy import</span>
+<span class="kn">from</span> <span class="nn">obspy</span> <span class="kn">import</span> <span class="n">read</span>
+<span class="kn">from</span> <span class="nn">obspy.core.stream</span> <span class="kn">import</span> <span class="n">Stream</span>
+<span class="kn">from</span> <span class="nn">obspy.core.trace</span> <span class="kn">import</span> <span class="n">Trace</span>
+<span class="kn">from</span> <span class="nn">obspy.core</span> <span class="kn">import</span> <span class="n">Stats</span>
+<span class="kn">from</span> <span class="nn">obspy.core</span> <span class="kn">import</span> <span class="n">UTCDateTime</span>
+<span class="kn">from</span> <span class="nn">obspy.signal.filter</span> <span class="kn">import</span> <span class="n">envelope</span>
+
+<span class="c"># local imports</span>
+<span class="kn">from</span> <span class="nn">miic.core.miic_utils</span> <span class="kn">import</span> <span class="n">convert_time</span>
+
+
+<span class="k">class</span> <span class="nc">InputError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Exception for Input errors.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
+        <span class="ne">Exception</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="stream_combine"><a class="viewcode-back" href="../../../modules/autogen/miic.core.stream.stream_combine.html#miic.core.stream.stream_combine">[docs]</a><span class="k">def</span> <span class="nf">stream_combine</span><span class="p">(</span><span class="n">st1</span><span class="p">,</span> <span class="n">st2</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Combins two streams into a single one &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">st1</span><span class="p">,</span> <span class="n">Stream</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">st2</span><span class="p">,</span> <span class="n">Stream</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="n">InputError</span><span class="p">(</span><span class="s">&quot;&#39;st1&#39; ans &#39;st2&#39; must be a &#39;obspy.core.stream.Stream&#39;</span><span class="se">\</span>
+<span class="s">             objects&quot;</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">tr</span> <span class="ow">in</span> <span class="n">st2</span><span class="p">:</span>
+        <span class="n">st1</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tr</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">st1</span>
+
+</div>
+<span class="k">if</span> <span class="n">BC_UI</span><span class="p">:</span>
+    <span class="k">class</span> <span class="nc">_stream_combine_view</span><span class="p">(</span><span class="n">HasTraits</span><span class="p">):</span>
+        <span class="n">trait_view</span> <span class="o">=</span> <span class="n">View</span><span class="p">()</span>
+
+
+<div class="viewcode-block" id="stream_add_lat_lon_ele"><a class="viewcode-back" href="../../../modules/autogen/miic.core.stream.stream_add_lat_lon_ele.html#miic.core.stream.stream_add_lat_lon_ele">[docs]</a><span class="k">def</span> <span class="nf">stream_add_lat_lon_ele</span><span class="p">(</span><span class="n">st</span><span class="p">,</span> <span class="n">df</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Add lat lon ele information to each trace if of a stream, if available.</span>
+
+<span class="sd">    This function checks all the traces in the stream ``st`` and if their name</span>
+<span class="sd">    is available in the DataFrame structure ``df``, the corresponding lat, lon</span>
+<span class="sd">    and ele are included in the tr.stats dictionary.</span>
+
+<span class="sd">    :type st: :class:`~obspy.core.stream.Stream`</span>
+<span class="sd">    :param st: The Stream to which add geo informations.</span>
+<span class="sd">    :type df: :class:`~pandas.DataFrame`</span>
+<span class="sd">    :param df: The dataframe that has as index the stations name and 3 columns</span>
+<span class="sd">        lat, lon and ele.</span>
+
+<span class="sd">    :rtype: :class:`~obspy.core.stream.Stream`</span>
+<span class="sd">    :return: **st_with_geo**: Stream with trace&#39; geo information updated.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">st</span><span class="p">,</span> <span class="n">Stream</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="n">InputError</span><span class="p">(</span><span class="s">&quot;&#39;st&#39; must be a &#39;obspy.core.stream.Stream&#39; objects&quot;</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">tr</span> <span class="ow">in</span> <span class="n">st</span><span class="p">:</span>
+        <span class="n">selector</span> <span class="o">=</span> <span class="n">_Selector</span><span class="p">(</span><span class="n">tr</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+        <span class="n">tr_geo_info</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">selector</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">tr_geo_info</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">size</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">if</span> <span class="s">&#39;sac&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="p">:</span>
+                <span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;sac&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+                <span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">sac</span><span class="p">[</span><span class="s">&#39;stla&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">tr_geo_info</span><span class="p">[</span><span class="s">&#39;latitude&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">sac</span><span class="p">[</span><span class="s">&#39;stlo&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">tr_geo_info</span><span class="p">[</span><span class="s">&#39;longitude&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">sac</span><span class="p">[</span><span class="s">&#39;stel&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">tr_geo_info</span><span class="p">[</span><span class="s">&#39;elevation&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">sac</span><span class="o">.</span><span class="n">stla</span> <span class="o">=</span> <span class="n">tr_geo_info</span><span class="p">[</span><span class="s">&#39;latitude&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">sac</span><span class="o">.</span><span class="n">stlo</span> <span class="o">=</span> <span class="n">tr_geo_info</span><span class="p">[</span><span class="s">&#39;longitude&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">sac</span><span class="o">.</span><span class="n">stel</span> <span class="o">=</span> <span class="n">tr_geo_info</span><span class="p">[</span><span class="s">&#39;elevation&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="n">st_with_geo</span> <span class="o">=</span> <span class="n">st</span>
+    <span class="k">return</span> <span class="n">st_with_geo</span>
+
+</div>
+<span class="k">class</span> <span class="nc">_Selector</span><span class="p">:</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sid</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tr_network</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">tr_station</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">tr_location</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">tr_channel</span> <span class="o">=</span> \
+            <span class="n">sid</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;.&#39;</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="n">network</span><span class="p">,</span> <span class="n">station</span><span class="p">,</span> <span class="n">location</span><span class="p">,</span> <span class="n">channel</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;.&#39;</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">network</span> <span class="o">==</span> <span class="s">&#39;*&#39;</span> <span class="ow">or</span> <span class="n">network</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">tr_network</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">False</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">station</span> <span class="o">==</span> <span class="s">&#39;*&#39;</span> <span class="ow">or</span> <span class="n">station</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">tr_station</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">False</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">location</span> <span class="o">==</span> <span class="s">&#39;*&#39;</span> <span class="ow">or</span> <span class="n">location</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">tr_location</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">False</span>
+
+        <span class="k">if</span> <span class="ow">not</span><span class="p">(</span><span class="n">channel</span> <span class="o">==</span> <span class="s">&#39;*&#39;</span> <span class="ow">or</span> <span class="n">channel</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">tr_channel</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">False</span>
+
+        <span class="k">return</span> <span class="bp">True</span>
+
+
+<span class="k">if</span> <span class="n">BC_UI</span><span class="p">:</span>
+    <span class="k">class</span> <span class="nc">_stream_add_lat_lon_ele_view</span><span class="p">(</span><span class="n">HasTraits</span><span class="p">):</span>
+        <span class="n">trait_view</span> <span class="o">=</span> <span class="n">View</span><span class="p">()</span>
+
+
+<div class="viewcode-block" id="stream_save_sac"><a class="viewcode-back" href="../../../modules/autogen/miic.core.stream.stream_save_sac.html#miic.core.stream.stream_save_sac">[docs]</a><span class="k">def</span> <span class="nf">stream_save_sac</span><span class="p">(</span><span class="n">st</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Save a stream in sac format &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">st</span><span class="p">,</span> <span class="n">Stream</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="n">InputError</span><span class="p">(</span><span class="s">&quot;&#39;st&#39; must be a &#39;obspy.core.stream.Stream&#39; objects&quot;</span><span class="p">)</span>
+
+    <span class="n">st</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="n">filename</span><span class="p">,</span> <span class="n">format</span><span class="o">=</span><span class="s">&#39;sac&#39;</span><span class="p">)</span>
+
+</div>
+<span class="k">if</span> <span class="n">BC_UI</span><span class="p">:</span>
+    <span class="k">class</span> <span class="nc">_stream_save_sac_view</span><span class="p">(</span><span class="n">HasTraits</span><span class="p">):</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="n">File</span>
+        <span class="n">trait_view</span> <span class="o">=</span> <span class="n">View</span><span class="p">(</span><span class="n">Item</span><span class="p">(</span><span class="s">&#39;filename&#39;</span><span class="p">))</span>
+
+
+<span class="k">def</span> <span class="nf">corr_trace_to_obspy</span><span class="p">(</span><span class="n">corr_trace</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Convert a correlation trace dictionary to an obspy trace.</span>
+
+<span class="sd">    Convert a single correlation trace (or a list of) in an</span>
+<span class="sd">    :class:`~obspy.core.trace.Trace` (or :class:`~obspy.core.stream.Stream`)</span>
+<span class="sd">    object.</span>
+
+<span class="sd">    :type corr_trace: dictionary of type correlation trace or list of these</span>
+<span class="sd">    :param corr_trace: input date to be converted</span>
+
+<span class="sd">    :rtype: :class:`~obspy.core.trace.Trace` if ``corr_trace`` is a dict</span>
+<span class="sd">        and :class:`~obspy.core.stream.Stream` if ``corr_trace`` is a list of</span>
+<span class="sd">        dicts</span>
+<span class="sd">    :return: **st**: the obspy object containing the data</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">corr_trace</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="n">st</span> <span class="o">=</span> <span class="n">Stream</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">tr</span> <span class="ow">in</span> <span class="n">corr_trace</span><span class="p">:</span>
+            <span class="n">st</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_single_corr_trace_to_obspy_trace</span><span class="p">(</span><span class="n">tr</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">st</span> <span class="o">=</span> <span class="n">_single_corr_trace_to_obspy_trace</span><span class="p">(</span><span class="n">corr_trace</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">st</span>
+
+
+<span class="k">if</span> <span class="n">BC_UI</span><span class="p">:</span>
+    <span class="k">class</span> <span class="nc">_corr_trace_to_obspy_view</span><span class="p">(</span><span class="n">HasTraits</span><span class="p">):</span>
+        <span class="n">trait_view</span> <span class="o">=</span> <span class="n">View</span><span class="p">()</span>
+
+
+<span class="k">def</span> <span class="nf">_single_corr_trace_to_obspy_trace</span><span class="p">(</span><span class="n">trace</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Convert a correlation trace dictionary to an obspy trace.</span>
+
+<span class="sd">    Convert a single correlation trace in an</span>
+<span class="sd">    :class:`~obspy.core.trace.Trace` object.</span>
+
+<span class="sd">    :type corr_trace: dictionary of type correlation trace</span>
+<span class="sd">    :param corr_trace: input date to be converted</span>
+
+<span class="sd">    :rtype: :class:`~obspy.core.trace.Trace`</span>
+<span class="sd">    :return: **tr**: the obspy object containing the data</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">tr</span> <span class="o">=</span> <span class="n">Trace</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">trace</span><span class="p">[</span><span class="s">&#39;corr_trace&#39;</span><span class="p">]))</span>
+    <span class="n">stats_keys</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;network&#39;</span><span class="p">,</span> <span class="s">&#39;station&#39;</span><span class="p">,</span> <span class="s">&#39;location&#39;</span><span class="p">,</span>
+                  <span class="s">&#39;channel&#39;</span><span class="p">,</span> <span class="s">&#39;npts&#39;</span><span class="p">,</span> <span class="s">&#39;sampling_rate&#39;</span><span class="p">]</span>
+
+    <span class="n">sac_keys</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;baz&#39;</span><span class="p">,</span> <span class="s">&#39;az&#39;</span><span class="p">,</span> <span class="s">&#39;stla&#39;</span><span class="p">,</span> <span class="s">&#39;stlo&#39;</span><span class="p">,</span> <span class="s">&#39;stel&#39;</span><span class="p">,</span>
+                <span class="s">&#39;evla&#39;</span><span class="p">,</span> <span class="s">&#39;evlo&#39;</span><span class="p">,</span> <span class="s">&#39;evel&#39;</span><span class="p">,</span> <span class="s">&#39;dist&#39;</span><span class="p">]</span>
+
+    <span class="c"># copy stats</span>
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">stats_keys</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">trace</span><span class="p">[</span><span class="s">&#39;stats&#39;</span><span class="p">][</span><span class="n">key</span><span class="p">]</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">print</span> <span class="s">&#39;Error copying key: </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">key</span>
+            <span class="k">raise</span>
+    
+    <span class="c"># special keys</span>
+    <span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;starttime&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">UTCDateTime</span><span class="p">(</span>
+                              <span class="n">convert_time</span><span class="p">([</span><span class="n">trace</span><span class="p">[</span><span class="s">&#39;stats&#39;</span><span class="p">][</span><span class="s">&#39;starttime&#39;</span><span class="p">]])[</span><span class="mi">0</span><span class="p">])</span>
+
+    <span class="c"># test for presence of geo information</span>
+    <span class="n">flag</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">sac_keys</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">trace</span><span class="p">[</span><span class="s">&#39;stats&#39;</span><span class="p">]:</span>
+            <span class="n">flag</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="k">if</span> <span class="n">flag</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>  <span class="c"># geo information present</span>
+        <span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;sac&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">sac_keys</span><span class="p">:</span>
+            <span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;sac&#39;</span><span class="p">][</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">trace</span><span class="p">[</span><span class="s">&#39;stats&#39;</span><span class="p">][</span><span class="n">key</span><span class="p">]</span>
+            
+    <span class="c"># copy stats_tr1</span>
+    <span class="k">if</span> <span class="s">&#39;stats_tr1&#39;</span> <span class="ow">in</span> <span class="n">trace</span><span class="p">:</span>
+        <span class="n">tr</span><span class="o">.</span><span class="n">stats_tr1</span> <span class="o">=</span> <span class="n">Stats</span><span class="p">()</span>
+        <span class="n">tr</span><span class="o">.</span><span class="n">stats_tr1</span><span class="p">[</span><span class="s">&#39;starttime&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">UTCDateTime</span><span class="p">(</span>
+                              <span class="n">convert_time</span><span class="p">([</span><span class="n">trace</span><span class="p">[</span><span class="s">&#39;stats_tr1&#39;</span><span class="p">][</span><span class="s">&#39;starttime&#39;</span><span class="p">]])[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">stats_keys</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">tr</span><span class="o">.</span><span class="n">stats_tr1</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">trace</span><span class="p">[</span><span class="s">&#39;stats_tr1&#39;</span><span class="p">][</span><span class="n">key</span><span class="p">]</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="k">print</span> <span class="s">&#39;Error copying key: </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">key</span>
+                <span class="k">raise</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">sac_keys</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">tr</span><span class="o">.</span><span class="n">stats_tr1</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">trace</span><span class="p">[</span><span class="s">&#39;stats_tr1&#39;</span><span class="p">][</span><span class="n">key</span><span class="p">]</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="k">pass</span>
+
+    <span class="c"># copy stats_tr2</span>
+    <span class="k">if</span> <span class="s">&#39;stats_tr2&#39;</span> <span class="ow">in</span> <span class="n">trace</span><span class="p">:</span>
+        <span class="n">tr</span><span class="o">.</span><span class="n">stats_tr2</span> <span class="o">=</span> <span class="n">Stats</span><span class="p">()</span>
+        <span class="n">tr</span><span class="o">.</span><span class="n">stats_tr2</span><span class="p">[</span><span class="s">&#39;starttime&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">UTCDateTime</span><span class="p">(</span>
+                              <span class="n">convert_time</span><span class="p">([</span><span class="n">trace</span><span class="p">[</span><span class="s">&#39;stats_tr2&#39;</span><span class="p">][</span><span class="s">&#39;starttime&#39;</span><span class="p">]])[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">stats_keys</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">tr</span><span class="o">.</span><span class="n">stats_tr2</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">trace</span><span class="p">[</span><span class="s">&#39;stats_tr2&#39;</span><span class="p">][</span><span class="n">key</span><span class="p">]</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="k">print</span> <span class="s">&#39;Error copying key: </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">key</span>
+                <span class="k">raise</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">sac_keys</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">tr</span><span class="o">.</span><span class="n">stats_tr2</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">trace</span><span class="p">[</span><span class="s">&#39;stats_tr2&#39;</span><span class="p">][</span><span class="n">key</span><span class="p">]</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="k">pass</span>
+
+    <span class="k">return</span> <span class="n">tr</span>
+
+
+<span class="k">def</span> <span class="nf">_tr_gen</span><span class="p">(</span><span class="n">st</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; A generator that extract the traces form a Straem object</span>
+
+<span class="sd">    :type st: :py:class:`~obspy.core.stream.Stream`</span>
+<span class="sd">    :param st: Stream where to take the traces</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">st</span><span class="p">:</span>
+        <span class="k">yield</span> <span class="n">st</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">_AppendST</span><span class="p">:</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">st</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">st</span> <span class="o">=</span> <span class="n">st</span>
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">trs</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">tr</span> <span class="ow">in</span> <span class="n">trs</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">st</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tr</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">_StDownsample</span><span class="p">:</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">final_freq</span><span class="p">,</span> <span class="n">no_filter</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+                      <span class="n">strict_length</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">final_freq</span> <span class="o">=</span> <span class="n">final_freq</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">no_filter</span> <span class="o">=</span> <span class="n">no_filter</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">strict_length</span> <span class="o">=</span> <span class="n">strict_length</span>
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tr</span><span class="p">):</span>
+
+        <span class="n">sampling_rate</span> <span class="o">=</span> <span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">sampling_rate</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mod</span><span class="p">(</span><span class="n">sampling_rate</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">final_freq</span><span class="p">)</span>
+        <span class="n">decimation_factor</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">sampling_rate</span> <span class="o">//</span> <span class="bp">self</span><span class="o">.</span><span class="n">final_freq</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">res</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">print</span> <span class="s">&quot;downsample factor rounded to integer: </span><span class="si">%4.2f</span><span class="s"> -&gt; </span><span class="si">%i</span><span class="s"> !!!!&quot;</span> <span class="o">%</span> \
+                <span class="p">(</span><span class="n">decimation_factor</span> <span class="o">+</span> <span class="n">res</span><span class="p">,</span> <span class="n">res</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">decimation_factor</span> <span class="o">&gt;</span> <span class="mi">16</span><span class="p">:</span>
+            <span class="k">print</span> <span class="s">&quot;downsample factor &gt; 16. Bound to 16&quot;</span>
+            <span class="n">decimation_factor</span> <span class="o">=</span> <span class="mi">16</span>
+
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">tr</span><span class="p">,</span> <span class="s">&#39;decimate&#39;</span><span class="p">):</span>
+            <span class="n">tr</span><span class="o">.</span><span class="n">decimate</span><span class="p">(</span><span class="n">decimation_factor</span><span class="p">,</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">no_filter</span><span class="p">,</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">strict_length</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">tr</span><span class="o">.</span><span class="n">downsample</span><span class="p">(</span><span class="n">decimation_factor</span><span class="p">,</span>
+                          <span class="bp">self</span><span class="o">.</span><span class="n">no_filter</span><span class="p">,</span>
+                          <span class="bp">self</span><span class="o">.</span><span class="n">strict_length</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">tr</span>
+
+
+<div class="viewcode-block" id="stream_downsample"><a class="viewcode-back" href="../../../modules/autogen/miic.core.stream.stream_downsample.html#miic.core.stream.stream_downsample">[docs]</a><span class="k">def</span> <span class="nf">stream_downsample</span><span class="p">(</span><span class="n">st</span><span class="p">,</span> <span class="n">final_freq</span><span class="p">,</span> <span class="n">no_filter</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> \
+                      <span class="n">strict_length</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">parallel</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">processes</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Downsample all the traces in the input stream to a desired frequency.</span>
+
+<span class="sd">    This function downsample all the traces in the input stream ``st`` to a</span>
+<span class="sd">    desired frequency. The decimation_factor is rounded to the closest integer</span>
+<span class="sd">    in case of a rational value.</span>
+<span class="sd">    It is also possible to decide if the anti-aliasing filter is applied or not</span>
+<span class="sd">    before downsampling through the ``no_filter`` flag.</span>
+<span class="sd">    If the length of the data array modulo decimation_factor is not zero then</span>
+<span class="sd">    the endtime of the trace is changing on sub-sample scale. To abort</span>
+<span class="sd">    downsampling in case of changing endtimes set strict_length=True.</span>
+
+<span class="sd">    .. Note::</span>
+
+<span class="sd">    This operation is performed in place on the actual data arrays. The</span>
+<span class="sd">    raw data is not accessible anymore afterwards. To keep your</span>
+<span class="sd">    original data, use :func:`~miic.core.alpha_mod.stream_copy` to create</span>
+<span class="sd">    a copy of your stream object.</span>
+<span class="sd">    This function can also work in parallel an all or a specified number of</span>
+<span class="sd">    cores available in the hosting machine. It must also be noticed that a</span>
+<span class="sd">    decimation_factor grater than 16 is not allowed so, in case it is</span>
+<span class="sd">    effectively higher, it is bounded to 16.</span>
+
+<span class="sd">    :type st: :class:`~obspy.core.stream.Stream`</span>
+<span class="sd">    :param st: The container for the Traces that we want to downsample</span>
+<span class="sd">    :type final_freq: float</span>
+<span class="sd">    :param final_freq: Desired final frequency</span>
+<span class="sd">    :type no_filter: bool, optional</span>
+<span class="sd">    :param no_filter: If ``True`` no anti-aliasing low-pass filter is applied.</span>
+<span class="sd">        Defaults to False.</span>
+<span class="sd">    :type strict_length: bool, optional</span>
+<span class="sd">    :param strict_length: Leave traces unchanged for which endtime of trace</span>
+<span class="sd">        would change. Defaults to False. (for more details see:</span>
+<span class="sd">        :class:`~obspy.core.trace.Trace.decimate`)</span>
+<span class="sd">    :type parallel: bool (Default: True)</span>
+<span class="sd">    :pram parallel: If the filtering will be run in parallel or not</span>
+<span class="sd">    :type processes: int</span>
+<span class="sd">    :pram processes: Number of processes to start (if None it will be equal</span>
+<span class="sd">        to the number of cores available in the hosting machine)</span>
+
+<span class="sd">    :rtype: :class:`~obspy.core.stream.Stream`</span>
+<span class="sd">    :return: **st_down**: Downsampled Stream.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">st</span><span class="p">,</span> <span class="n">Stream</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="n">InputError</span><span class="p">(</span><span class="s">&quot;&#39;st&#39; must be a &#39;obspy.core.stream.Stream&#39; object&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">parallel</span><span class="p">:</span>
+        <span class="n">trs</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="n">_StDownsample</span><span class="p">(</span><span class="n">final_freq</span><span class="p">,</span> <span class="n">no_filter</span><span class="p">,</span> <span class="n">strict_length</span><span class="p">),</span> \
+                  <span class="n">_tr_gen</span><span class="p">(</span><span class="n">st</span><span class="p">))</span>
+        <span class="n">st</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">trs</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">processes</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">processes</span> <span class="o">=</span> <span class="bp">None</span>
+
+        <span class="n">p</span> <span class="o">=</span> <span class="n">Pool</span><span class="p">(</span><span class="n">processes</span><span class="o">=</span><span class="n">processes</span><span class="p">)</span>
+
+        <span class="n">p</span><span class="o">.</span><span class="n">map_async</span><span class="p">(</span><span class="n">_StDownsample</span><span class="p">(</span><span class="n">final_freq</span><span class="p">,</span> <span class="n">no_filter</span><span class="p">,</span> <span class="n">strict_length</span><span class="p">),</span>
+                    <span class="n">_tr_gen</span><span class="p">(</span><span class="n">st</span><span class="p">),</span>
+                    <span class="n">callback</span><span class="o">=</span><span class="n">_AppendST</span><span class="p">(</span><span class="n">st</span><span class="p">))</span>
+
+        <span class="n">p</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>
+
+    <span class="n">st_down</span> <span class="o">=</span> <span class="n">st</span>
+    <span class="k">return</span> <span class="n">st_down</span>
+
+</div>
+<span class="k">if</span> <span class="n">BC_UI</span><span class="p">:</span>
+    <span class="k">class</span> <span class="nc">_stream_downsample_view</span><span class="p">(</span><span class="n">HasTraits</span><span class="p">):</span>
+        <span class="n">final_freq</span> <span class="o">=</span> <span class="n">Int</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">no_filter</span> <span class="o">=</span> <span class="n">Bool</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
+        <span class="n">strict_length</span> <span class="o">=</span> <span class="n">Bool</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
+        <span class="n">parallel</span> <span class="o">=</span> <span class="n">Bool</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
+        <span class="n">processes</span> <span class="o">=</span> <span class="n">Int</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    
+        <span class="n">trait_view</span> <span class="o">=</span> <span class="n">View</span><span class="p">(</span><span class="n">Item</span><span class="p">(</span><span class="s">&#39;final_freq&#39;</span><span class="p">),</span>
+                          <span class="n">Item</span><span class="p">(</span><span class="s">&#39;no_filter&#39;</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="s">&#39;custom&#39;</span><span class="p">),</span>
+                          <span class="n">Item</span><span class="p">(</span><span class="s">&#39;strict_length&#39;</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="s">&#39;custom&#39;</span><span class="p">),</span>
+                          <span class="n">Item</span><span class="p">(</span><span class="s">&#39;parallel&#39;</span><span class="p">),</span>
+                          <span class="n">Item</span><span class="p">(</span><span class="s">&#39;processes&#39;</span><span class="p">))</span>
+
+
+
+<span class="k">def</span> <span class="nf">stream_envelope</span><span class="p">(</span><span class="n">st</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Calculate the envelopes of all traces in a stream.</span>
+
+<span class="sd">    It works on a copy of the stream.</span>
+
+<span class="sd">    :type st: ::class:`~obspy.core.stream.Stream`</span>
+<span class="sd">    :param st: Stream fo be used for calculating the envelopes.</span>
+
+<span class="sd">    :rtype sst: :class:`~obspy.core.stream.Stream`</span>
+<span class="sd">    :return: **sst**: envelopes of stream</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">tr</span> <span class="ow">in</span> <span class="n">st</span><span class="p">:</span>
+        <span class="n">tr</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">envelope</span><span class="p">(</span><span class="n">tr</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">st</span>
+
+
+<span class="k">def</span> <span class="nf">stream_stack_distance_intervals</span><span class="p">(</span><span class="n">st</span><span class="p">,</span> <span class="n">interval</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Stack average traces in a stream if their distance difference is</span>
+<span class="sd">    smaller than interval.</span>
+
+<span class="sd">    The stream containing a number of traces with given distance (e.g. from source)</span>
+<span class="sd">    is used to create a number of equally spaced traces by averaging traces that fall</span>
+<span class="sd">    into the same distance bin. If interval is a scalar the bins are equally spaced with</span>
+<span class="sd">    a width of interval. If interval is a sequence its elements define the lower distance</span>
+<span class="sd">    limit of the bins.</span>
+
+<span class="sd">    :type st: :class:`~obspy.core.stream.Stream`</span>
+<span class="sd">    :param st: Stream fo be used for stacking.</span>
+<span class="sd">    :type interval: scalar os array like</span>
+<span class="sd">    :param interval: width of bins in case of scalar or smaller edge of</span>
+<span class="sd">        bins if interval is a sequence.</span>
+<span class="sd">    :rtype sst: :class:`~obspy.core.stream.Stream`</span>
+<span class="sd">    :return: **sst**: stacked stream</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">dist</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">npts</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">tr</span> <span class="ow">in</span> <span class="n">st</span><span class="p">:</span>
+        <span class="n">dist</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">sac</span><span class="p">[</span><span class="s">&#39;dist&#39;</span><span class="p">])</span>
+        <span class="n">npts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;npts&#39;</span><span class="p">])</span>
+    
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">interval</span><span class="p">,</span> <span class="s">&quot;__len__&quot;</span><span class="p">):</span>
+        <span class="n">bins</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">dist</span><span class="p">),</span> <span class="nb">max</span><span class="p">(</span><span class="n">dist</span><span class="p">),</span><span class="n">interval</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">bins</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">interval</span><span class="p">)</span>
+    
+    <span class="n">sst</span> <span class="o">=</span> <span class="n">Stream</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="n">bins</span><span class="p">:</span>
+        <span class="n">sst</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Trace</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">npts</span><span class="p">),</span><span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">),</span><span class="n">header</span><span class="o">=</span><span class="p">{</span>
+            <span class="s">&#39;network&#39;</span><span class="p">:</span><span class="s">&#39;stack&#39;</span><span class="p">,</span><span class="s">&#39;station&#39;</span><span class="p">:</span><span class="nb">str</span><span class="p">(</span><span class="n">ii</span><span class="p">),</span><span class="s">&#39;location&#39;</span><span class="p">:</span><span class="s">&#39;&#39;</span><span class="p">,</span>
+            <span class="s">&#39;channel&#39;</span><span class="p">:</span><span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;channel&#39;</span><span class="p">],</span><span class="s">&#39;starttime&#39;</span><span class="p">:</span><span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;starttime&#39;</span><span class="p">],</span><span class="s">&#39;sampling_rate&#39;</span><span class="p">:</span><span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;sampling_rate&#39;</span><span class="p">],</span>
+            <span class="s">&#39;sac&#39;</span><span class="p">:{</span><span class="s">&#39;dist&#39;</span><span class="p">:</span><span class="n">ii</span><span class="p">,</span><span class="s">&#39;az&#39;</span><span class="p">:</span><span class="mi">0</span><span class="p">,</span><span class="s">&#39;evla&#39;</span><span class="p">:</span><span class="mf">0.</span><span class="p">,</span><span class="s">&#39;evlo&#39;</span><span class="p">:</span><span class="mf">0.</span><span class="p">,</span><span class="s">&#39;stla&#39;</span><span class="p">:</span><span class="n">ii</span><span class="o">/</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">*</span><span class="mi">6371000</span><span class="p">)</span><span class="o">*</span><span class="mf">180.</span><span class="p">,</span><span class="s">&#39;stlo&#39;</span><span class="p">:</span><span class="mf">0.</span><span class="p">}}))</span>
+    <span class="n">count</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">bins</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">tr</span> <span class="ow">in</span> <span class="n">st</span><span class="p">:</span>
+        <span class="n">ind</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">((</span><span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">sac</span><span class="p">[</span><span class="s">&#39;dist&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">bins</span><span class="p">)</span><span class="o">&gt;=</span><span class="mi">0</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span>
+        <span class="n">sst</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;npts&#39;</span><span class="p">]]</span> <span class="o">+=</span> <span class="n">tr</span><span class="o">.</span><span class="n">data</span>
+        <span class="n">count</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="k">for</span> <span class="n">ind</span><span class="p">,</span> <span class="n">tr</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">sst</span><span class="p">):</span>
+        <span class="n">tr</span><span class="o">.</span><span class="n">data</span> <span class="o">/=</span> <span class="n">count</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span>
+    
+    <span class="k">return</span> <span class="n">sst</span>
+
+
+
+<span class="k">class</span> <span class="nc">_StFilter</span><span class="p">:</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ftype</span><span class="p">,</span> <span class="n">param</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ftype</span> <span class="o">=</span> <span class="n">ftype</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">param</span> <span class="o">=</span> <span class="n">param</span>
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tr</span><span class="p">):</span>
+        <span class="n">tr</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ftype</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">param</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">tr</span>
+
+
+<div class="viewcode-block" id="stream_filter"><a class="viewcode-back" href="../../../modules/autogen/miic.core.stream.stream_filter.html#miic.core.stream.stream_filter">[docs]</a><span class="k">def</span> <span class="nf">stream_filter</span><span class="p">(</span><span class="n">st</span><span class="p">,</span> <span class="n">ftype</span><span class="p">,</span> <span class="n">filter_option</span><span class="p">,</span> <span class="n">parallel</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">processes</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Filter each trace of a Stream according to the given parameters</span>
+
+<span class="sd">    This faction apply the specified filter function to all the traces in the</span>
+<span class="sd">    present in the input :py:class:`~obspy.core.stream.Stream`.</span>
+
+<span class="sd">    .. Note::</span>
+
+<span class="sd">    This operation is performed in place on the actual data arrays. The</span>
+<span class="sd">    raw data is not accessible anymore afterwards. To keep your</span>
+<span class="sd">    original data, use :func:`~miic.core.alpha_mod.stream_copy` to create</span>
+<span class="sd">    a copy of your stream object.</span>
+<span class="sd">    This function can also work in parallel an all or a specified number of</span>
+<span class="sd">    cores available in the hosting machine.</span>
+
+<span class="sd">    :type ftype: str</span>
+<span class="sd">    :param ftype: String that specifies which filter is applied (e.g.</span>
+<span class="sd">            ``&quot;bandpass&quot;``). See the `Supported Filter`_ section below for</span>
+<span class="sd">            further details.</span>
+<span class="sd">    :type filter_option: dict</span>
+<span class="sd">    :param filter_option: Necessary arguments for the respective filter</span>
+<span class="sd">        that will be passed on. (e.g. ``freqmin=1.0``, ``freqmax=20.0`` for</span>
+<span class="sd">        ``&quot;bandpass&quot;``)</span>
+<span class="sd">    :type parallel: bool (Default: True)</span>
+<span class="sd">    :pram parallel: If the filtering will be run in parallel or not</span>
+<span class="sd">    :type processes: int</span>
+<span class="sd">    :pram processes: Number of processes to start (if None it will be equal</span>
+<span class="sd">        to the number of cores available in the hosting machine)</span>
+
+<span class="sd">    .. rubric:: _`Supported Filter`</span>
+
+<span class="sd">    ``&#39;bandpass&#39;``</span>
+<span class="sd">        Butterworth-Bandpass (uses :func:`obspy.signal.filter.bandpass`).</span>
+
+<span class="sd">    ``&#39;bandstop&#39;``</span>
+<span class="sd">        Butterworth-Bandstop (uses :func:`obspy.signal.filter.bandstop`).</span>
+
+<span class="sd">    ``&#39;lowpass&#39;``</span>
+<span class="sd">        Butterworth-Lowpass (uses :func:`obspy.signal.filter.lowpass`).</span>
+
+<span class="sd">    ``&#39;highpass&#39;``</span>
+<span class="sd">        Butterworth-Highpass (uses :func:`obspy.signal.filter.highpass`).</span>
+
+<span class="sd">    ``&#39;lowpassCheby2&#39;``</span>
+<span class="sd">        Cheby2-Lowpass (uses :func:`obspy.signal.filter.lowpassCheby2`).</span>
+
+<span class="sd">    ``&#39;lowpassFIR&#39;`` (experimental)</span>
+<span class="sd">        FIR-Lowpass (uses :func:`obspy.signal.filter.lowpassFIR`).</span>
+
+<span class="sd">    ``&#39;remezFIR&#39;`` (experimental)</span>
+<span class="sd">        Minimax optimal bandpass using Remez algorithm (uses</span>
+<span class="sd">        :func:`obspy.signal.filter.remezFIR`).</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">st</span><span class="p">,</span> <span class="n">Stream</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="n">InputError</span><span class="p">(</span><span class="s">&quot;&#39;st&#39; must be a &#39;obspy.core.stream.Stream&#39; object&quot;</span><span class="p">)</span>
+
+    <span class="n">fparam</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">([(</span><span class="n">kw_filed</span><span class="p">,</span> <span class="n">filter_option</span><span class="p">[</span><span class="n">kw_filed</span><span class="p">])</span> \
+                <span class="k">for</span> <span class="n">kw_filed</span> <span class="ow">in</span> <span class="n">filter_option</span><span class="p">])</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">parallel</span><span class="p">:</span>
+        <span class="n">st</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">ftype</span><span class="p">,</span> <span class="o">**</span><span class="n">fparam</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">processes</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">processes</span> <span class="o">=</span> <span class="bp">None</span>
+
+        <span class="n">p</span> <span class="o">=</span> <span class="n">Pool</span><span class="p">(</span><span class="n">processes</span><span class="o">=</span><span class="n">processes</span><span class="p">)</span>
+
+        <span class="n">p</span><span class="o">.</span><span class="n">map_async</span><span class="p">(</span><span class="n">_StFilter</span><span class="p">(</span><span class="n">ftype</span><span class="p">,</span> <span class="n">fparam</span><span class="p">),</span>
+                    <span class="n">_tr_gen</span><span class="p">(</span><span class="n">st</span><span class="p">),</span>
+                    <span class="n">callback</span><span class="o">=</span><span class="n">_AppendST</span><span class="p">(</span><span class="n">st</span><span class="p">))</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>
+
+    <span class="c"># Change the name to help blockcanvas readability</span>
+    <span class="n">st_filtered</span> <span class="o">=</span> <span class="n">st</span>
+    <span class="k">return</span> <span class="n">st_filtered</span>
+
+</div>
+<span class="k">if</span> <span class="n">BC_UI</span><span class="p">:</span>
+    <span class="k">class</span> <span class="nc">_stream_filter_view</span><span class="p">(</span><span class="n">HasTraits</span><span class="p">):</span>
+    
+        <span class="n">freq_l</span> <span class="o">=</span> <span class="n">Float</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>
+        <span class="n">df_l</span> <span class="o">=</span> <span class="n">Float</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>
+        <span class="n">corners_l</span> <span class="o">=</span> <span class="n">Int</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
+        <span class="n">zerophase_l</span> <span class="o">=</span> <span class="n">Bool</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
+    
+        <span class="n">freq_h</span> <span class="o">=</span> <span class="n">Float</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>
+        <span class="n">df_h</span> <span class="o">=</span> <span class="n">Float</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>
+        <span class="n">corners_h</span> <span class="o">=</span> <span class="n">Int</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
+        <span class="n">zerophase_h</span> <span class="o">=</span> <span class="n">Bool</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
+    
+        <span class="n">freqmin_bp</span> <span class="o">=</span> <span class="n">Float</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>
+        <span class="n">freqmax_bp</span> <span class="o">=</span> <span class="n">Float</span><span class="p">(</span><span class="mf">10.0</span><span class="p">)</span>
+        <span class="n">df_bp</span> <span class="o">=</span> <span class="n">Float</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>
+        <span class="n">corners_bp</span> <span class="o">=</span> <span class="n">Int</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
+        <span class="n">zerophase_bp</span> <span class="o">=</span> <span class="n">Bool</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
+    
+        <span class="n">freqmin_bs</span> <span class="o">=</span> <span class="n">Float</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>
+        <span class="n">freqmax_bs</span> <span class="o">=</span> <span class="n">Float</span><span class="p">(</span><span class="mf">10.0</span><span class="p">)</span>
+        <span class="n">df_bs</span> <span class="o">=</span> <span class="n">Float</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>
+        <span class="n">corners_bs</span> <span class="o">=</span> <span class="n">Int</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
+        <span class="n">zerophase_bs</span> <span class="o">=</span> <span class="n">Bool</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
+    
+        <span class="n">filter_option</span> <span class="o">=</span> <span class="n">Dict</span>
+    
+        <span class="n">save_b</span> <span class="o">=</span> <span class="n">Button</span><span class="p">(</span><span class="s">&#39;Save&#39;</span><span class="p">)</span>
+    
+        <span class="n">ftype</span> <span class="o">=</span> <span class="n">Enum</span><span class="p">(</span><span class="s">&#39;lowpass&#39;</span><span class="p">,</span> <span class="s">&#39;highpass&#39;</span><span class="p">,</span> <span class="s">&#39;bandpass&#39;</span><span class="p">,</span> <span class="s">&#39;bandstop&#39;</span><span class="p">)</span>
+    
+        <span class="n">parallel</span> <span class="o">=</span> <span class="n">Bool</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
+        <span class="n">processes</span> <span class="o">=</span> <span class="n">Int</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    
+        <span class="n">trait_view</span> <span class="o">=</span> <span class="n">View</span><span class="p">(</span><span class="n">Tabbed</span><span class="p">(</span><span class="n">VGroup</span><span class="p">(</span>
+                          <span class="n">Item</span><span class="p">(</span><span class="s">&#39;ftype&#39;</span><span class="p">),</span>
+                          <span class="n">Item</span><span class="p">(</span><span class="s">&#39;parallel&#39;</span><span class="p">),</span>
+                          <span class="n">Item</span><span class="p">(</span><span class="s">&#39;processes&#39;</span><span class="p">),</span>
+                          <span class="n">Item</span><span class="p">(</span><span class="s">&#39;filter_option&#39;</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="s">&#39;readonly&#39;</span><span class="p">)),</span>
+                          <span class="n">Include</span><span class="p">(</span><span class="s">&#39;lowpass_view&#39;</span><span class="p">),</span>
+                          <span class="n">Include</span><span class="p">(</span><span class="s">&#39;highpass_view&#39;</span><span class="p">),</span>
+                          <span class="n">Include</span><span class="p">(</span><span class="s">&#39;bandpass_view&#39;</span><span class="p">),</span>
+                          <span class="n">Include</span><span class="p">(</span><span class="s">&#39;bandstop_view&#39;</span><span class="p">)))</span>
+    
+        <span class="n">lowpass_view</span> <span class="o">=</span> <span class="n">HGroup</span><span class="p">(</span><span class="n">Item</span><span class="p">(</span><span class="s">&#39;freq_l&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">&#39;f max&#39;</span><span class="p">),</span>
+                              <span class="n">Item</span><span class="p">(</span><span class="s">&#39;corners_l&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">&#39;corners&#39;</span><span class="p">),</span>
+                              <span class="n">Item</span><span class="p">(</span><span class="s">&#39;zerophase_l&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">&#39;zerophase&#39;</span><span class="p">),</span>
+                              <span class="n">Item</span><span class="p">(</span><span class="s">&#39;save_b&#39;</span><span class="p">,</span> <span class="n">show_label</span><span class="o">=</span><span class="bp">False</span><span class="p">),</span>
+                              <span class="n">label</span><span class="o">=</span><span class="s">&#39;lowpass&#39;</span><span class="p">,</span>
+                              <span class="n">enabled_when</span><span class="o">=</span><span class="s">&quot;ftype=&#39;lowpass&#39;&quot;</span><span class="p">)</span>
+    
+        <span class="n">highpass_view</span> <span class="o">=</span> <span class="n">HGroup</span><span class="p">(</span><span class="n">Item</span><span class="p">(</span><span class="s">&#39;freq_h&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">&#39;f min&#39;</span><span class="p">),</span>
+                              <span class="n">Item</span><span class="p">(</span><span class="s">&#39;corners_h&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">&#39;corners&#39;</span><span class="p">),</span>
+                              <span class="n">Item</span><span class="p">(</span><span class="s">&#39;zerophase_h&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">&#39;zerophase&#39;</span><span class="p">),</span>
+                              <span class="n">Item</span><span class="p">(</span><span class="s">&#39;save_b&#39;</span><span class="p">,</span> <span class="n">show_label</span><span class="o">=</span><span class="bp">False</span><span class="p">),</span>
+                              <span class="n">label</span><span class="o">=</span><span class="s">&#39;highpass&#39;</span><span class="p">,</span>
+                              <span class="n">enabled_when</span><span class="o">=</span><span class="s">&quot;ftype=&#39;highpass&#39;&quot;</span><span class="p">)</span>
+    
+        <span class="n">bandpass_view</span> <span class="o">=</span> <span class="n">HGroup</span><span class="p">(</span><span class="n">Item</span><span class="p">(</span><span class="s">&#39;freqmin_bp&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">&#39;f min&#39;</span><span class="p">),</span>
+                              <span class="n">Item</span><span class="p">(</span><span class="s">&#39;freqmax_bp&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">&#39;f max&#39;</span><span class="p">),</span>
+                              <span class="n">Item</span><span class="p">(</span><span class="s">&#39;corners_bp&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">&#39;corners&#39;</span><span class="p">),</span>
+                              <span class="n">Item</span><span class="p">(</span><span class="s">&#39;zerophase_bp&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">&#39;zerophase&#39;</span><span class="p">),</span>
+                              <span class="n">Item</span><span class="p">(</span><span class="s">&#39;save_b&#39;</span><span class="p">,</span> <span class="n">show_label</span><span class="o">=</span><span class="bp">False</span><span class="p">),</span>
+                              <span class="n">label</span><span class="o">=</span><span class="s">&#39;bandpass&#39;</span><span class="p">,</span>
+                              <span class="n">enabled_when</span><span class="o">=</span><span class="s">&quot;ftype=&#39;bandpass&#39;&quot;</span><span class="p">)</span>
+    
+        <span class="n">bandstop_view</span> <span class="o">=</span> <span class="n">HGroup</span><span class="p">(</span><span class="n">Item</span><span class="p">(</span><span class="s">&#39;freqmin_bs&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">&#39;f min&#39;</span><span class="p">),</span>
+                              <span class="n">Item</span><span class="p">(</span><span class="s">&#39;freqmax_bs&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">&#39;f max&#39;</span><span class="p">),</span>
+                              <span class="n">Item</span><span class="p">(</span><span class="s">&#39;corners_bs&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">&#39;corners&#39;</span><span class="p">),</span>
+                              <span class="n">Item</span><span class="p">(</span><span class="s">&#39;zerophase_bs&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">&#39;zerophase&#39;</span><span class="p">),</span>
+                              <span class="n">Item</span><span class="p">(</span><span class="s">&#39;save_b&#39;</span><span class="p">,</span> <span class="n">show_label</span><span class="o">=</span><span class="bp">False</span><span class="p">),</span>
+                              <span class="n">label</span><span class="o">=</span><span class="s">&#39;bandstop&#39;</span><span class="p">,</span>
+                              <span class="n">enabled_when</span><span class="o">=</span><span class="s">&quot;ftype=&#39;bandstop&#39;&quot;</span><span class="p">)</span>
+    
+        <span class="k">def</span> <span class="nf">_save_b_fired</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ftype</span> <span class="o">==</span> <span class="s">&#39;lowpass&#39;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">filter_option</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;freq&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">freq_l</span><span class="p">,</span>
+                                      <span class="s">&#39;corners&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">corners_l</span><span class="p">,</span>
+                                      <span class="s">&#39;zerophase&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">zerophase_l</span><span class="p">}</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">ftype</span> <span class="o">==</span> <span class="s">&#39;highpass&#39;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">filter_option</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;freq&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">freq_h</span><span class="p">,</span>
+                                      <span class="s">&#39;corners&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">corners_h</span><span class="p">,</span>
+                                      <span class="s">&#39;zerophase&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">zerophase_h</span><span class="p">}</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">ftype</span> <span class="o">==</span> <span class="s">&#39;bandpass&#39;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">filter_option</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;freqmin&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">freqmin_bp</span><span class="p">,</span>
+                                      <span class="s">&#39;freqmax&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">freqmax_bp</span><span class="p">,</span>
+                                      <span class="s">&#39;corners&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">corners_bp</span><span class="p">,</span>
+                                      <span class="s">&#39;zerophase&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">zerophase_bp</span><span class="p">}</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">ftype</span> <span class="o">==</span> <span class="s">&#39;bandstop&#39;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">filter_option</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;freqmin&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">freqmin_bs</span><span class="p">,</span>
+                                      <span class="s">&#39;freqmax&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">freqmax_bs</span><span class="p">,</span>
+                                      <span class="s">&#39;corners&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">corners_bs</span><span class="p">,</span>
+                                      <span class="s">&#39;zerophase&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">zerophase_bs</span><span class="p">}</span>
+    
+    
+<div class="viewcode-block" id="trace_sym_pad_shrink_to_npts"><a class="viewcode-back" href="../../../modules/autogen/miic.core.stream.trace_sym_pad_shrink_to_npts.html#miic.core.stream.trace_sym_pad_shrink_to_npts">[docs]</a><span class="k">def</span> <span class="nf">trace_sym_pad_shrink_to_npts</span><span class="p">(</span><span class="n">tr</span><span class="p">,</span> <span class="n">npts</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Pads with 0 or shrink the trace data symmetrically to npts points.</span>
+
+<span class="sd">    This functions pads or shrinks, respectively if the orignal verctor is</span>
+<span class="sd">    shorten or longer repsect to the request npts, the trace.data vector</span>
+<span class="sd">    to npts points respect to its center. The padding value is 0 and both the</span>
+<span class="sd">    operation of padding shrinking are done symmetrically respect to the</span>
+<span class="sd">    central point.</span>
+
+<span class="sd">    :type tr: :class:`~obspy.core.trace.Trace`</span>
+<span class="sd">    :param tr: Trace to be padded</span>
+<span class="sd">    :type npts: int</span>
+<span class="sd">    :param npts: Length at which pad</span>
+
+<span class="sd">    :rtype tr_padded: :class:`~obspy.core.trace.Trace`</span>
+<span class="sd">    :return: **tr_padded**: Pointer to the original trace but with data padded</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">lp</span> <span class="o">=</span> <span class="n">npts</span> <span class="o">-</span> <span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">npts</span>
+    <span class="c"># print &quot;lp: %d&quot; % lp</span>
+
+    <span class="k">if</span> <span class="n">lp</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">pass</span>
+    <span class="k">elif</span> <span class="n">lp</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">left</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">lp</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">right</span> <span class="o">=</span> <span class="n">lp</span> <span class="o">-</span> <span class="n">left</span>
+        <span class="n">cdata</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">left</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">tr</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">dtype</span><span class="p">),</span> <span class="n">tr</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+        <span class="n">tr</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cdata</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">right</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">tr</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">dtype</span><span class="p">))</span>
+        <span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;starttime&#39;</span><span class="p">]</span> <span class="o">-=</span> <span class="nb">float</span><span class="p">(</span><span class="n">left</span><span class="p">)</span> <span class="o">*</span> <span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;delta&#39;</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">lp</span> <span class="o">=</span> <span class="o">-</span><span class="n">lp</span>
+        <span class="n">left</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">lp</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">right</span> <span class="o">=</span> <span class="n">lp</span> <span class="o">-</span> <span class="n">left</span>
+        <span class="n">tr</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">tr</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">left</span><span class="p">:</span><span class="o">-</span><span class="n">right</span><span class="p">]</span>
+        <span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;starttime&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="nb">float</span><span class="p">(</span><span class="n">left</span><span class="p">)</span> <span class="o">*</span> <span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;delta&#39;</span><span class="p">]</span>
+
+    <span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;npts&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">npts</span>
+    <span class="n">tr_padded</span> <span class="o">=</span> <span class="n">tr</span>
+    <span class="k">return</span> <span class="n">tr_padded</span>
+
+</div>
+<span class="n">IDformat</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;%NET&#39;</span><span class="p">,</span><span class="s">&#39;%STA&#39;</span><span class="p">,</span><span class="s">&#39;%LOC&#39;</span><span class="p">,</span><span class="s">&#39;%CHA&#39;</span><span class="p">]</span>
+
+<div class="viewcode-block" id="read_from_filesystem"><a class="viewcode-back" href="../../../modules/autogen/miic.core.stream.read_from_filesystem.html#miic.core.stream.read_from_filesystem">[docs]</a><span class="k">def</span> <span class="nf">read_from_filesystem</span><span class="p">(</span><span class="n">ID</span><span class="p">,</span><span class="n">starttime</span><span class="p">,</span><span class="n">endtime</span><span class="p">,</span><span class="n">fs</span><span class="p">,</span><span class="n">trim</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Function to read data from a filesystem with a give file structure</span>
+<span class="sd">    just by specifying ID and time interval.</span>
+
+<span class="sd">    :param ID: seedID of the channel to read (NET.STA.LOC.CHA)</span>
+<span class="sd">    :type ID: string</span>
+<span class="sd">    :param starttime: start time</span>
+<span class="sd">    :type starttime: datetime.datetime</span>
+<span class="sd">    :param endtime: end time</span>
+<span class="sd">    :type endtime: datetime.datetime</span>
+<span class="sd">    :param fs: file structure descriptor</span>
+<span class="sd">    :type fs: list</span>
+<span class="sd">    :param trim: switch for trimming of the stream</span>
+<span class="sd">    :type trim: bool</span>
+
+<span class="sd">    :rtype: `obspy.stream`</span>
+<span class="sd">    :return: data stream of requested data</span>
+
+<span class="sd">    If the switch for trimming is False the whole stream in the files is</span>
+<span class="sd">    returned.</span>
+
+<span class="sd">    **File structure descriptor**</span>
+<span class="sd">    fs is a list of strings or other lists indicating the elements in the</span>
+<span class="sd">    file structure. Each item of this list is translated in one level of the</span>
+<span class="sd">    directory structure. The first element is a string indicating the</span>
+<span class="sd">    base_directory. The following elements can be strings to indicate</span>
+<span class="sd">    one of the following</span>
+<span class="sd">     - %X as defined by datetime.strftime indicating an element of</span>
+<span class="sd">       the time. e.g. %H</span>
+<span class="sd">     - %NET: network name</span>
+<span class="sd">     - %STA: station name</span>
+<span class="sd">     - %CHA: channel name</span>
+<span class="sd">     - %LOC: location</span>
+<span class="sd">     - string with out %</span>
+<span class="sd">    The format strings are replaced either with an element of the starttime</span>
+<span class="sd">    if they correspond to a datetime specifyer or with the respective part</span>
+<span class="sd">    of the seedID. A string withouta % sign is not changed. If more than one</span>
+<span class="sd">    format string is required in one directory level the need to be</span>
+<span class="sd">    separated within a sublist.</span>
+
+<span class="sd">    A format string for the ID can be followed by a pair of braces including</span>
+<span class="sd">    two strings that will be used to replace the first string with the</span>
+<span class="sd">    second. This cna be used if the filename contains part of the ID in a</span>
+<span class="sd">    different form.</span>
+
+<span class="sd">    :Exapmple:</span>
+
+<span class="sd">    Example for a station &#39;GJE&#39; in network &#39;HEJSL&#39; with channel &#39;BHZ&#39; and</span>
+<span class="sd">    location &#39;00&#39; with the start time 2010-12-24_11:36:30 and \\</span>
+<span class="sd">    ``fs = [&#39;base_dir&#39;,&#39;%Y&#39;,&#39;%b&#39;,&#39;%NET,[&#39;%j&#39;,&#39;_&#39;,&#39;%STA&#39;&#39;,&#39;_T_&#39;,&quot;%CHA(&#39;BH&#39;,&#39;&#39;)&quot;,&#39;.mseed&#39;]]``</span>
+<span class="sd">    will be translated in a linux filename</span>
+<span class="sd">    ``base_dir/2010/Nov/HEJSL/317_GJE_T_Z.mseed``</span>
+
+<span class="sd">    :Note:</span>
+
+<span class="sd">    If the data contain traces of different channels in the same file with</span>
+<span class="sd">    different start and endtimes the routine will not work properly when the</span>
+<span class="sd">    period spans multiple files.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c"># translate file structure string</span>
+    <span class="n">fpattern</span> <span class="o">=</span> <span class="n">_current_filepattern</span><span class="p">(</span><span class="n">ID</span><span class="p">,</span><span class="n">starttime</span><span class="p">,</span><span class="n">fs</span><span class="p">)</span>
+    <span class="n">st</span> <span class="o">=</span> <span class="n">_read_filepattern</span><span class="p">(</span><span class="n">fpattern</span><span class="p">,</span> <span class="n">starttime</span><span class="p">,</span> <span class="n">endtime</span><span class="p">,</span><span class="n">trim</span><span class="p">)</span>
+
+    <span class="c"># if trace starts too late have a look in the previous section</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">st</span><span class="p">)</span><span class="o">==</span><span class="mi">0</span><span class="p">)</span> <span class="ow">or</span> <span class="p">((</span><span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">starttime</span><span class="o">-</span><span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">delta</span><span class="p">)</span><span class="o">.</span><span class="n">datetime</span> <span class="o">&gt;</span> <span class="n">starttime</span><span class="p">):</span>
+        <span class="n">fpattern</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">_adjacent_filepattern</span><span class="p">(</span><span class="n">ID</span><span class="p">,</span><span class="n">starttime</span><span class="p">,</span><span class="n">fs</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">st</span> <span class="o">+=</span> <span class="n">_read_filepattern</span><span class="p">(</span><span class="n">fpattern</span><span class="p">,</span> <span class="n">starttime</span><span class="p">,</span> <span class="n">endtime</span><span class="p">,</span><span class="n">trim</span><span class="p">)</span>
+        <span class="n">st</span><span class="o">.</span><span class="n">merge</span><span class="p">()</span>
+    <span class="n">thistime</span> <span class="o">=</span> <span class="n">starttime</span>
+    <span class="k">while</span> <span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">st</span><span class="p">)</span><span class="o">==</span><span class="mi">0</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">endtime</span><span class="o">.</span><span class="n">datetime</span> <span class="o">&lt;</span> <span class="n">endtime</span><span class="p">))</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">thistime</span> <span class="o">&lt;</span> <span class="n">endtime</span><span class="p">):</span>
+        <span class="n">fpattern</span><span class="p">,</span> <span class="n">thistime</span> <span class="o">=</span> <span class="n">_adjacent_filepattern</span><span class="p">(</span><span class="n">ID</span><span class="p">,</span><span class="n">thistime</span><span class="p">,</span><span class="n">fs</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">thistime</span> <span class="o">==</span> <span class="n">starttime</span><span class="p">:</span>
+            <span class="k">break</span>
+        <span class="n">st</span> <span class="o">+=</span> <span class="n">_read_filepattern</span><span class="p">(</span><span class="n">fpattern</span><span class="p">,</span> <span class="n">starttime</span><span class="p">,</span> <span class="n">endtime</span><span class="p">,</span><span class="n">trim</span><span class="p">)</span>
+        <span class="n">st</span><span class="o">.</span><span class="n">merge</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">trim</span><span class="p">:</span>
+        <span class="n">st</span><span class="o">.</span><span class="n">trim</span><span class="p">(</span><span class="n">starttime</span><span class="o">=</span><span class="n">UTCDateTime</span><span class="p">(</span><span class="n">starttime</span><span class="p">),</span><span class="n">endtime</span><span class="o">=</span><span class="n">UTCDateTime</span><span class="p">(</span><span class="n">endtime</span><span class="p">))</span>
+    <span class="n">st</span> <span class="o">=</span> <span class="n">st</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="n">ID</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">st</span>
+
+</div>
+<span class="k">def</span> <span class="nf">_read_filepattern</span><span class="p">(</span><span class="n">fpattern</span><span class="p">,</span> <span class="n">starttime</span><span class="p">,</span> <span class="n">endtime</span><span class="p">,</span> <span class="n">trim</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Read a stream from files whose names match a given pattern.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">flist</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">fpattern</span><span class="p">)</span>
+    <span class="n">starttimes</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">endtimes</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="c"># first only read the header information</span>
+    <span class="k">for</span> <span class="n">fname</span> <span class="ow">in</span> <span class="n">flist</span><span class="p">:</span>
+        <span class="n">st</span> <span class="o">=</span> <span class="n">read</span><span class="p">(</span><span class="n">fname</span><span class="p">,</span><span class="n">headonly</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+        <span class="n">starttimes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">starttime</span><span class="o">.</span><span class="n">datetime</span><span class="p">)</span>
+        <span class="n">endtimes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">st</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">endtime</span><span class="o">.</span><span class="n">datetime</span><span class="p">)</span>
+    <span class="c"># now read the stream from the files that contain the period</span>
+    <span class="n">st</span> <span class="o">=</span> <span class="n">Stream</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">ind</span><span class="p">,</span><span class="n">fname</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">flist</span><span class="p">):</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">starttimes</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">endtime</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">endtimes</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">starttime</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">trim</span><span class="p">:</span>
+                <span class="n">st</span> <span class="o">+=</span> <span class="n">read</span><span class="p">(</span><span class="n">fname</span><span class="p">,</span><span class="n">starttime</span><span class="o">=</span><span class="n">UTCDateTime</span><span class="p">(</span><span class="n">starttime</span><span class="p">),</span><span class="n">endtime</span><span class="o">=</span><span class="n">UTCDateTime</span><span class="p">(</span><span class="n">endtime</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">st</span> <span class="o">+=</span> <span class="n">read</span><span class="p">(</span><span class="n">fname</span><span class="p">)</span>
+    <span class="n">st</span><span class="o">.</span><span class="n">merge</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">st</span>
+
+
+<span class="k">def</span> <span class="nf">_adjacent_filepattern</span><span class="p">(</span><span class="n">ID</span><span class="p">,</span><span class="n">starttime</span><span class="p">,</span><span class="n">fs</span><span class="p">,</span><span class="n">inc</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return the file name that contains the data sequence prior to the one</span>
+<span class="sd">    that contains the given time for a given file structure and ID.</span>
+
+<span class="sd">    :param inc: either 1 for following of -1 for previous period</span>
+<span class="sd">    :type inc: int</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">assert</span> <span class="p">((</span><span class="n">inc</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">inc</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)),</span> <span class="s">&quot; inc must either be 1 or -1&quot;</span>
+    <span class="n">fname</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
+    <span class="n">flag</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="c"># find earlier time by turning back the time by one increment of the</span>
+    <span class="c"># last time indicator in the fs</span>
+    <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="n">fs</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">::</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">part</span><span class="p">,</span><span class="nb">list</span><span class="p">):</span>
+            <span class="n">part</span> <span class="o">=</span> <span class="p">[</span><span class="n">part</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">tpart</span> <span class="ow">in</span> <span class="n">part</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">::</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="p">(((</span><span class="s">&#39;(&#39;</span> <span class="ow">in</span> <span class="n">tpart</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="s">&#39;)&#39;</span> <span class="ow">in</span> <span class="n">tpart</span><span class="p">))</span> <span class="ow">or</span> <span class="p">(</span><span class="n">tpart</span> <span class="ow">in</span> <span class="n">IDformat</span><span class="p">))</span>
+                                        <span class="ow">and</span> <span class="p">(</span><span class="s">&#39;%&#39;</span> <span class="ow">in</span> <span class="n">tpart</span><span class="p">)</span>
+                                        <span class="ow">and</span> <span class="p">(</span><span class="n">flag</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)):</span>
+                <span class="n">flag</span> <span class="o">=</span> <span class="mi">1</span>
+                <span class="k">if</span> <span class="n">tpart</span> <span class="ow">in</span> <span class="p">[</span><span class="s">&#39;%H&#39;</span><span class="p">,</span><span class="s">&#39;%I&#39;</span><span class="p">]:</span>
+                    <span class="n">thistime</span> <span class="o">=</span> <span class="n">starttime</span> <span class="o">+</span> <span class="n">inc</span> <span class="o">*</span> <span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">hours</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="n">tpart</span> <span class="o">==</span> <span class="s">&#39;%p&#39;</span><span class="p">:</span>
+                    <span class="n">thistime</span> <span class="o">=</span> <span class="n">starttime</span> <span class="o">+</span> <span class="n">inc</span> <span class="o">*</span> <span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">hours</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="n">tpart</span> <span class="ow">in</span> <span class="p">[</span><span class="s">&#39;%a&#39;</span><span class="p">,</span><span class="s">&#39;%A&#39;</span><span class="p">,</span><span class="s">&#39;%w&#39;</span><span class="p">,</span><span class="s">&#39;</span><span class="si">%d</span><span class="s">&#39;</span><span class="p">,</span><span class="s">&#39;%j&#39;</span><span class="p">]:</span>
+                    <span class="n">thistime</span> <span class="o">=</span> <span class="n">starttime</span> <span class="o">+</span> <span class="n">inc</span> <span class="o">*</span> <span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="n">tpart</span> <span class="ow">in</span> <span class="p">[</span><span class="s">&#39;%U&#39;</span><span class="p">,</span><span class="s">&#39;%W&#39;</span><span class="p">]:</span>
+                    <span class="n">thistime</span> <span class="o">=</span> <span class="n">starttime</span> <span class="o">+</span> <span class="n">inc</span> <span class="o">*</span> <span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="mi">7</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="n">tpart</span> <span class="ow">in</span> <span class="p">[</span><span class="s">&#39;%b&#39;</span><span class="p">,</span><span class="s">&#39;%B&#39;</span><span class="p">,</span><span class="s">&#39;%m&#39;</span><span class="p">]:</span>
+                    <span class="k">if</span> <span class="n">starttime</span><span class="o">.</span><span class="n">month</span> <span class="o">+</span> <span class="n">inc</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="n">thistime</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">(</span><span class="n">starttime</span><span class="o">.</span><span class="n">year</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span>
+                                                     <span class="mi">12</span><span class="p">,</span>
+                                                     <span class="n">starttime</span><span class="o">.</span><span class="n">day</span><span class="p">,</span>
+                                                     <span class="n">starttime</span><span class="o">.</span><span class="n">hour</span><span class="p">,</span>
+                                                     <span class="n">starttime</span><span class="o">.</span><span class="n">minute</span><span class="p">,</span>
+                                                     <span class="n">starttime</span><span class="o">.</span><span class="n">second</span><span class="p">,</span>
+                                                     <span class="n">starttime</span><span class="o">.</span><span class="n">microsecond</span><span class="p">)</span>
+                    <span class="k">elif</span> <span class="n">starttime</span><span class="o">.</span><span class="n">month</span> <span class="o">+</span> <span class="n">inc</span> <span class="o">==</span> <span class="mi">13</span><span class="p">:</span>
+                        <span class="n">thistime</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">(</span><span class="n">starttime</span><span class="o">.</span><span class="n">year</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span>
+                                                     <span class="mi">1</span><span class="p">,</span>
+                                                     <span class="n">starttime</span><span class="o">.</span><span class="n">day</span><span class="p">,</span>
+                                                     <span class="n">starttime</span><span class="o">.</span><span class="n">hour</span><span class="p">,</span>
+                                                     <span class="n">starttime</span><span class="o">.</span><span class="n">minute</span><span class="p">,</span>
+                                                     <span class="n">starttime</span><span class="o">.</span><span class="n">second</span><span class="p">,</span>
+                                                     <span class="n">starttime</span><span class="o">.</span><span class="n">microsecond</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">thistime</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">(</span><span class="n">starttime</span><span class="o">.</span><span class="n">year</span><span class="p">,</span>
+                                                     <span class="n">starttime</span><span class="o">.</span><span class="n">month</span> <span class="o">+</span> <span class="n">inc</span><span class="p">,</span>
+                                                     <span class="n">starttime</span><span class="o">.</span><span class="n">day</span><span class="p">,</span>
+                                                     <span class="n">starttime</span><span class="o">.</span><span class="n">hour</span><span class="p">,</span>
+                                                     <span class="n">starttime</span><span class="o">.</span><span class="n">minute</span><span class="p">,</span>
+                                                     <span class="n">starttime</span><span class="o">.</span><span class="n">second</span><span class="p">,</span>
+                                                     <span class="n">starttime</span><span class="o">.</span><span class="n">microsecond</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="n">tpart</span> <span class="ow">in</span> <span class="p">[</span><span class="s">&#39;%y&#39;</span><span class="p">,</span><span class="s">&#39;%Y&#39;</span><span class="p">]:</span>
+                    <span class="n">thistime</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">(</span><span class="n">starttime</span><span class="o">.</span><span class="n">year</span> <span class="o">-</span> <span class="n">inc</span><span class="p">,</span>
+                                                     <span class="n">starttime</span><span class="o">.</span><span class="n">month</span><span class="p">,</span>
+                                                     <span class="n">starttime</span><span class="o">.</span><span class="n">day</span><span class="p">,</span>
+                                                     <span class="n">starttime</span><span class="o">.</span><span class="n">hour</span><span class="p">,</span>
+                                                     <span class="n">starttime</span><span class="o">.</span><span class="n">minute</span><span class="p">,</span>
+                                                     <span class="n">starttime</span><span class="o">.</span><span class="n">second</span><span class="p">,</span>
+                                                     <span class="n">starttime</span><span class="o">.</span><span class="n">microsecond</span><span class="p">)</span>
+    <span class="n">fname</span> <span class="o">=</span> <span class="n">_current_filepattern</span><span class="p">(</span><span class="n">ID</span><span class="p">,</span><span class="n">thistime</span><span class="p">,</span><span class="n">fs</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">fname</span><span class="p">,</span> <span class="n">thistime</span>
+
+
+<span class="k">def</span> <span class="nf">_current_filepattern</span><span class="p">(</span><span class="n">ID</span><span class="p">,</span><span class="n">starttime</span><span class="p">,</span><span class="n">fs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return the file name that contains the data sequence that contains</span>
+<span class="sd">    the given time for a given file structure and ID.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">fname</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
+    <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="n">fs</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">part</span><span class="p">,</span><span class="nb">list</span><span class="p">):</span>
+            <span class="n">part</span> <span class="o">=</span> <span class="p">[</span><span class="n">part</span><span class="p">]</span>
+        <span class="n">fpartname</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
+        <span class="k">for</span> <span class="n">tpart</span> <span class="ow">in</span> <span class="n">part</span><span class="p">:</span>
+            <span class="n">fpartname</span> <span class="o">+=</span> <span class="n">_fs_translate</span><span class="p">(</span><span class="n">tpart</span><span class="p">,</span><span class="n">ID</span><span class="p">,</span><span class="n">starttime</span><span class="p">)</span>
+        <span class="n">fname</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">fname</span><span class="p">,</span><span class="n">fpartname</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">fname</span>
+
+
+<span class="k">def</span> <span class="nf">_fs_translate</span><span class="p">(</span><span class="n">part</span><span class="p">,</span><span class="n">ID</span><span class="p">,</span><span class="n">starttime</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Translate part of the file structure descriptor.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">IDlist</span> <span class="o">=</span> <span class="n">ID</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;.&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="p">(</span><span class="s">&#39;(&#39;</span> <span class="ow">in</span> <span class="n">part</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="s">&#39;)&#39;</span> <span class="ow">in</span> <span class="n">part</span><span class="p">):</span>
+        <span class="n">trans</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s">&#39;\(.*?\)&#39;</span><span class="p">,</span><span class="n">part</span><span class="p">)</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">trans</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="c"># in case there is something to translate remove from the filepart</span>
+    <span class="k">if</span> <span class="n">trans</span><span class="p">:</span>
+        <span class="n">part</span> <span class="o">=</span> <span class="n">part</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">trans</span><span class="p">,</span><span class="s">&#39;&#39;</span><span class="p">)</span>
+    <span class="c"># if there is no %-sign it is a fixed string</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="s">&#39;%&#39;</span> <span class="ow">in</span> <span class="n">part</span><span class="p">:</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="n">part</span>
+    <span class="c"># in case it belongs to the ID replace it with the respective ID-part</span>
+    <span class="k">if</span> <span class="n">part</span> <span class="ow">in</span> <span class="n">IDformat</span><span class="p">:</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="n">IDlist</span><span class="p">[</span><span class="n">IDformat</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">part</span><span class="p">)]</span>
+    <span class="c"># otherwise it must be part of the date string</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="n">starttime</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="n">part</span><span class="p">)</span>
+    <span class="c"># replace if nesseccary</span>
+    <span class="k">if</span> <span class="n">trans</span><span class="p">:</span>
+        <span class="n">transl</span> <span class="o">=</span> <span class="n">trans</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;,&#39;</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">transl</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">,</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s"> is not valid for replacement&quot;</span> <span class="o">%</span> <span class="n">trans</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="n">res</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">transl</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&quot;&#39;&quot;</span><span class="p">,</span><span class="s">&quot;&quot;</span><span class="p">),</span><span class="n">transl</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&quot;&#39;&quot;</span><span class="p">,</span><span class="s">&quot;&quot;</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">res</span>
+
+
+
+<span class="c">#EOF</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MIIC 1.0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2012, Eraldo Pomponi.
+      Last updated on 2016-03-07T14:54:14.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </div>
+  </body>
+</html>

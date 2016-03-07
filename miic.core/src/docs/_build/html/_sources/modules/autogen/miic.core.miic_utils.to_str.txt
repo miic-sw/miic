@@ -1,0 +1,6 @@
+miic.core.miic_utils.to_str
+===========================
+
+.. currentmodule:: miic.core.miic_utils
+
+.. autofunction:: to_str

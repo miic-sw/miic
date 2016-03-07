@@ -1,0 +1,6 @@
+miic.core.normalization.spect_norm
+==================================
+
+.. currentmodule:: miic.core.normalization
+
+.. autofunction:: spect_norm

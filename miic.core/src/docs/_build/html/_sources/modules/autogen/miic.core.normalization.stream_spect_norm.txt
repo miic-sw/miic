@@ -1,0 +1,6 @@
+miic.core.normalization.stream_spect_norm
+=========================================
+
+.. currentmodule:: miic.core.normalization
+
+.. autofunction:: stream_spect_norm

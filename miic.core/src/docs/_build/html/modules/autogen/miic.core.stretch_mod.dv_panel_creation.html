@@ -1,0 +1,158 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>miic.core.stretch_mod.dv_panel_creation &mdash; MIIC 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="MIIC 1.0 documentation" href="../../index.html" />
+    <link rel="up" title="Signal stretching" href="../stretch_mod.html" />
+    <link rel="next" title="Inversion" href="../inversion.html" />
+    <link rel="prev" title="miic.core.stretch_mod.estimate_reftr_shifts_from_dt_corr" href="miic.core.stretch_mod.estimate_reftr_shifts_from_dt_corr.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../inversion.html" title="Inversion"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="miic.core.stretch_mod.estimate_reftr_shifts_from_dt_corr.html" title="miic.core.stretch_mod.estimate_reftr_shifts_from_dt_corr"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">MIIC 1.0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../core.html" >MIIC Library Reference</a> &raquo;</li>
+          <li class="nav-item nav-item-2"><a href="../stretch_mod.html" accesskey="U">Signal stretching</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/modules/autogen/miic.core.stretch_mod.dv_panel_creation.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="miic-core-stretch-mod-dv-panel-creation">
+<h1>miic.core.stretch_mod.dv_panel_creation<a class="headerlink" href="#miic-core-stretch-mod-dv-panel-creation" title="Permalink to this headline">¶</a></h1>
+<dl class="function">
+<dt id="miic.core.stretch_mod.dv_panel_creation">
+<code class="descname">dv_panel_creation</code><span class="sig-paren">(</span><em>dv_list</em>, <em>save_dir='./save'</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/miic/core/stretch_mod.html#dv_panel_creation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#miic.core.stretch_mod.dv_panel_creation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create <code class="xref py py-class docutils literal"><span class="pre">pandas.Panel</span></code> objects recombining corr and dv curves</p>
+<p>This function creates two <code class="xref py py-class docutils literal"><span class="pre">pandas.Panel</span></code> object recombining
+respectively all correlation <cite>curve</cite> and <cite>dv/v</cite> curve created for
+a specific dataset and one <code class="xref py py-class docutils literal"><span class="pre">pandas.DataFrame</span></code> containing all
+the metainformation in each <cite>stats</cite> object associated with one stations
+pair.</p>
+<p>The function accept a list of dv dictionaries that could be created, e.g.,
+with the function
+<code class="xref py py-func docutils literal"><span class="pre">velocity_change_estimate()</span></code> or with
+<a class="reference internal" href="miic.core.stretch_mod.multi_ref_vchange_and_align.html#miic.core.stretch_mod.multi_ref_vchange_and_align" title="miic.core.stretch_mod.multi_ref_vchange_and_align"><code class="xref py py-func docutils literal"><span class="pre">multi_ref_vchange_and_align()</span></code></a>
+that are checked for a consistent structure through
+<a class="reference internal" href="miic.core.miic_utils.dv_check.html#miic.core.miic_utils.dv_check" title="miic.core.miic_utils.dv_check"><code class="xref py py-func docutils literal"><span class="pre">dv_check()</span></code></a>.</p>
+<p>Patterns that are processed without errors are logged in a file
+<code class="docutils literal"><span class="pre">success_patterns.npy</span></code> saved in the <cite>save_dir</cite> directory.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>dv_list</strong> (<em>list of dv dictionaries</em>) &#8211; List of dv dictionaries</li>
+<li><strong>save_dir</strong> (<em>string</em>) &#8211; Where the two Panels and the one DataFrame will be saved</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first">dict</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><strong>panel_dict</strong>: dictionary that has this structure:
+<em>dv</em>: Velocity change panel
+<em>corr</em>: Correlation panel
+<em>stats</em>: Meta-information stored in a DataFrame</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../inversion.html" title="Inversion"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="miic.core.stretch_mod.estimate_reftr_shifts_from_dt_corr.html" title="miic.core.stretch_mod.estimate_reftr_shifts_from_dt_corr"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">MIIC 1.0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../core.html" >MIIC Library Reference</a> &raquo;</li>
+          <li class="nav-item nav-item-2"><a href="../stretch_mod.html" >Signal stretching</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2012, Eraldo Pomponi.
+      Last updated on 2016-03-02T16:12:50.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </div>
+  </body>
+</html>

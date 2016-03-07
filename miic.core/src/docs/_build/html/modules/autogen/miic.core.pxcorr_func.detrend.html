@@ -1,0 +1,151 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>miic.core.pxcorr_func.detrend &mdash; MIIC 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="MIIC 1.0 documentation" href="../../index.html" />
+    <link rel="up" title="Efficient parallel correlation of traces" href="../pxcorr_func.html" />
+    <link rel="next" title="miic.core.pxcorr_func.TDnormalization" href="miic.core.pxcorr_func.TDnormalization.html" />
+    <link rel="prev" title="miic.core.pxcorr_func.stream_pxcorr" href="miic.core.pxcorr_func.stream_pxcorr.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="miic.core.pxcorr_func.TDnormalization.html" title="miic.core.pxcorr_func.TDnormalization"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="miic.core.pxcorr_func.stream_pxcorr.html" title="miic.core.pxcorr_func.stream_pxcorr"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">MIIC 1.0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../core.html" >MIIC Library Reference</a> &raquo;</li>
+          <li class="nav-item nav-item-2"><a href="../pxcorr_func.html" accesskey="U">Efficient parallel correlation of traces</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/modules/autogen/miic.core.pxcorr_func.detrend.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="miic-core-pxcorr-func-detrend">
+<h1>miic.core.pxcorr_func.detrend<a class="headerlink" href="#miic-core-pxcorr-func-detrend" title="Permalink to this headline">¶</a></h1>
+<dl class="function">
+<dt id="miic.core.pxcorr_func.detrend">
+<code class="descname">detrend</code><span class="sig-paren">(</span><em>A</em>, <em>args</em>, <em>params</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/miic/core/pxcorr_func.html#detrend"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#miic.core.pxcorr_func.detrend" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove trend from data</p>
+<p>Remove the trend from the time series data in <cite>A</cite>. Several methods are possible. The method is specified as the value of the <cite>type</cite> keyword in
+the argument dictionary <cite>args</cite>.</p>
+<dl class="docutils">
+<dt>Possible <cite>types</cite> of detrending:</dt>
+<dd><p class="first">-<cite>constant</cite> or <cite>demean</cite>: substract mean of traces</p>
+<p class="last">-<cite>linear</cite>: substract a least squares fitted linear trend form the data</p>
+</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>A</strong> (<em>numpy.ndarray</em>) &#8211; time series data with time oriented along the first dimension (columns)</li>
+<li><strong>args</strong> (<em>dictionary</em>) &#8211; the only used keyword is <cite>type</cite></li>
+<li><strong>params</strong> (<em>dictionary</em>) &#8211; not used here</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first">numpy.ndarray</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">detrended time series data</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="miic.core.pxcorr_func.TDnormalization.html" title="miic.core.pxcorr_func.TDnormalization"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="miic.core.pxcorr_func.stream_pxcorr.html" title="miic.core.pxcorr_func.stream_pxcorr"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">MIIC 1.0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../core.html" >MIIC Library Reference</a> &raquo;</li>
+          <li class="nav-item nav-item-2"><a href="../pxcorr_func.html" >Efficient parallel correlation of traces</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2012, Eraldo Pomponi.
+      Last updated on 2016-03-07T08:43:25.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </div>
+  </body>
+</html>

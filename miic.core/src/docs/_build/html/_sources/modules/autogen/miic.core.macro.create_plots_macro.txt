@@ -1,0 +1,6 @@
+miic.core.macro.create_plots_macro
+==================================
+
+.. currentmodule:: miic.core.macro
+
+.. autofunction:: create_plots_macro

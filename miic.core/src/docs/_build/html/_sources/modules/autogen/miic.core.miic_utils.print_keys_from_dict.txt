@@ -1,0 +1,6 @@
+miic.core.miic_utils.print_keys_from_dict
+=========================================
+
+.. currentmodule:: miic.core.miic_utils
+
+.. autofunction:: print_keys_from_dict

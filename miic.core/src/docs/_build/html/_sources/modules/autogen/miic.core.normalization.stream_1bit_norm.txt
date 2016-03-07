@@ -1,0 +1,6 @@
+miic.core.normalization.stream_1bit_norm
+========================================
+
+.. currentmodule:: miic.core.normalization
+
+.. autofunction:: stream_1bit_norm

@@ -1,0 +1,6 @@
+miic.core.plot_fun.plot_trace_distance_section
+==============================================
+
+.. currentmodule:: miic.core.plot_fun
+
+.. autofunction:: plot_trace_distance_section

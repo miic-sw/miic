@@ -1,0 +1,6 @@
+miic.core.alpha_mod.stream_arklink_read
+=======================================
+
+.. currentmodule:: miic.core.alpha_mod
+
+.. autofunction:: stream_arklink_read

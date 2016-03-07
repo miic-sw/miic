@@ -1,0 +1,6 @@
+miic.core.alpha_mod.dir_read
+============================
+
+.. currentmodule:: miic.core.alpha_mod
+
+.. autofunction:: dir_read

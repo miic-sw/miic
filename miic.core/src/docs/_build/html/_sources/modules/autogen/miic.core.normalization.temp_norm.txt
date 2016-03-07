@@ -1,0 +1,6 @@
+miic.core.normalization.temp_norm
+=================================
+
+.. currentmodule:: miic.core.normalization
+
+.. autofunction:: temp_norm

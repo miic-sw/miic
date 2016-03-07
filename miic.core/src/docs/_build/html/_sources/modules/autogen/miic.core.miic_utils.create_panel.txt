@@ -1,0 +1,6 @@
+miic.core.miic_utils.create_panel
+=================================
+
+.. currentmodule:: miic.core.miic_utils
+
+.. autofunction:: create_panel

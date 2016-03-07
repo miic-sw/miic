@@ -1,0 +1,6 @@
+miic.core.miic_utils.trimmed_std
+================================
+
+.. currentmodule:: miic.core.miic_utils
+
+.. autofunction:: trimmed_std

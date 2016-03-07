@@ -1,0 +1,6 @@
+miic.core.corr_fun.norm_corr_stream
+===================================
+
+.. currentmodule:: miic.core.corr_fun
+
+.. autofunction:: norm_corr_stream

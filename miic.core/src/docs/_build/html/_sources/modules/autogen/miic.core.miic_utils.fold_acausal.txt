@@ -1,0 +1,6 @@
+miic.core.miic_utils.fold_acausal
+=================================
+
+.. currentmodule:: miic.core.miic_utils
+
+.. autofunction:: fold_acausal

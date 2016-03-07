@@ -1,0 +1,6 @@
+miic.core.miic_utils.from_single_pattern_to_panel
+=================================================
+
+.. currentmodule:: miic.core.miic_utils
+
+.. autofunction:: from_single_pattern_to_panel

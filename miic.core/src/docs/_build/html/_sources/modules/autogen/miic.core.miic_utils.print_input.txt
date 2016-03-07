@@ -1,0 +1,6 @@
+miic.core.miic_utils.print_input
+================================
+
+.. currentmodule:: miic.core.miic_utils
+
+.. autofunction:: print_input

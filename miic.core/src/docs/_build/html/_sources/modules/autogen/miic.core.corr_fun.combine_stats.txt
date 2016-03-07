@@ -1,0 +1,6 @@
+miic.core.corr_fun.combine_stats
+================================
+
+.. currentmodule:: miic.core.corr_fun
+
+.. autofunction:: combine_stats

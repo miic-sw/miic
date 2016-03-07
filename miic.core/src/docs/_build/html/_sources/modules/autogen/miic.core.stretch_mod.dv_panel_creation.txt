@@ -1,0 +1,6 @@
+miic.core.stretch_mod.dv_panel_creation
+=======================================
+
+.. currentmodule:: miic.core.stretch_mod
+
+.. autofunction:: dv_panel_creation

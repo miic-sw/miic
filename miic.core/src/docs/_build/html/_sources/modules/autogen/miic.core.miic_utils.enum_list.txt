@@ -1,0 +1,6 @@
+miic.core.miic_utils.enum_list
+==============================
+
+.. currentmodule:: miic.core.miic_utils
+
+.. autofunction:: enum_list

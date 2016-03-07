@@ -1,0 +1,6 @@
+miic.core.stretch_mod.velocity_change_estimete
+==============================================
+
+.. currentmodule:: miic.core.stretch_mod
+
+.. autofunction:: velocity_change_estimete

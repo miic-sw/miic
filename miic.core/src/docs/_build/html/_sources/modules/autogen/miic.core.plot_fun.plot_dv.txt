@@ -1,0 +1,6 @@
+miic.core.plot_fun.plot_dv
+==========================
+
+.. currentmodule:: miic.core.plot_fun
+
+.. autofunction:: plot_dv

@@ -1,0 +1,6 @@
+miic.core.stream.read_from_filesystem
+=====================================
+
+.. currentmodule:: miic.core.stream
+
+.. autofunction:: read_from_filesystem

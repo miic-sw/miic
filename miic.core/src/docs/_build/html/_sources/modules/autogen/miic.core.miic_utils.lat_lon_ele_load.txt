@@ -1,0 +1,6 @@
+miic.core.miic_utils.lat_lon_ele_load
+=====================================
+
+.. currentmodule:: miic.core.miic_utils
+
+.. autofunction:: lat_lon_ele_load

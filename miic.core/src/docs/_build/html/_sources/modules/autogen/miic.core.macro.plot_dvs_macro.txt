@@ -1,0 +1,6 @@
+miic.core.macro.plot_dvs_macro
+==============================
+
+.. currentmodule:: miic.core.macro
+
+.. autofunction:: plot_dvs_macro

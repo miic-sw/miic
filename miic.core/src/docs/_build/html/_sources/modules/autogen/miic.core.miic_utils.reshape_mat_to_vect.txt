@@ -1,0 +1,6 @@
+miic.core.miic_utils.reshape_mat_to_vect
+========================================
+
+.. currentmodule:: miic.core.miic_utils
+
+.. autofunction:: reshape_mat_to_vect

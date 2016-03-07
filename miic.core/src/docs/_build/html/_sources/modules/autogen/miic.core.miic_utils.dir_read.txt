@@ -1,0 +1,6 @@
+miic.core.miic_utils.dir_read
+=============================
+
+.. currentmodule:: miic.core.miic_utils
+
+.. autofunction:: dir_read

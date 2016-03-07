@@ -1,0 +1,6 @@
+miic.core.stretch_mod.time_windows_creation
+===========================================
+
+.. currentmodule:: miic.core.stretch_mod
+
+.. autofunction:: time_windows_creation

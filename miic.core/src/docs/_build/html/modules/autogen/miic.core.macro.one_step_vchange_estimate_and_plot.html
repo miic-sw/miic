@@ -1,0 +1,181 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>miic.core.macro.one_step_vchange_estimate_and_plot &mdash; MIIC 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="MIIC 1.0 documentation" href="../../index.html" />
+    <link rel="up" title="Macros" href="../macro.html" />
+    <link rel="next" title="miic.core.macro.plot_corr_matrix" href="miic.core.macro.plot_corr_matrix.html" />
+    <link rel="prev" title="miic.core.macro.create_plots_macro" href="miic.core.macro.create_plots_macro.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="miic.core.macro.plot_corr_matrix.html" title="miic.core.macro.plot_corr_matrix"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="miic.core.macro.create_plots_macro.html" title="miic.core.macro.create_plots_macro"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">MIIC 1.0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../core.html" >MIIC Library Reference</a> &raquo;</li>
+          <li class="nav-item nav-item-2"><a href="../macro.html" accesskey="U">Macros</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/modules/autogen/miic.core.macro.one_step_vchange_estimate_and_plot.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="miic-core-macro-one-step-vchange-estimate-and-plot">
+<h1>miic.core.macro.one_step_vchange_estimate_and_plot<a class="headerlink" href="#miic-core-macro-one-step-vchange-estimate-and-plot" title="Permalink to this headline">¶</a></h1>
+<dl class="function">
+<dt id="miic.core.macro.one_step_vchange_estimate_and_plot">
+<code class="descname">one_step_vchange_estimate_and_plot</code><span class="sig-paren">(</span><em>base_dir, suffix, save_dir, center_win_len=1500, fmax=1.0, fmin=0.5, order=4, fs=10.0, smooth_win=5, tw_start_list=[40, 60, 80], tw_len=[100, 100, 100], st_range=0.01, st_steps=1000, list_of_combinations=[], start_day='03/04/2010', stop_day='03/04/2011', all=False, marker_day=None, old_style=False</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/miic/core/macro.html#one_step_vchange_estimate_and_plot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#miic.core.macro.one_step_vchange_estimate_and_plot" title="Permalink to this definition">¶</a></dt>
+<dd><p>One step function to do the velocity change estimation and plot</p>
+<p>This function wants to group together everything is necessary to move
+from the single auto-cross correlation functions to the velocity change
+estimation and plot in one step.
+It collates together the three <code class="docutils literal"><span class="pre">macro</span></code> functions <code class="docutils literal"><span class="pre">vchange_estimate</span></code>,
+<code class="docutils literal"><span class="pre">from_single_pattern_to_panel</span></code> and <code class="docutils literal"><span class="pre">create_plots_macro</span></code> plus the
+creation of a standard directory structure to hold all the produced
+results in a consistent way plus a configuration file that stores all
+the parameters that have been adopted to produce them.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>base_dir</strong> (<em>directory</em>) &#8211; Where the auto-cross correlation matrix are stored</li>
+<li><strong>save_dir</strong> (<em>directory</em>) &#8211; Where all results will be saved (see Notes for details)</li>
+<li><strong>center_win_len</strong> (<em>int</em>) &#8211; How many samples will be taken from the central part
+of the corr func</li>
+<li><strong>fmax</strong> (<em>float</em>) &#8211; Maximum freq for the bandpass filter</li>
+<li><strong>fmin</strong> (<em>float</em>) &#8211; Minimum freq for the bandpass filter</li>
+<li><strong>order</strong> (<em>int</em>) &#8211; Filter order (i.e. corners in obspy terminology)</li>
+<li><strong>fs</strong> (<em>float</em>) &#8211; Sampling frequency for the corr trace</li>
+<li><strong>smooth_win</strong> (<em>int</em>) &#8211; Width of the smoothing window</li>
+<li><strong>tw_start_list</strong> (<em>list of int</em>) &#8211; List of time lag (in samples) that we want to adopt
+in the velocity change evaluation</li>
+<li><strong>tw_len</strong> (<em>list of int</em>) &#8211; Time window length in samples for each time lag</li>
+<li><strong>st_range</strong> (<em>float</em>) &#8211; Stretching range (i.e. 0.01 -&gt; 1%)</li>
+<li><strong>st_steps</strong> (<em>int</em>) &#8211; How many stretching steps in the specified range</li>
+<li><strong>list_of_combinations</strong> (<em>list of string</em>) &#8211; The list of combinations that we want to plot
+(e.g. [&#8216;QC01-QC02&#8217;,&#8217;QC05-QC11&#8217;]</li>
+<li><strong>all</strong> (<em>bool</em>) &#8211; If true all available combinations are ploted</li>
+<li><strong>start_day</strong> (<cite>~datetime.date</cite> object) &#8211; Starting day</li>
+<li><strong>stop_day</strong> (<cite>~datetime.date</cite> object) &#8211; Stoplting day</li>
+<li><strong>marker_day</strong> (<cite>~datetime.date</cite> object) &#8211; If passed a vertical red line will be plotted
+at this date.</li>
+<li><strong>suffix</strong> (<em>string</em>) &#8211; Optional suffix for the filename to look for (it must be the
+same as used with the <a class="reference internal" href="miic.core.macro.vchange_estimate.html#miic.core.macro.vchange_estimate" title="miic.core.macro.vchange_estimate"><code class="xref py py-class docutils literal"><span class="pre">vchange_estimate</span></code></a>
+function through with the corr ad dv/v curves were created)</li>
+<li><strong>old_style</strong> (<em>bool</em>) &#8211; If true, the suffic is generated using the <cite>fs</cite>
+( &#8220;_&lt;fs&gt;Hz&#8221;) instead of being passed as a parameter)</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p>The directories structure that will be created under <code class="docutils literal"><span class="pre">save_dir</span></code> has this
+layout:</p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">save_dir</span></code></dt>
+<dd><a href="#id1"><span class="problematic" id="id2">|</span></a>&#8212;&#8212;&gt; panels
+<a href="#id3"><span class="problematic" id="id4">|</span></a>&#8212;&#8212;&gt; img
+<a href="#id5"><span class="problematic" id="id6">|</span></a><code class="docutils literal"><span class="pre">vchange_files</span></code></dd>
+</dl>
+<p><code class="docutils literal"><span class="pre">panels</span></code> stores the <code class="xref py py-class docutils literal"><span class="pre">Panel</span></code> objects
+<code class="docutils literal"><span class="pre">img</span></code> stores all produced images
+In <code class="docutils literal"><span class="pre">save_dir</span></code> is also stored a configuration.txt file that contains all
+the parameters in the currunt setup in the for of key-&gt;value pairs.</p>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="miic.core.macro.plot_corr_matrix.html" title="miic.core.macro.plot_corr_matrix"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="miic.core.macro.create_plots_macro.html" title="miic.core.macro.create_plots_macro"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">MIIC 1.0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../core.html" >MIIC Library Reference</a> &raquo;</li>
+          <li class="nav-item nav-item-2"><a href="../macro.html" >Macros</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2012, Eraldo Pomponi.
+      Last updated on 2016-03-02T16:12:50.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </div>
+  </body>
+</html>

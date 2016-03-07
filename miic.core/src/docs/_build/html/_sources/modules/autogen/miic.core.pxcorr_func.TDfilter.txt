@@ -1,0 +1,6 @@
+miic.core.pxcorr_func.TDfilter
+==============================
+
+.. currentmodule:: miic.core.pxcorr_func
+
+.. autofunction:: TDfilter

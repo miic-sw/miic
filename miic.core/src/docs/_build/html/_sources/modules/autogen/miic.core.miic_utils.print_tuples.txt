@@ -1,0 +1,6 @@
+miic.core.miic_utils.print_tuples
+=================================
+
+.. currentmodule:: miic.core.miic_utils
+
+.. autofunction:: print_tuples

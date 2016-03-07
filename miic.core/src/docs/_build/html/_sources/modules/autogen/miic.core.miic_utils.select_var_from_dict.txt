@@ -1,0 +1,6 @@
+miic.core.miic_utils.select_var_from_dict
+=========================================
+
+.. currentmodule:: miic.core.miic_utils
+
+.. autofunction:: select_var_from_dict

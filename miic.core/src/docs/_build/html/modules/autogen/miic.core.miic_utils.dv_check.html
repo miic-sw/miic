@@ -1,0 +1,163 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>miic.core.miic_utils.dv_check &mdash; MIIC 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="MIIC 1.0 documentation" href="../../index.html" />
+    <link rel="up" title="Utilities" href="../miic_utils.html" />
+    <link rel="next" title="miic.core.miic_utils.create_panel" href="miic.core.miic_utils.create_panel.html" />
+    <link rel="prev" title="miic.core.miic_utils.corr_mat_check" href="miic.core.miic_utils.corr_mat_check.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="miic.core.miic_utils.create_panel.html" title="miic.core.miic_utils.create_panel"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="miic.core.miic_utils.corr_mat_check.html" title="miic.core.miic_utils.corr_mat_check"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">MIIC 1.0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../core.html" >MIIC Library Reference</a> &raquo;</li>
+          <li class="nav-item nav-item-2"><a href="../miic_utils.html" accesskey="U">Utilities</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/modules/autogen/miic.core.miic_utils.dv_check.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="miic-core-miic-utils-dv-check">
+<h1>miic.core.miic_utils.dv_check<a class="headerlink" href="#miic-core-miic-utils-dv-check" title="Permalink to this headline">¶</a></h1>
+<dl class="function">
+<dt id="miic.core.miic_utils.dv_check">
+<code class="descname">dv_check</code><span class="sig-paren">(</span><em>dv_dict</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/miic/core/miic_utils.html#dv_check"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#miic.core.miic_utils.dv_check" title="Permalink to this definition">¶</a></dt>
+<dd><p>Velocity change dictionary check</p>
+<p>This function test if a loaded velocity change dictionary
+contains the requested keywords and if their corresponding value is of the
+proper class to continue the processing, e.g., to create a DataFrame.</p>
+<dl class="docutils">
+<dt>Actually the requested keywords -&gt; class pairs are:</dt>
+<dd>&#8216;corr&#8217;            -&gt; <code class="xref py py-class docutils literal"><span class="pre">numpy.ndarray</span></code>
+&#8216;value&#8217;           -&gt; <code class="xref py py-class docutils literal"><span class="pre">numpy.ndarray</span></code>
+&#8216;time&#8217;            -&gt; <code class="xref py py-class docutils literal"><span class="pre">numpy.ndarray</span></code>
+&#8216;sim_mat&#8217;         -&gt; <code class="xref py py-class docutils literal"><span class="pre">numpy.ndarray</span></code>
+&#8216;stats&#8217;           -&gt; dict
+&#8216;second_axis&#8217;     -&gt; <code class="xref py py-class docutils literal"><span class="pre">numpy.ndarray</span></code>
+&#8216;value_type&#8217;      -&gt; basestring
+&#8216;method&#8217;          -&gt; basestring</dd>
+</dl>
+<p>The &#8220;stats&#8221; objects is also checked for some &#8220;main&#8221; errors like
+the starttime greather then the endtime or a substaintial (greater then 1
+sample) disagreement between starttime, endtime, sampling_rate and npts.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>dv_dict</strong> (<em>dict</em>) &#8211; Velocity change dictionary</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">dict</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><strong>ret_dict</strong>: dictionary that contains the following keys:
+<em>is_incomplete</em>: True if a keyword is missed
+<em>missed_keys</em>: list of missed keywords
+<em>wrong_class</em>: list of keyworkds which value is of a wrong class
+<em>ERROR_stats</em>: list of errors (strings) detected in the &#8216;stats&#8217; object</td>
+</tr>
+</tbody>
+</table>
+<p>... rubric:: Notes</p>
+<p>If the dv dictionary have been saved to a matlab file and than
+reloaded, it is supposed that the stats onìbjects have been flattened.
+For instance, this can be achieved doing the reload with the function
+<a class="reference internal" href="miic.core.miic_utils.mat_to_ndarray.html#miic.core.miic_utils.mat_to_ndarray" title="miic.core.miic_utils.mat_to_ndarray"><code class="xref py py-func docutils literal"><span class="pre">mat_to_ndarray()</span></code></a> setting the flag
+flatten to True (this is the default value)</p>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="miic.core.miic_utils.create_panel.html" title="miic.core.miic_utils.create_panel"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="miic.core.miic_utils.corr_mat_check.html" title="miic.core.miic_utils.corr_mat_check"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">MIIC 1.0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../core.html" >MIIC Library Reference</a> &raquo;</li>
+          <li class="nav-item nav-item-2"><a href="../miic_utils.html" >Utilities</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2012, Eraldo Pomponi.
+      Last updated on 2016-03-02T16:12:50.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </div>
+  </body>
+</html>

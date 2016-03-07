@@ -1,0 +1,6 @@
+miic.core.corr_fun.merge_id
+===========================
+
+.. currentmodule:: miic.core.corr_fun
+
+.. autofunction:: merge_id

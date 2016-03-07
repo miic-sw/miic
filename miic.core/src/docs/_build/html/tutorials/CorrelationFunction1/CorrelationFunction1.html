@@ -1,0 +1,174 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Basics &mdash; MIIC 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="MIIC 1.0 documentation" href="../../index.html" />
+    <link rel="up" title="Ambient Noise Correlation" href="../index.html" />
+    <link rel="next" title="Pre-Processing" href="../CorrelationFunction2/CorrelationFunction2.html" />
+    <link rel="prev" title="Ambient Noise Correlation" href="../index.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../CorrelationFunction2/CorrelationFunction2.html" title="Pre-Processing"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="../index.html" title="Ambient Noise Correlation"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">MIIC 1.0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Ambient Noise Correlation</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Basics</a><ul>
+<li><a class="reference internal" href="#introduction">Introduction</a></li>
+<li><a class="reference internal" href="#correlation-function">Correlation Function</a><ul>
+<li><a class="reference internal" href="#bc-implementation">BC implementation</a></li>
+<li><a class="reference internal" href="#python-code">Python Code</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/tutorials/CorrelationFunction1/CorrelationFunction1.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="basics">
+<span id="basics-tutorial"></span><h1>Basics<a class="headerlink" href="#basics" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
+<p>The <a class="reference external" href="http://theo1.geo.uni-leipzig.de/trac">MIIC Software Suite</a> is a library of python functions for data processing in seismic interferometry. It features a graphic user interface based on the Enthought <a class="reference external" href="http://code.enthought.com/projects/block_canvas/">BlockCanvas</a> Project. The MIIC suit is created within the <a class="reference external" href="http://www.bmbf.de/">BMBF</a> funded research and development project on <em>Monitoring and Imaging based on Interferometric Concepts</em> <a class="reference external" href="http://theo1.geo.uni-leipzig.de">MIIC</a>.</p>
+<p>In this tutorial we explain the use of the GUI in parallel to the command line functions.</p>
+</div>
+<div class="section" id="correlation-function">
+<h2>Correlation Function<a class="headerlink" href="#correlation-function" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="bc-implementation">
+<h3>BC implementation<a class="headerlink" href="#bc-implementation" title="Permalink to this headline">¶</a></h3>
+<p>The most fundamental operation in seismic interferometry is the correlation of seismic records. In the most simple case
+one wishes to correalte two time series. This is implemented in the BC project described in the following section.</p>
+<div class="figure align-center" id="id1">
+<a class="reference internal image-reference" href="../../_images/CorrelationFunction1.png"><img alt="BC implementation of simple signal correlation" src="../../_images/CorrelationFunction1.png" style="width: 90%;" /></a>
+<p class="caption"><span class="caption-text">Block structure of the BC implementation of a correlation between two time series</span></p>
+</div>
+<p>The project consist of two <a class="reference internal" href="../../modules/alpha_mod.html#miic.core.alpha_mod.stream_read" title="miic.core.alpha_mod.stream_read"><code class="xref py py-class docutils literal"><span class="pre">stream_read</span></code></a> blocks that take a filename as input and deliver an <code class="xref py py-class docutils literal"><span class="pre">Stream</span></code> object.
+These two objects are combined in the <a class="reference internal" href="../../modules/autogen/miic.core.stream.stream_combine.html#miic.core.stream.stream_combine" title="miic.core.stream.stream_combine"><code class="xref py py-class docutils literal"><span class="pre">stream_combine</span></code></a> block. The variable <code class="docutils literal"><span class="pre">st11</span></code> now is a stream that contains two traces
+which are passed to the <a class="reference internal" href="../../modules/autogen/miic.core.corr_fun.corr_trace_fun.html#miic.core.corr_fun.corr_trace_fun" title="miic.core.corr_fun.corr_trace_fun"><code class="xref py py-class docutils literal"><span class="pre">corr_trace_fun</span></code></a> block that correalates the traces in the stream. In case the stream contains
+many traces it is handy to be able to specify the combinations of the traces that are to be correlated. This feature is
+provided by the <code class="docutils literal"><span class="pre">combinations</span></code> block that outputs a list of tuples to <a class="reference internal" href="../../modules/autogen/miic.core.corr_fun.corr_trace_fun.html#miic.core.corr_fun.corr_trace_fun" title="miic.core.corr_fun.corr_trace_fun"><code class="xref py py-class docutils literal"><span class="pre">corr_trace_fun</span></code></a> block. The output of <code class="docutils literal"><span class="pre">Corr_trace_fun</span></code>
+is again a stream that contains as much correlation functions as combinations are passed. <a class="reference internal" href="../../modules/autogen/miic.core.corr_fun.corr_trace_fun.html#miic.core.corr_fun.corr_trace_fun" title="miic.core.corr_fun.corr_trace_fun"><code class="xref py py-class docutils literal"><span class="pre">corr_trace_fun</span></code></a> modifies the
+metainformation in the stream to be appropriate for a correlation function. The stream can either be plotted or saved.
+Because of the modified metainformation the stanard seismological dataformats are not suitable to store the stream of
+correlation functions. The <a class="reference internal" href="../../modules/autogen/miic.core.miic_utils.convert_to_matlab.html#miic.core.miic_utils.convert_to_matlab" title="miic.core.miic_utils.convert_to_matlab"><code class="xref py py-class docutils literal"><span class="pre">convert_to_matlab</span></code></a> function provides the possibility to save the individual
+traces in a stream into individual <code class="docutils literal"><span class="pre">matlab.mat</span></code> files together with the required metainformation.</p>
+</div>
+<div class="section" id="python-code">
+<h3>Python Code<a class="headerlink" href="#python-code" title="Permalink to this headline">¶</a></h3>
+<p>The project implemented above can be exported as the following python code.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">miic.core.miic_utils</span> <span class="kn">import</span> <span class="n">combinations</span><span class="p">,</span> <span class="n">convert_to_matlab</span> 
+<span class="kn">from</span> <span class="nn">miic.core.corr_fun</span> <span class="kn">import</span> <span class="n">corr_trace_fun</span> 
+<span class="kn">from</span> <span class="nn">miic.core.alpha_mod</span> <span class="kn">import</span> <span class="n">stream_read</span> 
+<span class="kn">from</span> <span class="nn">miic.core.stream</span> <span class="kn">import</span> <span class="n">stream_combine</span>
+
+<span class="n">comb2</span> <span class="o">=</span> <span class="n">combinations</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="s">&#39;Full-corr&#39;</span><span class="p">)</span> 
+<span class="n">st2</span><span class="p">,</span> <span class="n">n_trace2</span><span class="p">,</span> <span class="n">base_name2</span><span class="p">,</span> <span class="n">start_time2</span> <span class="o">=</span> <span class="n">stream_read</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="s">&#39;./ktn_110331_00.mseed&#39;</span><span class="p">,</span> <span class="n">format</span><span class="o">=</span><span class="s">&#39;None (Automatic)&#39;</span><span class="p">,</span> <span class="n">example</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span> 
+<span class="n">st1</span><span class="p">,</span> <span class="n">n_trace1</span><span class="p">,</span> <span class="n">base_name1</span><span class="p">,</span> <span class="n">start_time1</span> <span class="o">=</span> <span class="n">stream_read</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="s">&#39;./ktn_110331_00.mseed&#39;</span><span class="p">,</span> <span class="n">format</span><span class="o">=</span><span class="s">&#39;None (Automatic)&#39;</span><span class="p">,</span> <span class="n">example</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span> 
+<span class="n">st11</span> <span class="o">=</span> <span class="n">stream_combine</span><span class="p">(</span><span class="n">st1</span><span class="p">,</span> <span class="n">st2</span><span class="p">)</span> 
+<span class="n">corrData2</span> <span class="o">=</span> <span class="n">corr_trace_fun</span><span class="p">(</span><span class="n">st11</span><span class="p">,</span> <span class="n">comb</span><span class="o">=</span><span class="n">comb2</span><span class="p">,</span> <span class="n">normal</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span> 
+<span class="n">convert_to_matlab</span><span class="p">(</span><span class="n">corrData2</span><span class="p">,</span> <span class="s">&#39;correlation&#39;</span><span class="p">,</span> <span class="s">&#39;./results&#39;</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">)</span>
+<span class="c">#EOF</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../CorrelationFunction2/CorrelationFunction2.html" title="Pre-Processing"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="../index.html" title="Ambient Noise Correlation"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">MIIC 1.0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Ambient Noise Correlation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2012, Eraldo Pomponi.
+      Last updated on 2016-03-02T14:12:35.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </div>
+  </body>
+</html>

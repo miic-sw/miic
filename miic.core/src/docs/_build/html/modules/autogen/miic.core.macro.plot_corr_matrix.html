@@ -1,0 +1,154 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>miic.core.macro.plot_corr_matrix &mdash; MIIC 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="MIIC 1.0 documentation" href="../../index.html" />
+    <link rel="up" title="Macros" href="../macro.html" />
+    <link rel="next" title="miic.core.macro.plot_dvs_macro" href="miic.core.macro.plot_dvs_macro.html" />
+    <link rel="prev" title="miic.core.macro.one_step_vchange_estimate_and_plot" href="miic.core.macro.one_step_vchange_estimate_and_plot.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="miic.core.macro.plot_dvs_macro.html" title="miic.core.macro.plot_dvs_macro"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="miic.core.macro.one_step_vchange_estimate_and_plot.html" title="miic.core.macro.one_step_vchange_estimate_and_plot"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">MIIC 1.0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../core.html" >MIIC Library Reference</a> &raquo;</li>
+          <li class="nav-item nav-item-2"><a href="../macro.html" accesskey="U">Macros</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/modules/autogen/miic.core.macro.plot_corr_matrix.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="miic-core-macro-plot-corr-matrix">
+<h1>miic.core.macro.plot_corr_matrix<a class="headerlink" href="#miic-core-macro-plot-corr-matrix" title="Permalink to this headline">¶</a></h1>
+<dl class="function">
+<dt id="miic.core.macro.plot_corr_matrix">
+<code class="descname">plot_corr_matrix</code><span class="sig-paren">(</span><em>base_dir='.'</em>, <em>save_dir='./img'</em>, <em>center_win_len=500</em>, <em>axis=1</em>, <em>plot_selected_curves=False</em>, <em>selected_curves_idx_list=[]</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/miic/core/macro.html#plot_corr_matrix"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#miic.core.macro.plot_corr_matrix" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot all correlation matrixes stored in a folder as .mat file</p>
+<p>This is a basic function to plot the correlation matrixes stored in a
+folder as .mat files.
+It loads each matrix, check if time information are available in the same
+file and then creates a <code class="docutils literal"><span class="pre">contourf</span></code> plot with 20 levels.
+It also add simple lables to each axis and a generic title &#8220;Correlation
+Matrix&#8221;.
+It is also possible to generate, at the same time, plots of a list of
+interesting correlation functions just setting
+<code class="docutils literal"><span class="pre">plot_selected_curves==True</span></code> and passing the list of indexes in the
+parameter <code class="docutils literal"><span class="pre">selected_curves_idx_list</span></code>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>base_dir</strong> (<em>directory</em>) &#8211; Where the auto-cross correlation matrix are stored</li>
+<li><strong>save_dir</strong> (<em>directory</em>) &#8211; Directory where to save the resulting images</li>
+<li><strong>center_win_len</strong> (<em>int</em>) &#8211; How many samples will be taken from the central part
+of the correlation function</li>
+<li><strong>axis</strong> (<em>int</em>) &#8211; On which axis apltly the selection
+(axis==1 cols, axis==1 rows)</li>
+<li><strong>plot_selected_curves</strong> (<em>bool</em>) &#8211; If it is requested to plot single correlation
+functions</li>
+<li><strong>selected_curves_idx_list</strong> (<em>list of int</em>) &#8211; The list of index (in the selected axis)
+of the curves that will be ploted</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="miic.core.macro.plot_dvs_macro.html" title="miic.core.macro.plot_dvs_macro"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="miic.core.macro.one_step_vchange_estimate_and_plot.html" title="miic.core.macro.one_step_vchange_estimate_and_plot"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">MIIC 1.0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../core.html" >MIIC Library Reference</a> &raquo;</li>
+          <li class="nav-item nav-item-2"><a href="../macro.html" >Macros</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2012, Eraldo Pomponi.
+      Last updated on 2016-03-02T16:12:50.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </div>
+  </body>
+</html>

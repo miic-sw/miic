@@ -1,0 +1,197 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>miic.core.stream.read_from_filesystem &mdash; MIIC 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="MIIC 1.0 documentation" href="../../index.html" />
+    <link rel="up" title="Manipulation of Data Streams" href="../stream.html" />
+    <link rel="next" title="miic.core.stream.stream_combine" href="miic.core.stream.stream_combine.html" />
+    <link rel="prev" title="miic.core.stream.trace_sym_pad_shrink_to_npts" href="miic.core.stream.trace_sym_pad_shrink_to_npts.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="miic.core.stream.stream_combine.html" title="miic.core.stream.stream_combine"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="miic.core.stream.trace_sym_pad_shrink_to_npts.html" title="miic.core.stream.trace_sym_pad_shrink_to_npts"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">MIIC 1.0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../core.html" >MIIC Library Reference</a> &raquo;</li>
+          <li class="nav-item nav-item-2"><a href="../stream.html" accesskey="U">Manipulation of Data Streams</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/modules/autogen/miic.core.stream.read_from_filesystem.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="miic-core-stream-read-from-filesystem">
+<h1>miic.core.stream.read_from_filesystem<a class="headerlink" href="#miic-core-stream-read-from-filesystem" title="Permalink to this headline">¶</a></h1>
+<dl class="function">
+<dt id="miic.core.stream.read_from_filesystem">
+<code class="descname">read_from_filesystem</code><span class="sig-paren">(</span><em>ID</em>, <em>starttime</em>, <em>endtime</em>, <em>fs</em>, <em>trim=True</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/miic/core/stream.html#read_from_filesystem"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#miic.core.stream.read_from_filesystem" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function to read data from a filesystem with a give file structure
+just by specifying ID and time interval.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>ID</strong> (<em>string</em>) &#8211; seedID of the channel to read (NET.STA.LOC.CHA)</li>
+<li><strong>starttime</strong> (<em>datetime.datetime</em>) &#8211; start time</li>
+<li><strong>endtime</strong> (<em>datetime.datetime</em>) &#8211; end time</li>
+<li><strong>fs</strong> (<em>list</em>) &#8211; file structure descriptor</li>
+<li><strong>trim</strong> (<em>bool</em>) &#8211; switch for trimming of the stream</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first"><cite>obspy.stream</cite></p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">data stream of requested data</p>
+</td>
+</tr>
+</tbody>
+</table>
+<p>If the switch for trimming is False the whole stream in the files is
+returned.</p>
+<p><strong>File structure descriptor</strong>
+fs is a list of strings or other lists indicating the elements in the
+file structure. Each item of this list is translated in one level of the
+directory structure. The first element is a string indicating the
+base_directory. The following elements can be strings to indicate
+one of the following</p>
+<blockquote>
+<div><ul class="simple">
+<li>%X as defined by datetime.strftime indicating an element of
+the time. e.g. %H</li>
+<li>%NET: network name</li>
+<li>%STA: station name</li>
+<li>%CHA: channel name</li>
+<li>%LOC: location</li>
+<li>string with out %</li>
+</ul>
+</div></blockquote>
+<p>The format strings are replaced either with an element of the starttime
+if they correspond to a datetime specifyer or with the respective part
+of the seedID. A string withouta % sign is not changed. If more than one
+format string is required in one directory level the need to be
+separated within a sublist.</p>
+<p>A format string for the ID can be followed by a pair of braces including
+two strings that will be used to replace the first string with the
+second. This cna be used if the filename contains part of the ID in a
+different form.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Exapmple:</th><td class="field-body"></td>
+</tr>
+</tbody>
+</table>
+<p>Example for a station &#8216;GJE&#8217; in network &#8216;HEJSL&#8217; with channel &#8216;BHZ&#8217; and
+location &#8216;00&#8217; with the start time 2010-12-24_11:36:30 and <code class="docutils literal"><span class="pre">fs</span> <span class="pre">=</span> <span class="pre">['base_dir','%Y','%b','%NET,['%j','_','%STA'','_T_',&quot;%CHA('BH','')&quot;,'.mseed']]</span></code>
+will be translated in a linux filename
+<code class="docutils literal"><span class="pre">base_dir/2010/Nov/HEJSL/317_GJE_T_Z.mseed</span></code></p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Note:</th><td class="field-body"></td>
+</tr>
+</tbody>
+</table>
+<p>If the data contain traces of different channels in the same file with
+different start and endtimes the routine will not work properly when the
+period spans multiple files.</p>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="miic.core.stream.stream_combine.html" title="miic.core.stream.stream_combine"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="miic.core.stream.trace_sym_pad_shrink_to_npts.html" title="miic.core.stream.trace_sym_pad_shrink_to_npts"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">MIIC 1.0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../core.html" >MIIC Library Reference</a> &raquo;</li>
+          <li class="nav-item nav-item-2"><a href="../stream.html" >Manipulation of Data Streams</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2012, Eraldo Pomponi.
+      Last updated on 2016-03-07T14:54:14.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </div>
+  </body>
+</html>

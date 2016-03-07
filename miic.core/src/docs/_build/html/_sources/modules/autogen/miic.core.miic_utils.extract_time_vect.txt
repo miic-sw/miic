@@ -1,0 +1,6 @@
+miic.core.miic_utils.extract_time_vect
+======================================
+
+.. currentmodule:: miic.core.miic_utils
+
+.. autofunction:: extract_time_vect

@@ -1,0 +1,1555 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>miic.core.stretch_mod &mdash; MIIC 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="top" title="MIIC 1.0 documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MIIC 1.0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for miic.core.stretch_mod</h1><div class="highlight"><pre>
+<span class="c"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">@author:</span>
+<span class="sd">Eraldo Pomponi</span>
+
+<span class="sd">@copyright:</span>
+<span class="sd">The MIIC Development Team (eraldo.pomponi@uni-leipzig.de)</span>
+
+<span class="sd">@license:</span>
+<span class="sd">GNU Lesser General Public License, Version 3</span>
+<span class="sd">(http://www.gnu.org/copyleft/lesser.html)</span>
+
+<span class="sd">Created on Aug 19, 2011</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="c"># Main imports</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">scipy.ndimage</span>
+<span class="kn">from</span> <span class="nn">scipy.interpolate</span> <span class="kn">import</span> <span class="n">UnivariateSpline</span>
+<span class="kn">from</span> <span class="nn">pandas</span> <span class="kn">import</span> <span class="n">DataFrame</span><span class="p">,</span> <span class="n">Series</span><span class="p">,</span> <span class="n">Panel</span>
+
+<span class="c"># ETS imports</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">BC_UI</span> <span class="o">=</span> <span class="bp">True</span>
+    <span class="kn">from</span> <span class="nn">traits.api</span> <span class="kn">import</span> <span class="n">HasTraits</span><span class="p">,</span> <span class="n">Int</span><span class="p">,</span> <span class="n">Float</span><span class="p">,</span> <span class="n">Bool</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Enum</span>
+    <span class="kn">from</span> <span class="nn">traitsui.api</span> <span class="kn">import</span> <span class="n">View</span><span class="p">,</span> <span class="n">Item</span><span class="p">,</span> <span class="n">Tabbed</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="n">BC_UI</span> <span class="o">=</span> <span class="bp">False</span>
+    <span class="k">pass</span>
+    
+<span class="kn">from</span> <span class="nn">obspy.signal.invsim</span> <span class="kn">import</span> <span class="n">cosTaper</span>
+
+<span class="kn">from</span> <span class="nn">miic.core.miic_utils</span> <span class="kn">import</span> <span class="n">nextpow2</span><span class="p">,</span> <span class="n">from_str_to_datetime</span><span class="p">,</span> <span class="n">dv_check</span><span class="p">,</span> \
+    <span class="n">flatten_recarray</span><span class="p">,</span> <span class="n">convert_time</span>
+
+
+<span class="k">def</span> <span class="nf">_stretch_mat_creation</span><span class="p">(</span><span class="n">ref_tr</span><span class="p">,</span> <span class="n">str_range</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">nstr</span><span class="o">=</span><span class="mi">100</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Matrix of stretched instance of a reference trace.</span>
+
+<span class="sd">    The reference trace is stretched using a cubic spline interpolation</span>
+<span class="sd">    algorithm form ``-str_range`` to ``str_range`` (in %) for totally</span>
+<span class="sd">    ``nstr`` steps.</span>
+<span class="sd">    The output of this function is a matrix containing the stretched version</span>
+<span class="sd">    of the reference trace (one each row) (``new_m``) and the corresponding</span>
+<span class="sd">    stretching amount (``deltas``).</span>
+
+<span class="sd">    :type ref_tr: :class:`~numpy.ndarray`</span>
+<span class="sd">    :param ref_tr: 1d ndarray. The reference trace that will be stretched</span>
+<span class="sd">    :type str_range: float</span>
+<span class="sd">    :param str_range: Amount, in percent, of the desired stretching (one side)</span>
+<span class="sd">    :type nstr: int</span>
+<span class="sd">    :param nstr: Number of stretching steps (one side)</span>
+
+<span class="sd">    :rtype: :class:`~numpy.ndarray`, float</span>
+<span class="sd">    :return:</span>
+<span class="sd">        **new_m**:</span>
+<span class="sd">            2d ndarray of stretched version of the reference trace.</span>
+<span class="sd">            Its size is ``(nstr,len(ref_tr)/2)`` if ``signle_side==True``</span>
+<span class="sd">            otherwise it is ``(nstr,len(ref_tr))``</span>
+<span class="sd">        **deltas**: List of float, stretch amount for each row</span>
+<span class="sd">            of ``new_m``</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">ref_tr</span><span class="p">)</span>
+    <span class="n">samples_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="o">-</span> <span class="n">n</span> <span class="o">//</span> <span class="mi">2</span>
+    <span class="n">deltas</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="n">str_range</span><span class="p">,</span> <span class="n">str_range</span><span class="p">,</span> <span class="n">nstr</span><span class="p">)</span>
+    <span class="n">str_timemat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nstr</span><span class="p">,</span> <span class="n">n</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">nstr</span><span class="p">):</span>
+        <span class="n">str_timemat</span><span class="p">[</span><span class="n">ii</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">samples_idx</span> <span class="o">/</span> <span class="n">deltas</span><span class="p">[</span><span class="n">nstr</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">ii</span><span class="p">]</span>
+    <span class="n">new_m</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">str_timemat</span><span class="p">)</span>
+    <span class="n">coord</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">2</span><span class="p">,</span> <span class="n">n</span><span class="p">))</span>
+    <span class="k">for</span> <span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">row</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">str_timemat</span><span class="p">):</span>
+        <span class="n">coord</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">row</span> <span class="o">+</span> <span class="n">n</span> <span class="o">//</span> <span class="mi">2</span>
+        <span class="n">new_m</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">ndimage</span><span class="o">.</span><span class="n">map_coordinates</span><span class="p">(</span>\
+                                    <span class="n">ref_tr</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">ref_tr</span><span class="p">),</span> <span class="mi">1</span><span class="p">)),</span> <span class="n">coord</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">new_m</span><span class="p">,</span> <span class="n">deltas</span>
+
+
+<span class="k">if</span> <span class="n">BC_UI</span><span class="p">:</span>
+    <span class="k">class</span> <span class="nc">_stretch_mat_creation_view</span><span class="p">(</span><span class="n">HasTraits</span><span class="p">):</span>
+        <span class="n">str_range</span> <span class="o">=</span> <span class="n">Float</span><span class="p">(</span><span class="mf">0.1</span><span class="p">)</span>
+        <span class="n">nstr</span> <span class="o">=</span> <span class="n">Int</span><span class="p">(</span><span class="mi">100</span><span class="p">)</span>
+        <span class="n">single_side</span> <span class="o">=</span> <span class="n">Bool</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
+    
+        <span class="n">trait_view</span> <span class="o">=</span> <span class="n">View</span><span class="p">(</span><span class="n">Item</span><span class="p">(</span><span class="s">&#39;str_range&#39;</span><span class="p">),</span>
+                          <span class="n">Item</span><span class="p">(</span><span class="s">&#39;nstr&#39;</span><span class="p">),</span>
+                          <span class="n">Item</span><span class="p">(</span><span class="s">&#39;single_side&#39;</span><span class="p">))</span>
+
+
+<div class="viewcode-block" id="velocity_change_estimete"><a class="viewcode-back" href="../../../modules/autogen/miic.core.stretch_mod.velocity_change_estimete.html#miic.core.stretch_mod.velocity_change_estimete">[docs]</a><span class="k">def</span> <span class="nf">velocity_change_estimete</span><span class="p">(</span><span class="n">mat</span><span class="p">,</span> <span class="n">tw</span><span class="p">,</span> <span class="n">strrefmat</span><span class="p">,</span> <span class="n">strvec</span><span class="p">,</span> <span class="n">sides</span><span class="o">=</span><span class="s">&#39;both&#39;</span><span class="p">,</span>
+                             <span class="n">return_sim_mat</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">remove_nans</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Velocity change estimate through stretching and comparison.</span>
+
+<span class="sd">    Velocity changes are estimated comparing each correlation function stored</span>
+<span class="sd">    in the ``mat`` matrix (one for each row) with ``strrefmat.shape[0]``</span>
+<span class="sd">    stretched versions  of a reference trace stored in ``strrefmat``.</span>
+<span class="sd">    The stretch amount for each row of ``strrefmat`` must be passed in the</span>
+<span class="sd">    ``strvec`` vector.</span>
+<span class="sd">    The best match (stretch amount and corresponding correlation value) is</span>
+<span class="sd">    calculated on different time windows (each row of ``tw`` is a different</span>
+<span class="sd">    one) instead of on the whole trace.</span>
+
+<span class="sd">    :type mat: :class:`~numpy.ndarray`</span>
+<span class="sd">    :param mat: 2d ndarray containing the correlation functions.</span>
+<span class="sd">        One for each row.</span>
+<span class="sd">    :type tw: :class:`~numpy.ndarray` of int</span>
+<span class="sd">    :param tw: 2d ndarray of time windows to be use in the velocity change</span>
+<span class="sd">         estimate.</span>
+<span class="sd">    :type strrefmat: :class:`~numpy.ndarray`</span>
+<span class="sd">    :param strrefmat: 2D array containing stretched version of the reference</span>
+<span class="sd">         matrix</span>
+<span class="sd">    :type strvec: :class:`~numpy.ndarray` or list</span>
+<span class="sd">    :param strvec: Stretch amount for each row of ``strrefmat``</span>
+<span class="sd">    :type sides: string</span>
+<span class="sd">    :param sides: Side of the reference matrix to be used for the velocity</span>
+<span class="sd">        change estimate (&#39;both&#39; | &#39;left&#39; | &#39;right&#39; | &#39;single&#39;)</span>
+<span class="sd">    :type remove_nans: bool</span>
+<span class="sd">    :param remove_nans: If `True` applay :func:`~numpy.nan_to_num` to the</span>
+<span class="sd">        given correlation matrix before any other operation.</span>
+
+<span class="sd">    :rtype: Dictionary</span>
+<span class="sd">    :return: **dv**: Dictionary with the following keys</span>
+
+<span class="sd">        *corr*: 2d ndarray containing the correlation value for the best</span>
+<span class="sd">            match for each row of ``mat`` and for each time window.</span>
+<span class="sd">            Its dimension is: :func:(len(tw),mat.shape[1])</span>
+<span class="sd">        *value*: 2d ndarray containing the stretch amount corresponding to</span>
+<span class="sd">            the best match for each row of ``mat`` and for each time window.</span>
+<span class="sd">            Its dimension is: :func:(len(tw),mat.shape[1])</span>
+<span class="sd">        *sim_mat*: 3d ndarray containing the similarity matricies that</span>
+<span class="sd">            indicate the correlation coefficient with the reference for the</span>
+<span class="sd">            different time windows, different times and different amount of</span>
+<span class="sd">            stretching.</span>
+<span class="sd">            Its dimension is: :py:func:`(len(tw),mat.shape[1],len(strvec))`</span>
+<span class="sd">        *second_axis*: It contains the stretch vector used for the velocity</span>
+<span class="sd">            change estimate.</span>
+<span class="sd">        *vale_type*: It is equal to &#39;stretch&#39; and specify the content of</span>
+<span class="sd">            the returned &#39;value&#39;.</span>
+<span class="sd">        *method*: It is equal to &#39;single_ref&#39; and specify in which &quot;way&quot; the</span>
+<span class="sd">            values have been obtained.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c"># Mat must be a 2d vector in every case so</span>
+    <span class="n">mat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span><span class="n">mat</span><span class="p">)</span>
+
+    <span class="k">assert</span><span class="p">(</span><span class="n">strrefmat</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">mat</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+    <span class="k">if</span> <span class="n">remove_nans</span><span class="p">:</span>
+        <span class="n">mat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan_to_num</span><span class="p">(</span><span class="n">mat</span><span class="p">)</span>
+
+    <span class="n">center_p</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">((</span><span class="n">mat</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mf">1.</span><span class="p">)</span> <span class="o">/</span> <span class="mf">2.</span><span class="p">)</span>
+
+    <span class="n">nstr</span> <span class="o">=</span> <span class="n">strrefmat</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="n">corr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">tw</span><span class="p">),</span> <span class="n">mat</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+    <span class="n">dt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">tw</span><span class="p">),</span> <span class="n">mat</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+    <span class="n">sim_mat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="n">mat</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">len</span><span class="p">(</span><span class="n">strvec</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">tw</span><span class="p">)])</span>
+
+    <span class="k">for</span> <span class="p">(</span><span class="n">ii</span><span class="p">,</span> <span class="n">ctw</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">tw</span><span class="p">):</span>
+
+        <span class="k">if</span> <span class="n">sides</span> <span class="o">==</span> <span class="s">&#39;both&#39;</span><span class="p">:</span>
+            <span class="n">ctw</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">((</span><span class="n">center_p</span> <span class="o">-</span> <span class="n">ctw</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
+                             <span class="n">center_p</span> <span class="o">+</span> <span class="n">ctw</span><span class="p">))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">sides</span> <span class="o">==</span> <span class="s">&#39;left&#39;</span><span class="p">:</span>
+            <span class="n">ctw</span> <span class="o">=</span> <span class="p">(</span><span class="n">center_p</span> <span class="o">-</span> <span class="n">ctw</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">sides</span> <span class="o">==</span> <span class="s">&#39;right&#39;</span><span class="p">:</span>
+            <span class="n">ctw</span> <span class="o">=</span> <span class="p">(</span><span class="n">center_p</span> <span class="o">+</span> <span class="n">ctw</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">sides</span> <span class="o">==</span> <span class="s">&#39;single&#39;</span><span class="p">:</span>
+            <span class="n">ctw</span> <span class="o">=</span> <span class="n">ctw</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">print</span> <span class="s">&#39;sides = </span><span class="si">%s</span><span class="s"> not a valid option. Using sides = single&#39;</span> <span class="o">%</span> <span class="n">sides</span>
+
+        <span class="n">mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">mat</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],))</span>
+        <span class="n">mask</span><span class="p">[</span><span class="n">ctw</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+
+        <span class="n">ref_mask_mat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">mask</span><span class="p">,</span> <span class="p">(</span><span class="n">nstr</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="n">mat_mask_mat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">mask</span><span class="p">,</span> <span class="p">(</span><span class="n">mat</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">1</span><span class="p">))</span>
+
+        <span class="n">first</span> <span class="o">=</span> <span class="n">mat</span> <span class="o">*</span> <span class="n">mat_mask_mat</span>
+        <span class="n">second</span> <span class="o">=</span> <span class="n">strrefmat</span> <span class="o">*</span> <span class="n">ref_mask_mat</span>
+
+        <span class="n">dprod</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">first</span><span class="p">,</span> <span class="n">second</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+
+        <span class="c"># Normalization</span>
+        <span class="n">f_sq</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">first</span> <span class="o">**</span> <span class="mi">2</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">s_sq</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">second</span> <span class="o">**</span> <span class="mi">2</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="n">f_sq</span> <span class="o">=</span> <span class="n">f_sq</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">f_sq</span><span class="p">))</span>
+        <span class="n">s_sq</span> <span class="o">=</span> <span class="n">s_sq</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">s_sq</span><span class="p">))</span>
+
+        <span class="n">den</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">f_sq</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">s_sq</span><span class="p">))</span>
+
+        <span class="n">tmp</span> <span class="o">=</span> <span class="n">dprod</span> <span class="o">/</span> <span class="n">den</span>
+        <span class="n">sim_mat</span><span class="p">[:,</span> <span class="p">:,</span> <span class="n">ii</span><span class="p">]</span> <span class="o">=</span> <span class="n">tmp</span>
+
+        <span class="n">tmp_corr_vect</span> <span class="o">=</span> <span class="n">tmp</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">corr</span><span class="p">[</span><span class="n">ii</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">tmp_corr_vect</span>
+        <span class="n">dt</span><span class="p">[</span><span class="n">ii</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">strvec</span><span class="p">[</span><span class="n">tmp</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)]</span>
+
+        <span class="c"># Set dt to NaN where the correlation is NaN instead of having it equal</span>
+        <span class="c"># to one of the two stretch_range limits</span>
+        <span class="n">dt</span><span class="p">[</span><span class="n">ii</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">tmp_corr_vect</span><span class="p">)]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+
+    <span class="n">dv</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;corr&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">corr</span><span class="p">),</span>
+          <span class="s">&#39;value&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">dt</span><span class="p">),</span>
+          <span class="s">&#39;second_axis&#39;</span><span class="p">:</span> <span class="n">strvec</span><span class="p">,</span>
+          <span class="s">&#39;value_type&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="s">&#39;stretch&#39;</span><span class="p">]),</span>
+          <span class="s">&#39;method&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="s">&#39;single_ref&#39;</span><span class="p">])}</span>
+
+    <span class="k">if</span> <span class="n">return_sim_mat</span><span class="p">:</span>
+        <span class="n">dv</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s">&#39;sim_mat&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">sim_mat</span><span class="p">)})</span>
+
+    <span class="k">return</span> <span class="n">dv</span>
+
+</div>
+<span class="k">if</span> <span class="n">BC_UI</span><span class="p">:</span>
+    <span class="k">class</span> <span class="nc">_velocity_change_estimete_view</span><span class="p">(</span><span class="n">HasTraits</span><span class="p">):</span>
+        <span class="n">sides</span> <span class="o">=</span> <span class="n">Enum</span><span class="p">(</span><span class="s">&#39;both&#39;</span><span class="p">,</span> <span class="s">&#39;left&#39;</span><span class="p">,</span> <span class="s">&#39;right&#39;</span><span class="p">,</span> <span class="s">&#39;single&#39;</span><span class="p">)</span>
+        <span class="n">trait_view</span> <span class="o">=</span> <span class="n">View</span><span class="p">(</span><span class="n">Item</span><span class="p">(</span><span class="s">&#39;sides&#39;</span><span class="p">))</span>
+
+
+<div class="viewcode-block" id="time_shift_estimate"><a class="viewcode-back" href="../../../modules/autogen/miic.core.stretch_mod.time_shift_estimate.html#miic.core.stretch_mod.time_shift_estimate">[docs]</a><span class="k">def</span> <span class="nf">time_shift_estimate</span><span class="p">(</span><span class="n">corr_data</span><span class="p">,</span> <span class="n">ref_trc</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">tw</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">shift_range</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+                        <span class="n">shift_steps</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">single_sided</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+                        <span class="n">return_sim_mat</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">remove_nans</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Time shift estimate through shifting and comparison.</span>
+
+<span class="sd">    This function is intended to estimate shift of traces as they can occur</span>
+<span class="sd">    in noise cross-correlation in case of drifting clocks.</span>
+
+<span class="sd">    Time shifts are estimated comparing each correlation function stored</span>
+<span class="sd">    in the ``corr_data`` matrix (one for each row) with ``shift_steps``</span>
+<span class="sd">    shifted versions  of reference trace stored in ``ref_trc``.</span>
+<span class="sd">    The maximum amount of shifting may be passed in ``shift_range``.</span>
+<span class="sd">    The best match (shifting amount and corresponding correlation value) is</span>
+<span class="sd">    calculated on different time windows. If ``tw = None`` the shifting is</span>
+<span class="sd">    estimated on the whole trace.</span>
+
+<span class="sd">    :type corr_data: :class:`~numpy.ndarray`</span>
+<span class="sd">    :param corr_data: 2d ndarray containing the correlation functions.</span>
+<span class="sd">        One for each row.</span>
+<span class="sd">    :type ref_trc: :class:`~numpy.ndarray`</span>
+<span class="sd">    :param ref_trc: 1D array containing the reference trace to be shifted and</span>
+<span class="sd">        compared to the individual traces in ``mat``</span>
+<span class="sd">    :type tw: list of :class:`~numpy.ndarray` of int</span>
+<span class="sd">    :param tw: list of 1D ndarrays holding the indices of sampels in the time</span>
+<span class="sd">        windows to be use in the time shift estimate. The sampels are counted</span>
+<span class="sd">        from the zero lag time with the index of the first sample being 0. If</span>
+<span class="sd">        ``tw = None`` the full time range is used.</span>
+<span class="sd">    :type shift_range: scalar</span>
+<span class="sd">    :param shift_range: Maximum amount of time shift in samples (in one</span>
+<span class="sd">        direction).</span>
+<span class="sd">        Shifting is tested in both directions from ``-shift_range`` to</span>
+<span class="sd">        ``shift_range``</span>
+<span class="sd">    :type shift_steps: scalar`</span>
+<span class="sd">    :param shift_steps: Number of shifted version to be tested. The increment</span>
+<span class="sd">            will be ``(2 * shift_range) / shift_steps``</span>
+<span class="sd">    :type sinlge_sided: boolean</span>
+<span class="sd">    :param single_sided: If ``True`` the zero lag time of the traces is in the</span>
+<span class="sd">        first sample. If ``False`` zero lag is assumed to be in the center of</span>
+<span class="sd">        the traces and the shifting is evaluated on the causal and acausal</span>
+<span class="sd">        parts of the traces separately and averaged. This is done to avoid bias</span>
+<span class="sd">        from velocity changes (stretching) in the case of strongly asymmetric</span>
+<span class="sd">        traces.</span>
+<span class="sd">    :type remove_nans: bool</span>
+<span class="sd">    :param remove_nans: If `True` applay :func:`~numpy.nan_to_num` to the</span>
+<span class="sd">        given correlation matrix before any other operation.</span>
+
+<span class="sd">    :rtype: Dictionary</span>
+<span class="sd">    :return: **dt**: Dictionary with the following keys</span>
+
+<span class="sd">        *corr*: :class:`~numpy.ndarray` 2d ndarray containing the correlation</span>
+<span class="sd">            value for the best match for each row of ``mat`` and for each</span>
+<span class="sd">            time window.</span>
+<span class="sd">            Its dimension is: :func:(len(tw),mat.shape[1])</span>
+<span class="sd">        *value*: :class:`~numpy.ndarray` 2d ndarray containing the amount of</span>
+<span class="sd">            shifting corresponding to the best match for each row of ``mat``</span>
+<span class="sd">            and for each time window. Shift is measured in units of the</span>
+<span class="sd">            sampling interval.</span>
+<span class="sd">            Its dimension is: :py:func:`(len(tw),mat.shape[1])`</span>
+<span class="sd">        *sim_mat*: 2d ndarray containing the similarity matrix that</span>
+<span class="sd">            indicate the time shift respect to the reference for the</span>
+<span class="sd">            selected time windows, for different times and different amount of</span>
+<span class="sd">            shift.</span>
+<span class="sd">            Its dimension is: :py:func:`(mat.shape[1],shift_steps)`</span>
+<span class="sd">        *second_axis*: It contains the shift vector used for the velocity</span>
+<span class="sd">            change estimate.</span>
+<span class="sd">        *vale_type*: It is equal to &#39;shift&#39; and specify the content of</span>
+<span class="sd">            the returned &#39;value&#39;.</span>
+<span class="sd">        *method*: It is equal to &#39;time_shift&#39; and specify in which &quot;way&quot; the</span>
+<span class="sd">            values have been obtained.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c"># Mat must be a 2d vector in every case so</span>
+    <span class="n">mat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span><span class="n">corr_data</span><span class="p">)</span>
+
+    <span class="c"># FIX: Trace back this problem to the original source and remove</span>
+    <span class="c"># this statement</span>
+    <span class="k">if</span> <span class="n">remove_nans</span><span class="p">:</span>
+        <span class="n">mat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan_to_num</span><span class="p">(</span><span class="n">mat</span><span class="p">)</span>
+
+    <span class="c"># generate the reference trace if not given (use the whole time span)</span>
+    <span class="k">if</span> <span class="n">ref_trc</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">ref_trc</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nansum</span><span class="p">(</span><span class="n">mat</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="o">/</span> <span class="n">mat</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="c"># generate time window if not given (use the full length of</span>
+    <span class="c"># the correlation trace)</span>
+    <span class="k">if</span> <span class="n">tw</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">single_sided</span><span class="p">:</span>
+            <span class="n">tw</span> <span class="o">=</span> <span class="n">time_windows_creation</span><span class="p">([</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="n">mat</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]])</span>
+        <span class="c"># if center is in the middle use only half the length for the</span>
+        <span class="c"># time window</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">tw</span> <span class="o">=</span> <span class="n">time_windows_creation</span><span class="p">([</span><span class="mi">0</span><span class="p">],</span>
+                                       <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">mat</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="mf">2.</span><span class="p">))])</span>
+
+    <span class="c"># taper and extend the reference trace to avoid interpolation</span>
+    <span class="c"># artefacts at the ends of the trace</span>
+    <span class="n">taper</span> <span class="o">=</span> <span class="n">cosTaper</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ref_trc</span><span class="p">),</span> <span class="mf">0.05</span><span class="p">)</span>
+    <span class="n">ref_trc</span> <span class="o">*=</span> <span class="n">taper</span>
+
+    <span class="c"># different values of shifting to be tested</span>
+    <span class="n">shifts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="n">shift_range</span><span class="p">,</span> <span class="n">shift_range</span><span class="p">,</span> <span class="n">shift_steps</span><span class="p">)</span>
+
+    <span class="c"># time axis</span>
+    <span class="n">time_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ref_trc</span><span class="p">))</span>
+
+    <span class="c"># create the array to hold the shifted traces</span>
+    <span class="n">ref_shift</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">shifts</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">ref_trc</span><span class="p">)))</span>
+
+    <span class="c"># create a spline object for the reference trace</span>
+    <span class="n">ref_tr_spline</span> <span class="o">=</span> <span class="n">UnivariateSpline</span><span class="p">(</span><span class="n">time_idx</span><span class="p">,</span> <span class="n">ref_trc</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="c"># evaluate the spline object at different points and put in the prepared</span>
+    <span class="c"># array</span>
+    <span class="k">for</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">this_shift</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">shifts</span><span class="p">):</span>
+        <span class="n">ref_shift</span><span class="p">[</span><span class="n">k</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">ref_tr_spline</span><span class="p">(</span><span class="n">time_idx</span> <span class="o">-</span> <span class="n">this_shift</span><span class="p">)</span>
+
+    <span class="c"># search best fit of the crosscorrs to one of the shifted ref_traces</span>
+    <span class="k">if</span> <span class="n">single_sided</span><span class="p">:</span>
+        <span class="n">vdict</span> <span class="o">=</span> <span class="n">velocity_change_estimete</span><span class="p">(</span><span class="n">mat</span><span class="p">,</span> <span class="n">tw</span><span class="p">,</span> <span class="n">ref_shift</span><span class="p">,</span>
+                                         <span class="n">shifts</span><span class="p">,</span> <span class="n">sides</span><span class="o">=</span><span class="s">&#39;single&#39;</span><span class="p">,</span>
+                                         <span class="n">return_sim_mat</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+                                         <span class="n">remove_nans</span><span class="o">=</span><span class="n">remove_nans</span><span class="p">)</span>
+        <span class="n">corr</span> <span class="o">=</span> <span class="n">vdict</span><span class="p">[</span><span class="s">&#39;corr&#39;</span><span class="p">]</span>
+        <span class="n">shift</span> <span class="o">=</span> <span class="n">vdict</span><span class="p">[</span><span class="s">&#39;value&#39;</span><span class="p">]</span>
+        <span class="n">sim_mat</span> <span class="o">=</span> <span class="n">vdict</span><span class="p">[</span><span class="s">&#39;sim_mat&#39;</span><span class="p">]</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c"># estimate shifts for causal and acausal part individually and avarage</span>
+        <span class="c"># to avoid apparent shift from velocity change and asymmetric</span>
+        <span class="c"># amplitudes</span>
+        <span class="n">lvdict</span> <span class="o">=</span> <span class="n">velocity_change_estimete</span><span class="p">(</span><span class="n">mat</span><span class="p">,</span> <span class="n">tw</span><span class="p">,</span> <span class="n">ref_shift</span><span class="p">,</span>
+                                          <span class="n">shifts</span><span class="p">,</span>
+                                          <span class="n">sides</span><span class="o">=</span><span class="s">&#39;left&#39;</span><span class="p">,</span>
+                                          <span class="n">return_sim_mat</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+                                          <span class="n">remove_nans</span><span class="o">=</span><span class="n">remove_nans</span><span class="p">)</span>
+        <span class="n">lcorr</span> <span class="o">=</span> <span class="n">lvdict</span><span class="p">[</span><span class="s">&#39;corr&#39;</span><span class="p">]</span>
+        <span class="n">lshift</span> <span class="o">=</span> <span class="n">lvdict</span><span class="p">[</span><span class="s">&#39;value&#39;</span><span class="p">]</span>
+        <span class="n">lsim_mat</span> <span class="o">=</span> <span class="n">lvdict</span><span class="p">[</span><span class="s">&#39;sim_mat&#39;</span><span class="p">]</span>
+
+        <span class="n">rvdict</span> <span class="o">=</span> <span class="n">velocity_change_estimete</span><span class="p">(</span><span class="n">mat</span><span class="p">,</span> <span class="n">tw</span><span class="p">,</span> <span class="n">ref_shift</span><span class="p">,</span>
+                                          <span class="n">shifts</span><span class="p">,</span>
+                                          <span class="n">sides</span><span class="o">=</span><span class="s">&#39;right&#39;</span><span class="p">,</span>
+                                          <span class="n">return_sim_mat</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+                                          <span class="n">remove_nans</span><span class="o">=</span><span class="n">remove_nans</span><span class="p">)</span>
+        <span class="n">rcorr</span> <span class="o">=</span> <span class="n">rvdict</span><span class="p">[</span><span class="s">&#39;corr&#39;</span><span class="p">]</span>
+        <span class="n">rshift</span> <span class="o">=</span> <span class="n">rvdict</span><span class="p">[</span><span class="s">&#39;value&#39;</span><span class="p">]</span>
+        <span class="n">rsim_mat</span> <span class="o">=</span> <span class="n">rvdict</span><span class="p">[</span><span class="s">&#39;sim_mat&#39;</span><span class="p">]</span>
+
+        <span class="n">shift</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">lshift</span><span class="p">)</span>
+        <span class="n">corr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">lshift</span><span class="p">)</span>
+        <span class="n">sim_mat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">lsim_mat</span><span class="p">)</span>
+    
+        <span class="n">corr</span> <span class="o">=</span> <span class="p">(</span><span class="n">lcorr</span> <span class="o">+</span> <span class="n">rcorr</span><span class="p">)</span> <span class="o">/</span> <span class="mf">2.</span>
+        <span class="n">shift</span> <span class="o">=</span> <span class="p">(</span><span class="n">lshift</span> <span class="o">+</span> <span class="n">rshift</span><span class="p">)</span> <span class="o">/</span> <span class="mf">2.</span>
+        <span class="n">sim_mat</span> <span class="o">=</span> <span class="p">(</span><span class="n">lsim_mat</span> <span class="o">+</span> <span class="n">rsim_mat</span><span class="p">)</span> <span class="o">/</span> <span class="mf">2.</span>
+
+    <span class="c"># create the result dictionary</span>
+    <span class="n">dt</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;corr&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">corr</span><span class="p">),</span>
+          <span class="s">&#39;value&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">shift</span><span class="p">),</span>
+          <span class="s">&#39;second_axis&#39;</span><span class="p">:</span> <span class="n">shifts</span><span class="p">,</span>
+          <span class="s">&#39;value_type&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="s">&#39;shift&#39;</span><span class="p">]),</span>
+          <span class="s">&#39;method&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="s">&#39;time_shift&#39;</span><span class="p">])}</span>
+    
+    <span class="k">if</span> <span class="n">return_sim_mat</span><span class="p">:</span>
+        <span class="n">dt</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s">&#39;sim_mat&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">sim_mat</span><span class="p">)})</span>
+
+    <span class="k">return</span> <span class="n">dt</span>
+
+</div>
+<span class="k">if</span> <span class="n">BC_UI</span><span class="p">:</span>
+    <span class="k">class</span> <span class="nc">_time_shift_estimate_view</span><span class="p">(</span><span class="n">HasTraits</span><span class="p">):</span>
+
+        <span class="n">shift_range</span> <span class="o">=</span> <span class="n">Float</span><span class="p">(</span><span class="mf">10.0</span><span class="p">)</span>
+        <span class="n">shift_steps</span> <span class="o">=</span> <span class="n">Int</span><span class="p">(</span><span class="mi">100</span><span class="p">)</span>
+        <span class="n">single_sided</span> <span class="o">=</span> <span class="n">Bool</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
+    
+        <span class="n">trait_view</span> <span class="o">=</span> <span class="n">View</span><span class="p">(</span><span class="n">Item</span><span class="p">(</span><span class="s">&#39;shift_range&#39;</span><span class="p">),</span>
+                          <span class="n">Item</span><span class="p">(</span><span class="s">&#39;shift_steps&#39;</span><span class="p">),</span>
+                          <span class="n">Item</span><span class="p">(</span><span class="s">&#39;single_sided&#39;</span><span class="p">))</span>
+    
+
+<div class="viewcode-block" id="time_shift_apply"><a class="viewcode-back" href="../../../modules/autogen/miic.core.stretch_mod.time_shift_apply.html#miic.core.stretch_mod.time_shift_apply">[docs]</a><span class="k">def</span> <span class="nf">time_shift_apply</span><span class="p">(</span><span class="n">corr_data</span><span class="p">,</span> <span class="n">shift</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Apply time shift to traces.</span>
+
+<span class="sd">    Apply time shifts to traces e.g. to align them to a common time base.</span>
+<span class="sd">    Such shifts can occur in correlation traces in case of a drifting clock.</span>
+<span class="sd">    This function ``applies`` the shifts. To correct for shift estimated with</span>
+<span class="sd">    :class:`~miic.core.stretch_mod.time_shift_estimate` you need to apply</span>
+<span class="sd">    negative shifts.</span>
+<span class="sd">    Shifting is done in frequency domain with 5% tapering.</span>
+
+<span class="sd">    :type corr_data: :py:class:`~numpy.ndarray`</span>
+<span class="sd">    :param corr_data: 2d ndarray containing the correlation functions that are</span>
+<span class="sd">        to be shifted.</span>
+<span class="sd">        One for each row.</span>
+<span class="sd">    :type shift: :py:class:`~numpy.ndarray`</span>
+<span class="sd">    :param shift: ndarray with shift.shape[0] = corr_data.shape[0] containing</span>
+<span class="sd">        the shifts in units of the sampling interval by which the trace are to</span>
+<span class="sd">        be shifted</span>
+
+<span class="sd">    :rtype: :py:class:`~numpy.ndarray`</span>
+<span class="sd">    :return: **shifted_mat**: shifted version of the input matrix</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c"># Mat must be a 2d vector in every case so</span>
+    <span class="n">mat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span><span class="n">corr_data</span><span class="p">)</span>
+
+    <span class="c"># check input</span>
+    <span class="c"># shift is just a 1d array</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">shift</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">t_shift</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="n">shift</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">1</span><span class="p">])</span>
+        <span class="n">t_shift</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">shift</span>
+        <span class="n">shift</span> <span class="o">=</span> <span class="n">t_shift</span>
+    <span class="c"># shift has the wrong length</span>
+    <span class="k">elif</span> <span class="n">shift</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="n">mat</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+        <span class="k">print</span> <span class="s">&#39;InputError: shift.shape[0] must be equal corr_data.shape[0]&#39;</span>
+        <span class="k">return</span> <span class="mi">0</span>
+    <span class="c"># shift has multiple columns (multiple measurements for the same time)</span>
+    <span class="k">if</span> <span class="n">shift</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">shift</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">shift</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">shift</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="c"># taper the reference matrix to avoid interpolation</span>
+    <span class="n">taper</span> <span class="o">=</span> <span class="n">cosTaper</span><span class="p">(</span><span class="n">mat</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="mf">0.05</span><span class="p">)</span>
+    <span class="n">mat</span> <span class="o">*=</span> <span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">taper</span><span class="p">,</span> <span class="p">[</span><span class="n">mat</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">1</span><span class="p">])</span>
+
+    <span class="c"># find a suitable length for the FFT</span>
+    <span class="n">N</span> <span class="o">=</span> <span class="n">nextpow2</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">mat</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">w</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="n">N</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span>
+
+    <span class="c"># original and shifted phase</span>
+    <span class="n">w</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="n">N</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">pha</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mi">1j</span> <span class="o">*</span> <span class="p">(</span><span class="n">shift</span><span class="p">)</span> <span class="o">*</span> <span class="n">w</span><span class="p">)</span>
+
+    <span class="c"># Fourier Transform</span>
+    <span class="n">F</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">rfft</span><span class="p">(</span><span class="n">mat</span><span class="p">,</span> <span class="n">N</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+    <span class="c"># apply the phase shift</span>
+    <span class="n">sF</span> <span class="o">=</span> <span class="n">F</span> <span class="o">*</span> <span class="n">pha</span>
+
+    <span class="c"># transform to time domain</span>
+    <span class="n">smat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">irfft</span><span class="p">(</span><span class="n">sF</span><span class="p">)</span>
+
+    <span class="c"># cut to original size</span>
+    <span class="n">shifted_mat</span> <span class="o">=</span> <span class="n">smat</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">:</span><span class="n">mat</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span>
+    <span class="k">return</span> <span class="n">shifted_mat</span>
+
+</div>
+<span class="k">if</span> <span class="n">BC_UI</span><span class="p">:</span>
+    <span class="k">class</span> <span class="nc">_time_shift_apply_view</span><span class="p">(</span><span class="n">HasTraits</span><span class="p">):</span>
+        <span class="n">shift</span> <span class="o">=</span> <span class="n">List</span><span class="p">()</span>
+        <span class="n">corr_data</span> <span class="o">=</span> <span class="n">List</span><span class="p">()</span>
+        <span class="n">trait_view</span> <span class="o">=</span> <span class="n">View</span><span class="p">(</span><span class="n">Item</span><span class="p">(</span><span class="s">&#39;shift&#39;</span><span class="p">),</span> <span class="n">Item</span><span class="p">(</span><span class="s">&#39;corr_data&#39;</span><span class="p">))</span>
+
+
+<div class="viewcode-block" id="time_stretch_estimate"><a class="viewcode-back" href="../../../modules/autogen/miic.core.stretch_mod.time_stretch_estimate.html#miic.core.stretch_mod.time_stretch_estimate">[docs]</a><span class="k">def</span> <span class="nf">time_stretch_estimate</span><span class="p">(</span><span class="n">corr_data</span><span class="p">,</span> <span class="n">ref_trc</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">tw</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">stretch_range</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
+                          <span class="n">stretch_steps</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">sides</span><span class="o">=</span><span class="s">&#39;both&#39;</span><span class="p">,</span> <span class="n">remove_nans</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Time stretch estimate through stretch and comparison.</span>
+
+<span class="sd">    This function estimates stretching of the time axis of traces as it can</span>
+<span class="sd">    occur if the propagation velocity changes.</span>
+
+<span class="sd">    Time stretching is estimated comparing each correlation function stored</span>
+<span class="sd">    in the ``corr_data`` matrix (one for each row) with ``stretch_steps``</span>
+<span class="sd">    stretched versions  of reference trace stored in ``ref_trc``.</span>
+<span class="sd">    The maximum amount of stretching may be passed in ``stretch_range``. The</span>
+<span class="sd">    time axis is multiplied by exp(stretch).</span>
+<span class="sd">    The best match (stretching amount and corresponding correlation value) is</span>
+<span class="sd">    calculated on different time windows. If ``tw = None`` the stretching is</span>
+<span class="sd">    estimated on the whole trace.</span>
+
+<span class="sd">    :type corr_data: :class:`~numpy.ndarray`</span>
+<span class="sd">    :param corr_data: 2d ndarray containing the correlation functions.</span>
+<span class="sd">        One for each row.</span>
+<span class="sd">    :type ref_trc: :class:`~numpy.ndarray`</span>
+<span class="sd">    :param ref_trc: 1D array containing the reference trace to be shifted and</span>
+<span class="sd">        compared to the individual traces in ``mat``</span>
+<span class="sd">    :type tw: list of :class:`~numpy.ndarray` of int</span>
+<span class="sd">    :param tw: list of 1D ndarrays holding the indices of sampels in the time</span>
+<span class="sd">        windows to be use in the time shift estimate. The sampels are counted</span>
+<span class="sd">        from the zero lag time with the index of the first sample being 0. If</span>
+<span class="sd">        ``tw = None`` the full time range is used.</span>
+<span class="sd">    :type stretch_range: scalar</span>
+<span class="sd">    :param stretch_range: Maximum amount of relative stretching.</span>
+<span class="sd">        Stretching and compression is tested from ``-stretch_range`` to</span>
+<span class="sd">        ``stretch_range``.</span>
+<span class="sd">    :type stretch_steps: scalar`</span>
+<span class="sd">    :param stretch_steps: Number of shifted version to be tested. The</span>
+<span class="sd">        increment will be ``(2 * stretch_range) / stretch_steps``</span>
+<span class="sd">    :type sides: str</span>
+<span class="sd">    :param sides: Side of the reference matrix to be used for the stretching</span>
+<span class="sd">        estimate (&#39;both&#39; | &#39;left&#39; | &#39;right&#39; | &#39;single&#39;) ``single`` is used for</span>
+<span class="sd">        one-sided signals from active sources with zero lag time is on the</span>
+<span class="sd">        first sample. Other options assume that the zero lag time is in the</span>
+<span class="sd">        center of the traces.</span>
+<span class="sd">    :type remove_nans: bool</span>
+<span class="sd">    :param remove_nans: If `True` applay :func:`~numpy.nan_to_num` to the</span>
+<span class="sd">        given correlation matrix before any other operation.</span>
+
+<span class="sd">    :rtype: Dictionary</span>
+<span class="sd">    :return: **dv**: Dictionary with the following keys</span>
+
+<span class="sd">        *corr*: 2d ndarray containing the correlation value for the best</span>
+<span class="sd">            match for each row of ``mat`` and for each time window.</span>
+<span class="sd">            Its dimension is: :func:(len(tw),mat.shape[1])</span>
+<span class="sd">        *value*: 2d ndarray containing the stretch amount corresponding to</span>
+<span class="sd">            the best match for each row of ``mat`` and for each time window.</span>
+<span class="sd">            Stretch is a relative value corresponding to the negative relative</span>
+<span class="sd">            velocity change -dv/v.</span>
+<span class="sd">            Its dimension is: :func:(len(tw),mat.shape[1])</span>
+<span class="sd">        *sim_mat*: 3d ndarray containing the similarity matricies that</span>
+<span class="sd">            indicate the correlation coefficient with the reference for the</span>
+<span class="sd">            different time windows, different times and different amount of</span>
+<span class="sd">            stretching.</span>
+<span class="sd">            Its dimension is: :py:func:`(len(tw),mat.shape[1],len(strvec))`</span>
+<span class="sd">        *second_axis*: It contains the stretch vector used for the velocity</span>
+<span class="sd">            change estimate.</span>
+<span class="sd">        *vale_type*: It is equal to &#39;stretch&#39; and specify the content of</span>
+<span class="sd">            the returned &#39;value&#39;.</span>
+<span class="sd">        *method*: It is equal to &#39;single_ref&#39; and specify in which &quot;way&quot; the</span>
+<span class="sd">            values have been obtained.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c"># Mat must be a 2d vector in every case so</span>
+    <span class="n">mat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span><span class="n">corr_data</span><span class="p">)</span>
+
+    <span class="c"># FIX: Trace back this problem to the original source and remove</span>
+    <span class="c"># this statement</span>
+    <span class="k">if</span> <span class="n">remove_nans</span><span class="p">:</span>
+        <span class="n">mat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan_to_num</span><span class="p">(</span><span class="n">mat</span><span class="p">)</span>
+
+    <span class="c"># generate the reference trace if not given (use the whole time span)</span>
+    <span class="k">if</span> <span class="n">ref_trc</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">ref_trc</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nansum</span><span class="p">(</span><span class="n">mat</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="o">/</span> <span class="n">mat</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="c"># generate time window if not given (use the full length of the correlation</span>
+    <span class="c"># trace)</span>
+    <span class="k">if</span> <span class="n">tw</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">tw</span> <span class="o">=</span> <span class="n">time_windows_creation</span><span class="p">([</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">mat</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="mf">2.</span><span class="p">))])</span>
+
+    <span class="c"># taper and extend the reference trace to avoid interpolation</span>
+    <span class="c"># artefacts at the ends of the trace</span>
+    <span class="n">taper</span> <span class="o">=</span> <span class="n">cosTaper</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ref_trc</span><span class="p">),</span> <span class="mf">0.05</span><span class="p">)</span>
+    <span class="n">ref_trc</span> <span class="o">*=</span> <span class="n">taper</span>
+
+    <span class="c"># different values of shifting to be tested</span>
+    <span class="n">stretchs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="n">stretch_range</span><span class="p">,</span> <span class="n">stretch_range</span><span class="p">,</span> <span class="n">stretch_steps</span><span class="p">)</span>
+    <span class="n">time_facs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">stretchs</span><span class="p">)</span>
+
+    <span class="c"># time axis</span>
+    <span class="k">if</span> <span class="n">sides</span> <span class="ow">is</span> <span class="ow">not</span> <span class="s">&#39;single&#39;</span><span class="p">:</span>
+        <span class="n">time_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ref_trc</span><span class="p">))</span> <span class="o">-</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ref_trc</span><span class="p">)</span> <span class="o">-</span> <span class="mf">1.</span><span class="p">)</span> <span class="o">/</span> <span class="mf">2.</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">time_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ref_trc</span><span class="p">))</span>
+
+    <span class="c"># create the array to hold the shifted traces</span>
+    <span class="n">ref_stretch</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">stretchs</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">ref_trc</span><span class="p">)))</span>
+
+    <span class="c"># create a spline object for the reference trace</span>
+    <span class="n">ref_tr_spline</span> <span class="o">=</span> <span class="n">UnivariateSpline</span><span class="p">(</span><span class="n">time_idx</span><span class="p">,</span> <span class="n">ref_trc</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="c"># evaluate the spline object at different points and put in the prepared</span>
+    <span class="c"># array</span>
+    <span class="k">for</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">this_fac</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">time_facs</span><span class="p">):</span>
+        <span class="n">ref_stretch</span><span class="p">[</span><span class="n">k</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">ref_tr_spline</span><span class="p">(</span><span class="n">time_idx</span> <span class="o">*</span> <span class="n">this_fac</span><span class="p">)</span>
+
+    <span class="c"># search best fit of the crosscorrs to one of the stretched ref_traces</span>
+    <span class="n">dv</span> <span class="o">=</span> <span class="n">velocity_change_estimete</span><span class="p">(</span><span class="n">mat</span><span class="p">,</span> <span class="n">tw</span><span class="p">,</span> <span class="n">ref_stretch</span><span class="p">,</span>
+                                  <span class="n">stretchs</span><span class="p">,</span> <span class="n">sides</span><span class="o">=</span><span class="n">sides</span><span class="p">,</span>
+                                  <span class="n">return_sim_mat</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+                                  <span class="n">remove_nans</span><span class="o">=</span><span class="n">remove_nans</span><span class="p">)</span>
+
+    <span class="c"># TODO: It is not really clear why it it necessary to transpose here so</span>
+    <span class="c"># this is the fist point where to look in case of errors.</span>
+    <span class="n">dv</span><span class="p">[</span><span class="s">&#39;corr&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">dv</span><span class="p">[</span><span class="s">&#39;corr&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">T</span>
+    <span class="n">dv</span><span class="p">[</span><span class="s">&#39;value&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">dv</span><span class="p">[</span><span class="s">&#39;value&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">T</span>
+    <span class="c"># dv.update({&#39;stretch_vec&#39;: stretchs})</span>
+
+    <span class="k">return</span> <span class="n">dv</span>
+
+</div>
+<span class="k">if</span> <span class="n">BC_UI</span><span class="p">:</span>
+    <span class="k">class</span> <span class="nc">_time_stretch_estimate_view</span><span class="p">(</span><span class="n">HasTraits</span><span class="p">):</span>
+    
+        <span class="n">stretch_range</span> <span class="o">=</span> <span class="n">Float</span><span class="p">(</span><span class="mf">0.01</span><span class="p">)</span>
+        <span class="n">stretch_steps</span> <span class="o">=</span> <span class="n">Int</span><span class="p">(</span><span class="mi">100</span><span class="p">)</span>
+        <span class="n">sides</span> <span class="o">=</span> <span class="n">Enum</span><span class="p">(</span><span class="s">&#39;both&#39;</span><span class="p">,</span> <span class="s">&#39;left&#39;</span><span class="p">,</span> <span class="s">&#39;right&#39;</span><span class="p">,</span> <span class="s">&#39;sinlge&#39;</span><span class="p">)</span>
+    
+        <span class="n">trait_view</span> <span class="o">=</span> <span class="n">View</span><span class="p">(</span><span class="n">Item</span><span class="p">(</span><span class="s">&#39;stretch_range&#39;</span><span class="p">),</span>
+                          <span class="n">Item</span><span class="p">(</span><span class="s">&#39;stretch_steps&#39;</span><span class="p">),</span>
+                          <span class="n">Item</span><span class="p">(</span><span class="s">&#39;sides&#39;</span><span class="p">))</span>
+
+
+<div class="viewcode-block" id="time_stretch_apply"><a class="viewcode-back" href="../../../modules/autogen/miic.core.stretch_mod.time_stretch_apply.html#miic.core.stretch_mod.time_stretch_apply">[docs]</a><span class="k">def</span> <span class="nf">time_stretch_apply</span><span class="p">(</span><span class="n">corr_data</span><span class="p">,</span> <span class="n">stretch</span><span class="p">,</span> <span class="n">single_sided</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Apply time axis stretch to traces.</span>
+
+<span class="sd">    Stretch the time axis of traces e.g. to compensate a velocity shift in the</span>
+<span class="sd">    propagation medium.</span>
+<span class="sd">    Such shifts can occur in corrlation traces in case of a drifting clock.</span>
+<span class="sd">    This function ``applies`` the stretches. To correct for stretching</span>
+<span class="sd">    estimated with :class:`~miic.core.stretch_mod.time_stretch_estimate`you</span>
+<span class="sd">    need to apply negative stretching.</span>
+
+<span class="sd">    :type corr_data: :class:`~numpy.ndarray`</span>
+<span class="sd">    :param corr_data: 2d ndarray containing the correlation functions that are</span>
+<span class="sd">        to be shifted.</span>
+<span class="sd">        One for each row.</span>
+<span class="sd">    :type stretch: :class:`~numpy.ndarray`</span>
+<span class="sd">    :param stretch: ndarray with stretch.shape[0] = corr_data.shape[0]</span>
+<span class="sd">        containing the stretches relative units.</span>
+
+<span class="sd">    :rtype: :class:`~numpy.ndarray`</span>
+<span class="sd">    :return: **stretched_mat**: stretched version of the input matrix</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c"># Mat must be a 2d vector in every case so</span>
+    <span class="n">mat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span><span class="n">corr_data</span><span class="p">)</span>
+    <span class="c"># check input</span>
+    <span class="c"># stretch is just a 1d array</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">stretch</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">t_stretch</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="n">stretch</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">1</span><span class="p">])</span>
+        <span class="n">t_stretch</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">stretch</span>
+        <span class="n">stretch</span> <span class="o">=</span> <span class="n">t_stretch</span>
+    <span class="c"># stretch has the wrong length</span>
+    <span class="k">elif</span> <span class="n">stretch</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="n">mat</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+        <span class="k">print</span> <span class="s">&#39;InputError: shift.shape[0] must be equal corr_data.shape[0]&#39;</span>
+        <span class="k">return</span> <span class="mi">0</span>
+    <span class="c"># shift has multiple columns (multiple measurements for the same time)</span>
+    <span class="k">if</span> <span class="n">stretch</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">stretch</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">stretch</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">stretch</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="c"># taper and extend the reference trace to avoid interpolation</span>
+    <span class="c"># artefacts at the ends of the trace</span>
+    <span class="n">taper</span> <span class="o">=</span> <span class="n">cosTaper</span><span class="p">(</span><span class="n">mat</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="mf">0.05</span><span class="p">)</span>
+    <span class="n">mat</span> <span class="o">*=</span> <span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">taper</span><span class="p">,</span> <span class="p">[</span><span class="n">mat</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">1</span><span class="p">])</span>
+
+    <span class="c"># time axis</span>
+    <span class="k">if</span> <span class="n">single_sided</span><span class="p">:</span>
+        <span class="n">time_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">mat</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">time_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">mat</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">-</span> <span class="p">(</span><span class="n">mat</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mf">1.</span><span class="p">)</span> <span class="o">/</span> <span class="mf">2.</span>
+
+    <span class="c"># allocate space for the result</span>
+    <span class="n">stretched_mat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">mat</span><span class="p">)</span>
+
+    <span class="c"># stretch every line</span>
+    <span class="k">for</span> <span class="p">(</span><span class="n">ii</span><span class="p">,</span> <span class="n">line</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">mat</span><span class="p">):</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">UnivariateSpline</span><span class="p">(</span><span class="n">time_idx</span><span class="p">,</span> <span class="n">line</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">stretched_mat</span><span class="p">[</span><span class="n">ii</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">s</span><span class="p">(</span><span class="n">time_idx</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">stretch</span><span class="p">[</span><span class="n">ii</span><span class="p">]))</span>
+
+    <span class="k">return</span> <span class="n">stretched_mat</span>
+
+</div>
+<span class="k">if</span> <span class="n">BC_UI</span><span class="p">:</span>
+    <span class="k">class</span> <span class="nc">_time_stretch_apply_view</span><span class="p">(</span><span class="n">HasTraits</span><span class="p">):</span>
+        <span class="n">shift</span> <span class="o">=</span> <span class="n">List</span><span class="p">()</span>
+        <span class="n">corr_data</span> <span class="o">=</span> <span class="n">List</span><span class="p">()</span>
+        <span class="n">trait_view</span> <span class="o">=</span> <span class="n">View</span><span class="p">(</span><span class="n">Item</span><span class="p">(</span><span class="s">&#39;shift&#39;</span><span class="p">),</span> <span class="n">Item</span><span class="p">(</span><span class="s">&#39;corr_data&#39;</span><span class="p">))</span>
+    
+
+<div class="viewcode-block" id="multi_ref_creation"><a class="viewcode-back" href="../../../modules/autogen/miic.core.stretch_mod.multi_ref_creation.html#miic.core.stretch_mod.multi_ref_creation">[docs]</a><span class="k">def</span> <span class="nf">multi_ref_creation</span><span class="p">(</span><span class="n">corr_mat</span><span class="p">,</span>
+                       <span class="n">rtime</span><span class="p">,</span>
+                       <span class="n">freq</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span>
+                       <span class="n">use_break_point</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+                       <span class="n">break_point</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Create the multi-reference traces</span>
+
+<span class="sd">    This function creates multi-reference traces according with the given</span>
+<span class="sd">    frequency.</span>
+<span class="sd">    In case of a break-point is passed, the intervals to consider for the</span>
+<span class="sd">    reference traces creation are symmetric respect to it.</span>
+
+<span class="sd">    :type corr_mat: :class:`~numpy.ndarray`</span>
+<span class="sd">    :param corr_mat: Correlation matrix with one correlation function on each</span>
+<span class="sd">        row</span>
+<span class="sd">    :type rtime: :class:`~numpy.array` of :class:`~datetime.datetime` objects</span>
+<span class="sd">    :param rtime: Time vector associated to the given correlation matrix. Its</span>
+<span class="sd">        lenght must be equal to the numer of columns of the `corr_mat`</span>
+<span class="sd">        parameter</span>
+<span class="sd">    :type freq: int</span>
+<span class="sd">    :param freq: One reference trace every `freq` days</span>
+<span class="sd">    :type use_break_point: bool</span>
+<span class="sd">    :param use_break_point: If `True` the reference traces are calculated in</span>
+<span class="sd">        different intervals of `freq` days symmetric respect to the</span>
+<span class="sd">        `break_point`</span>
+<span class="sd">    :type break_point: string</span>
+<span class="sd">    :param break_point: Brake point expressed as &quot;YYYY-MM-DD&quot;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="c"># do a local import here to ensure compatibility with older pandas</span>
+    <span class="c"># versions outside this function</span>
+    <span class="kn">from</span> <span class="nn">pandas</span> <span class="kn">import</span> <span class="n">date_range</span>
+
+    <span class="k">if</span> <span class="n">use_break_point</span> <span class="ow">and</span> <span class="n">break_point</span> <span class="o">==</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="k">print</span> <span class="s">&quot;Error: A break point must be passed!&quot;</span>
+        <span class="k">return</span> <span class="bp">None</span>
+
+    <span class="k">if</span> <span class="n">use_break_point</span> <span class="ow">and</span> <span class="nb">type</span><span class="p">(</span><span class="n">break_point</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">print</span> <span class="s">&quot;Error: wrong break_point format!</span><span class="se">\n</span><span class="s">Check the docs:</span><span class="se">\n\n</span><span class="s">&quot;</span>
+        <span class="k">print</span> <span class="n">__doc__</span>
+        <span class="k">return</span> <span class="bp">None</span>
+
+    <span class="k">if</span> <span class="n">use_break_point</span><span class="p">:</span>
+        <span class="n">bp</span> <span class="o">=</span> <span class="n">from_str_to_datetime</span><span class="p">(</span><span class="n">break_point</span><span class="p">,</span> <span class="n">datetimefmt</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+        <span class="n">f_frw</span> <span class="o">=</span> <span class="s">&quot;</span><span class="si">%i</span><span class="s">D&quot;</span> <span class="o">%</span> <span class="nb">int</span><span class="p">(</span><span class="n">freq</span><span class="p">)</span>
+        <span class="n">f_bck</span> <span class="o">=</span> <span class="s">&quot;-</span><span class="si">%i</span><span class="s">D&quot;</span> <span class="o">%</span> <span class="nb">int</span><span class="p">(</span><span class="n">freq</span><span class="p">)</span>
+
+        <span class="c"># Time &quot;backward&quot; intervals starting from the break_point and going</span>
+        <span class="c"># back to the first day available in the data.</span>
+        <span class="n">dr</span> <span class="o">=</span> <span class="n">date_range</span><span class="p">(</span><span class="n">rtime</span><span class="p">[</span><span class="n">rtime</span> <span class="o">&lt;=</span> <span class="n">bp</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span>
+                        <span class="n">rtime</span><span class="p">[</span><span class="n">rtime</span> <span class="o">&lt;</span> <span class="n">bp</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span>
+                        <span class="n">freq</span><span class="o">=</span><span class="n">f_bck</span><span class="p">)[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="c"># Time &quot;forward&quot; intervals starting from the break_point and going</span>
+        <span class="c"># ahead to the last day available in the data.</span>
+        <span class="n">dr1</span> <span class="o">=</span> <span class="n">date_range</span><span class="p">(</span><span class="n">bp</span><span class="p">,</span> <span class="n">rtime</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span> <span class="n">freq</span><span class="o">=</span><span class="n">f_frw</span><span class="p">)[</span><span class="mi">1</span><span class="p">:]</span>  <span class="c"># break_point must</span>
+                                                            <span class="c"># be removed</span>
+
+        <span class="n">dr</span> <span class="o">=</span> <span class="n">dr</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dr1</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="s">&quot;</span><span class="si">%i</span><span class="s">D&quot;</span> <span class="o">%</span> <span class="nb">int</span><span class="p">(</span><span class="n">freq</span><span class="p">)</span>
+        <span class="n">dr</span> <span class="o">=</span> <span class="n">date_range</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">rtime</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">rtime</span><span class="p">),</span> <span class="n">freq</span><span class="o">=</span><span class="n">f</span><span class="p">)</span>
+
+    <span class="c"># DataFrame creation</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">DataFrame</span><span class="p">(</span><span class="n">corr_mat</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">rtime</span><span class="p">)</span>
+
+    <span class="c"># GroupBy the given intervals</span>
+    <span class="n">dfg</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">dr</span><span class="o">.</span><span class="n">shape</span><span class="p">)[</span><span class="n">dr</span> <span class="o">&lt;=</span> <span class="n">x</span><span class="p">]))</span>
+
+    <span class="c"># Calculate the reference traces averaging the traces on each interval</span>
+    <span class="n">df_ref</span> <span class="o">=</span> <span class="n">dfg</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+
+    <span class="c"># Take the raw output</span>
+    <span class="n">ref_mat</span> <span class="o">=</span> <span class="n">df_ref</span><span class="o">.</span><span class="n">values</span>
+
+    <span class="k">return</span> <span class="n">ref_mat</span>
+
+</div>
+<div class="viewcode-block" id="multi_ref_vchange_and_align"><a class="viewcode-back" href="../../../modules/autogen/miic.core.stretch_mod.multi_ref_vchange_and_align.html#miic.core.stretch_mod.multi_ref_vchange_and_align">[docs]</a><span class="k">def</span> <span class="nf">multi_ref_vchange_and_align</span><span class="p">(</span><span class="n">corr_data</span><span class="p">,</span>
+                      <span class="n">ref_trs</span><span class="p">,</span>
+                      <span class="n">tw</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                      <span class="n">stretch_range</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
+                      <span class="n">stretch_steps</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+                      <span class="n">sides</span><span class="o">=</span><span class="s">&#39;both&#39;</span><span class="p">,</span>
+                      <span class="n">return_sim_mat</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+                      <span class="n">remove_nans</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Multi-reference dv estimate and alignment</span>
+
+<span class="sd">    :type corr_data: :class:`~numpy.ndarray`</span>
+<span class="sd">    :param corr_data: 2d ndarray containing the correlation functions.</span>
+<span class="sd">        One for each row.</span>
+<span class="sd">    :type ref_trc: :class:`~numpy.ndarray`</span>
+<span class="sd">    :param ref_trc: 1D array containing the reference trace to be shifted and</span>
+<span class="sd">        compared to the individual traces in ``mat``</span>
+<span class="sd">    :type tw: list of :class:`~numpy.ndarray` of int</span>
+<span class="sd">    :param tw: list of 1D ndarrays holding the indices of sampels in the time</span>
+<span class="sd">        windows to be use in the time shift estimate. The sampels are counted</span>
+<span class="sd">        from the zero lag time with the index of the first sample being 0. If</span>
+<span class="sd">        ``tw = None`` the full time range is used.</span>
+<span class="sd">    :type stretch_range: scalar</span>
+<span class="sd">    :param stretch_range: Maximum amount of relative stretching.</span>
+<span class="sd">        Stretching and compression is tested from ``-stretch_range`` to</span>
+<span class="sd">        ``stretch_range``.</span>
+<span class="sd">    :type stretch_steps: scalar`</span>
+<span class="sd">    :param stretch_steps: Number of shifted version to be tested. The</span>
+<span class="sd">        increment will be ``(2 * stretch_range) / stretch_steps``</span>
+<span class="sd">    :type single_sided: bool</span>
+<span class="sd">    :param single_sided: if True zero lag time is on the first sample. If</span>
+<span class="sd">        False the zero lag time is in the center of the traces.</span>
+<span class="sd">    :type sides: str</span>
+<span class="sd">    :param sides: Side of the reference matrix to be used for the stretching</span>
+<span class="sd">        estimate (&#39;both&#39; | &#39;left&#39; | &#39;right&#39; | &#39;single&#39;) ``single`` is used for</span>
+<span class="sd">        one-sided signals from active sources with zero lag time is on the</span>
+<span class="sd">        first sample. Other options assume that the zero lag time is in the</span>
+<span class="sd">        center of the traces.</span>
+<span class="sd">    :type return_sim_mat: bool</span>
+<span class="sd">    :param return_sim_mat: If `True` the returning dictionary contains also the</span>
+<span class="sd">        similarity matrix `sim_mat&#39;.</span>
+<span class="sd">    :type remove_nans: bool</span>
+<span class="sd">    :param remove_nans: If `True` applay :func:`~numpy.nan_to_num` to the</span>
+<span class="sd">        given correlation matrix before any other operation.</span>
+
+<span class="sd">    :rtype: Dictionary</span>
+<span class="sd">    :return: **dv**: Dictionary with the following keys</span>
+
+<span class="sd">        *corr*: 2d ndarray containing the correlation value for the best</span>
+<span class="sd">            match for each row of ``mat`` and for each time window.</span>
+<span class="sd">            Its dimension is: :func:(len(tw),mat.shape[1])</span>
+<span class="sd">        *value*: 2d ndarray containing the stretch amount corresponding to</span>
+<span class="sd">            the best match for each row of ``mat`` and for each time window.</span>
+<span class="sd">            Stretch is a relative value corresponding to the negative relative</span>
+<span class="sd">            velocity change -dv/v.</span>
+<span class="sd">            Its dimension is: :func:(len(tw),mat.shape[1])</span>
+<span class="sd">        *sim_mat*: 3d ndarray containing the similarity matricies that</span>
+<span class="sd">            indicate the correlation coefficient with the reference for the</span>
+<span class="sd">            different time windows, different times and different amount of</span>
+<span class="sd">            stretching.</span>
+<span class="sd">            Its dimension is: :py:func:`(len(tw),mat.shape[1],len(strvec))`</span>
+<span class="sd">        *second_axis*: It contains the stretch vector used for the velocity</span>
+<span class="sd">            change estimate.</span>
+<span class="sd">        *vale_type*: It is equal to &#39;stretch&#39; and specify the content of</span>
+<span class="sd">            the returned &#39;value&#39;.</span>
+<span class="sd">        *method*: It is equal to &#39;single_ref&#39; and specify in which &quot;way&quot; the</span>
+<span class="sd">            values have been obtained.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c"># FIX: Trace back this problem to the original source and remove</span>
+    <span class="c"># this statement</span>
+    <span class="k">if</span> <span class="n">remove_nans</span><span class="p">:</span>
+        <span class="n">corr_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan_to_num</span><span class="p">(</span><span class="n">corr_data</span><span class="p">)</span>
+        <span class="n">ref_trs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan_to_num</span><span class="p">(</span><span class="n">ref_trs</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">tw</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">tw</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">print</span> <span class="s">&quot; The multi-reference vchange evaluation doesn&#39;t handle multiple</span><span class="se">\</span>
+<span class="s">                time windows. Only the first time-window will be used&quot;</span>
+        <span class="n">tw</span> <span class="o">=</span> <span class="n">tw</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="n">multi_ref_panel</span> <span class="o">=</span> <span class="n">multi_ref_vchange</span><span class="p">(</span><span class="n">corr_data</span><span class="p">,</span>
+                                        <span class="n">ref_trs</span><span class="p">,</span>
+                                        <span class="n">tw</span><span class="o">=</span><span class="n">tw</span><span class="p">,</span>
+                                        <span class="n">stretch_range</span><span class="o">=</span><span class="n">stretch_range</span><span class="p">,</span>
+                                        <span class="n">stretch_steps</span><span class="o">=</span><span class="n">stretch_steps</span><span class="p">,</span>
+                                        <span class="n">sides</span><span class="o">=</span><span class="n">sides</span><span class="p">,</span>
+                                        <span class="n">remove_nans</span><span class="o">=</span><span class="n">remove_nans</span><span class="p">)</span>
+
+    <span class="n">n_ref</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">multi_ref_panel</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+
+    <span class="k">if</span> <span class="n">n_ref</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">dv</span> <span class="o">=</span> <span class="n">estimate_reftr_shifts_from_dt_corr</span><span class="p">(</span><span class="n">multi_ref_panel</span><span class="p">,</span>
+                                                <span class="n">return_sim_mat</span><span class="o">=</span><span class="n">return_sim_mat</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c"># changed key here</span>
+        <span class="n">dv</span> <span class="o">=</span> <span class="n">multi_ref_panel</span><span class="p">[</span><span class="s">&#39;reftr_0&#39;</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">dv</span>
+
+</div>
+<span class="k">if</span> <span class="n">BC_UI</span><span class="p">:</span>
+    <span class="k">class</span> <span class="nc">_multi_ref_vchange_and_align_view</span><span class="p">(</span><span class="n">HasTraits</span><span class="p">):</span>
+    
+        <span class="n">stretch_range</span> <span class="o">=</span> <span class="n">Float</span><span class="p">(</span><span class="mf">0.01</span><span class="p">)</span>
+        <span class="n">stretch_steps</span> <span class="o">=</span> <span class="n">Int</span><span class="p">(</span><span class="mi">100</span><span class="p">)</span>
+        <span class="n">sides</span> <span class="o">=</span> <span class="n">Enum</span><span class="p">(</span><span class="s">&#39;both&#39;</span><span class="p">,</span> <span class="s">&#39;left&#39;</span><span class="p">,</span> <span class="s">&#39;right&#39;</span><span class="p">,</span> <span class="s">&#39;sinlge&#39;</span><span class="p">)</span>
+        <span class="n">return_sim_mat</span> <span class="o">=</span> <span class="n">Bool</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
+    
+        <span class="n">trait_view</span> <span class="o">=</span> <span class="n">View</span><span class="p">(</span><span class="n">Item</span><span class="p">(</span><span class="s">&#39;stretch_range&#39;</span><span class="p">),</span>
+                          <span class="n">Item</span><span class="p">(</span><span class="s">&#39;stretch_steps&#39;</span><span class="p">),</span>
+                          <span class="n">Item</span><span class="p">(</span><span class="s">&#39;sides&#39;</span><span class="p">),</span>
+                          <span class="n">Item</span><span class="p">(</span><span class="s">&#39;return_sim_mat&#39;</span><span class="p">))</span>
+    
+
+<div class="viewcode-block" id="multi_ref_vchange"><a class="viewcode-back" href="../../../modules/autogen/miic.core.stretch_mod.multi_ref_vchange.html#miic.core.stretch_mod.multi_ref_vchange">[docs]</a><span class="k">def</span> <span class="nf">multi_ref_vchange</span><span class="p">(</span><span class="n">corr_data</span><span class="p">,</span>
+                      <span class="n">ref_trs</span><span class="p">,</span>
+                      <span class="n">tw</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                      <span class="n">stretch_range</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
+                      <span class="n">stretch_steps</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+                      <span class="n">sides</span><span class="o">=</span><span class="s">&#39;both&#39;</span><span class="p">,</span>
+                      <span class="n">remove_nans</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Velocity change estimate with single or multiple reference traces.</span>
+
+<span class="sd">    This function estimates the velocity change corresponding to each row of</span>
+<span class="sd">    the ``corr_data`` matrix respect to the reference trace/s passed in</span>
+<span class="sd">    ``ref_trs``.</span>
+
+<span class="sd">    The velocity change is estimated comparing each correlation function stored</span>
+<span class="sd">    in the ``corr_data`` matrix (one for each row) with ``stretch_steps``</span>
+<span class="sd">    stretched versions of reference/s trace stored in ``ref_trs``.</span>
+<span class="sd">    The maximum amount of stretching may be passed in ``stretch_range``.</span>
+<span class="sd">    The best match (stretching amount and corresponding correlation value) is</span>
+<span class="sd">    calculated on different time windows. If ``tw = None`` the stretching is</span>
+<span class="sd">    estimated on the whole trace.</span>
+
+<span class="sd">    The output is a dictionary with keys of the form ``&quot;reftr_%d&quot; % i``: One</span>
+<span class="sd">    for each reference trace. The corresponding ``value`` is aslo a dictionary</span>
+<span class="sd">    that has a structure conforming with</span>
+<span class="sd">    :py:class:`~miic.core.stretch_mod.time_stretch_estimate` output.</span>
+
+<span class="sd">    :type corr_data: :class:`~numpy.ndarray`</span>
+<span class="sd">    :param corr_data: 2d ndarray containing the correlation functions.</span>
+<span class="sd">        One for each row.</span>
+<span class="sd">    :type ref_trc: :class:`~numpy.ndarray`</span>
+<span class="sd">    :param ref_trc: 1D array containing the reference trace to be shifted and</span>
+<span class="sd">        compared to the individual traces in ``mat``</span>
+<span class="sd">    :type tw: list of :class:`~numpy.ndarray` of int</span>
+<span class="sd">    :param tw: list of 1D ndarrays holding the indices of sampels in the time</span>
+<span class="sd">        windows to be use in the time shift estimate. The sampels are counted</span>
+<span class="sd">        from the zero lag time with the index of the first sample being 0. If</span>
+<span class="sd">        ``tw = None`` the full time range is used.</span>
+<span class="sd">    :type stretch_range: scalar</span>
+<span class="sd">    :param stretch_range: Maximum amount of relative stretching.</span>
+<span class="sd">        Stretching and compression is tested from ``-stretch_range`` to</span>
+<span class="sd">        ``stretch_range``.</span>
+<span class="sd">    :type stretch_steps: scalar`</span>
+<span class="sd">    :param stretch_steps: Number of shifted version to be tested. The</span>
+<span class="sd">        increment will be ``(2 * stretch_range) / stretch_steps``</span>
+<span class="sd">    :type single_sided: bool</span>
+<span class="sd">    :param single_sided: if True zero lag time is on the first sample. If</span>
+<span class="sd">        False the zero lag time is in the center of the traces.</span>
+<span class="sd">    :type sides: str</span>
+<span class="sd">    :param sides: Side of the reference matrix to be used for the stretching</span>
+<span class="sd">        estimate (&#39;both&#39; | &#39;left&#39; | &#39;right&#39; | &#39;single&#39;) ``single`` is used for</span>
+<span class="sd">        one-sided signals from active sources with zero lag time is on the</span>
+<span class="sd">        first sample. Other options assume that the zero lag time is in the</span>
+<span class="sd">        center of the traces.</span>
+<span class="sd">    :type remove_nans: bool</span>
+<span class="sd">    :param remove_nans: If `True` applay :func:`~numpy.nan_to_num` to the</span>
+<span class="sd">        given correlation matrix before any other operation.</span>
+
+<span class="sd">    :rtype: dictionary</span>
+<span class="sd">    :return: **multi_ref_panel**: It is a dictionary that contains as much</span>
+<span class="sd">        dictionaries as reference traces have been used. The key format is</span>
+<span class="sd">        ``&quot;reftr_%d&quot; % i`` and the corresponding value is also a dictionary</span>
+<span class="sd">        with the structure described in</span>
+<span class="sd">        :py:class:`~miic.core.stretch_mod.time_stretch_estimate`</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c"># FIX: Trace back this problem to the original source and remove</span>
+    <span class="c"># this statement</span>
+    <span class="k">if</span> <span class="n">remove_nans</span><span class="p">:</span>
+        <span class="n">corr_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan_to_num</span><span class="p">(</span><span class="n">corr_data</span><span class="p">)</span>
+        <span class="n">ref_trs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan_to_num</span><span class="p">(</span><span class="n">ref_trs</span><span class="p">)</span>
+
+    <span class="c"># remove 1-dimensions</span>
+    <span class="n">ref_trs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">ref_trs</span><span class="p">)</span>
+
+    <span class="c"># check how many reference traces have been passed</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">reftr_count</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">ref_trs</span><span class="o">.</span><span class="n">shape</span>
+    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>  <span class="c"># An array is passed</span>
+        <span class="n">reftr_count</span> <span class="o">=</span> <span class="mi">1</span>
+
+    <span class="c"># Distionary that will hold all the results</span>
+    <span class="n">multi_ref_panel</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="c"># When there is just 1 reference trace no loop is necessary</span>
+    <span class="k">if</span> <span class="n">reftr_count</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="s">&quot;reftr_0&quot;</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="n">time_stretch_estimate</span><span class="p">(</span><span class="n">corr_data</span><span class="p">,</span>
+                                      <span class="n">ref_trc</span><span class="o">=</span><span class="n">ref_trs</span><span class="p">,</span>
+                                      <span class="n">tw</span><span class="o">=</span><span class="n">tw</span><span class="p">,</span>
+                                      <span class="n">stretch_range</span><span class="o">=</span><span class="n">stretch_range</span><span class="p">,</span>
+                                      <span class="n">stretch_steps</span><span class="o">=</span><span class="n">stretch_steps</span><span class="p">,</span>
+                                      <span class="n">sides</span><span class="o">=</span><span class="n">sides</span><span class="p">,</span>
+                                      <span class="n">remove_nans</span><span class="o">=</span><span class="n">remove_nans</span><span class="p">)</span>
+        <span class="n">multi_ref_panel</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">key</span><span class="p">:</span> <span class="n">value</span><span class="p">})</span>
+    <span class="k">else</span><span class="p">:</span>  <span class="c"># For multiple-traces loops</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">reftr_count</span><span class="p">):</span>
+            <span class="n">ref_trc</span> <span class="o">=</span> <span class="n">ref_trs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="s">&quot;reftr_</span><span class="si">%d</span><span class="s">&quot;</span> <span class="o">%</span> <span class="nb">int</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="n">time_stretch_estimate</span><span class="p">(</span><span class="n">corr_data</span><span class="p">,</span>
+                                          <span class="n">ref_trc</span><span class="o">=</span><span class="n">ref_trc</span><span class="p">,</span>
+                                          <span class="n">tw</span><span class="o">=</span><span class="n">tw</span><span class="p">,</span>
+                                          <span class="n">stretch_range</span><span class="o">=</span><span class="n">stretch_range</span><span class="p">,</span>
+                                          <span class="n">stretch_steps</span><span class="o">=</span><span class="n">stretch_steps</span><span class="p">,</span>
+                                          <span class="n">sides</span><span class="o">=</span><span class="n">sides</span><span class="p">,</span>
+                                          <span class="n">remove_nans</span><span class="o">=</span><span class="n">remove_nans</span><span class="p">)</span>
+            <span class="n">multi_ref_panel</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">key</span><span class="p">:</span> <span class="n">value</span><span class="p">})</span>
+
+    <span class="k">return</span> <span class="n">multi_ref_panel</span>
+
+</div>
+<span class="k">if</span> <span class="n">BC_UI</span><span class="p">:</span>
+    <span class="k">class</span> <span class="nc">_multi_ref_vchange_view</span><span class="p">(</span><span class="n">HasTraits</span><span class="p">):</span>
+    
+        <span class="n">stretch_range</span> <span class="o">=</span> <span class="n">Float</span><span class="p">(</span><span class="mf">0.01</span><span class="p">)</span>
+        <span class="n">stretch_steps</span> <span class="o">=</span> <span class="n">Int</span><span class="p">(</span><span class="mi">100</span><span class="p">)</span>
+        <span class="n">sides</span> <span class="o">=</span> <span class="n">Enum</span><span class="p">(</span><span class="s">&#39;both&#39;</span><span class="p">,</span> <span class="s">&#39;left&#39;</span><span class="p">,</span> <span class="s">&#39;right&#39;</span><span class="p">,</span> <span class="s">&#39;sinlge&#39;</span><span class="p">)</span>
+    
+        <span class="n">trait_view</span> <span class="o">=</span> <span class="n">View</span><span class="p">(</span><span class="n">Item</span><span class="p">(</span><span class="s">&#39;stretch_range&#39;</span><span class="p">),</span>
+                          <span class="n">Item</span><span class="p">(</span><span class="s">&#39;stretch_steps&#39;</span><span class="p">),</span>
+                          <span class="n">Item</span><span class="p">(</span><span class="s">&#39;sides&#39;</span><span class="p">))</span>
+
+
+<div class="viewcode-block" id="est_shift_from_dt_corr"><a class="viewcode-back" href="../../../modules/autogen/miic.core.stretch_mod.est_shift_from_dt_corr.html#miic.core.stretch_mod.est_shift_from_dt_corr">[docs]</a><span class="k">def</span> <span class="nf">est_shift_from_dt_corr</span><span class="p">(</span><span class="n">dt1</span><span class="p">,</span> <span class="n">dt2</span><span class="p">,</span> <span class="n">corr1</span><span class="p">,</span> <span class="n">corr2</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Estimation of a baseline shift between velocity-change measurements</span>
+<span class="sd">    preformed with different references.</span>
+
+<span class="sd">    The use of different reference traces obtaind from different reference</span>
+<span class="sd">    periods will result in a shift of the velocity-change curves that ideally</span>
+<span class="sd">    characterizes the velocity variation between the two reference periods.</span>
+<span class="sd">    Instead of directly measuring this velocity change from the two reference</span>
+<span class="sd">    traces it is calulated here as the weighted average of the point</span>
+<span class="sd">    differences between the two velocity-change curves weighted by their</span>
+<span class="sd">    inverse variance according to Weaver et al. GJI 2011 (On the precision of</span>
+<span class="sd">    noise correlation interferometry)</span>
+
+<span class="sd">    Input vertors must all be of the same lenth.</span>
+
+<span class="sd">    :type dt1: :class:`~numpy.ndarray`</span>
+<span class="sd">    :pram dt1: Velocity variation measured for reference A</span>
+<span class="sd">    :type dt2: :class:`~numpy.ndarray`</span>
+<span class="sd">    :pram dt2: Velocity variation measured for reference B</span>
+<span class="sd">    :type corr1: :class:`~numpy.ndarray`</span>
+<span class="sd">    :pram corr1: Correlation between velocity corrected trace and reference A</span>
+<span class="sd">    :type corr2: :class:`~numpy.ndarray`</span>
+<span class="sd">    :pram corr2: Correlation between velocity corrected trace and reference B</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c"># Create maked arrays so that NaNs are handled properly</span>
+    <span class="n">dt1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ma</span><span class="o">.</span><span class="n">masked_array</span><span class="p">(</span><span class="n">dt1</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">dt1</span><span class="p">)</span> <span class="o">|</span> <span class="n">np</span><span class="o">.</span><span class="n">isinf</span><span class="p">(</span><span class="n">dt1</span><span class="p">)),</span>
+                             <span class="n">fill_value</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">dt2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ma</span><span class="o">.</span><span class="n">masked_array</span><span class="p">(</span><span class="n">dt2</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">dt2</span><span class="p">)</span> <span class="o">|</span> <span class="n">np</span><span class="o">.</span><span class="n">isinf</span><span class="p">(</span><span class="n">dt2</span><span class="p">)),</span>
+                             <span class="n">fill_value</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="n">corr1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ma</span><span class="o">.</span><span class="n">masked_array</span><span class="p">(</span><span class="n">corr1</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">corr1</span><span class="p">)</span> <span class="o">|</span> <span class="n">np</span><span class="o">.</span><span class="n">isinf</span><span class="p">(</span><span class="n">corr1</span><span class="p">)),</span>
+                               <span class="n">fill_value</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">corr2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ma</span><span class="o">.</span><span class="n">masked_array</span><span class="p">(</span><span class="n">corr2</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">corr2</span><span class="p">)</span> <span class="o">|</span> <span class="n">np</span><span class="o">.</span><span class="n">isinf</span><span class="p">(</span><span class="n">corr2</span><span class="p">)),</span>
+                               <span class="n">fill_value</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="c"># Remove the points where the correlation is 0</span>
+    <span class="n">no_zero</span> <span class="o">=</span> <span class="p">(</span><span class="n">corr1</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">corr2</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">corr1</span> <span class="o">=</span> <span class="n">corr1</span><span class="p">[</span><span class="n">no_zero</span><span class="p">]</span>
+    <span class="n">corr2</span> <span class="o">=</span> <span class="n">corr2</span><span class="p">[</span><span class="n">no_zero</span><span class="p">]</span>
+
+    <span class="c"># Estimate the point-variance for the two curves</span>
+    <span class="n">var1</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">corr1</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">4</span> <span class="o">*</span> <span class="n">corr1</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="n">var2</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">corr2</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">4</span> <span class="o">*</span> <span class="n">corr2</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+
+    <span class="c"># Calculate the point-weight</span>
+    <span class="n">wgt</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="n">var1</span> <span class="o">+</span> <span class="n">var2</span><span class="p">)</span>
+    <span class="n">mask</span> <span class="o">=</span> <span class="p">(</span><span class="n">corr1</span> <span class="o">&gt;</span> <span class="mf">0.999</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">corr2</span> <span class="o">&gt;</span> <span class="mf">0.999</span><span class="p">)</span>
+    <span class="n">wgt</span> <span class="o">=</span> <span class="n">wgt</span><span class="p">[</span><span class="o">~</span><span class="n">mask</span><span class="p">]</span>
+
+    <span class="c"># This saves from returning a masked value</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">wgt_s</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">wgt</span><span class="p">)</span><span class="o">.</span><span class="n">filled</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="n">wgt_s</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">wgt</span><span class="p">)</span>
+
+    <span class="c"># Calculate the shift and the total weight as a cumulative sum of the</span>
+    <span class="c"># weighted average of the two curves</span>
+    <span class="n">shift</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">((</span><span class="n">dt1</span><span class="p">[</span><span class="o">~</span><span class="n">mask</span><span class="p">]</span> <span class="o">-</span> <span class="n">dt2</span><span class="p">[</span><span class="o">~</span><span class="n">mask</span><span class="p">])</span> <span class="o">*</span> <span class="n">wgt</span><span class="p">)</span> <span class="o">/</span> <span class="n">wgt_s</span>
+    <span class="n">comb_corr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">((</span><span class="n">corr1</span><span class="p">[</span><span class="o">~</span><span class="n">mask</span><span class="p">]</span> <span class="o">+</span> <span class="n">corr2</span><span class="p">[</span><span class="o">~</span><span class="n">mask</span><span class="p">])</span> <span class="o">*</span> <span class="n">wgt</span><span class="p">)</span> <span class="o">/</span> <span class="n">wgt_s</span>
+
+    <span class="c"># This saves from returning masked values</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">shift</span> <span class="o">=</span> <span class="n">shift</span><span class="o">.</span><span class="n">filled</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="k">pass</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">comb_corr</span> <span class="o">=</span> <span class="n">comb_corr</span><span class="o">.</span><span class="n">filled</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="k">pass</span>
+
+    <span class="k">return</span> <span class="n">comb_corr</span><span class="p">,</span> <span class="n">shift</span>
+
+</div>
+<div class="viewcode-block" id="estimate_reftr_shifts_from_dt_corr"><a class="viewcode-back" href="../../../modules/autogen/miic.core.stretch_mod.estimate_reftr_shifts_from_dt_corr.html#miic.core.stretch_mod.estimate_reftr_shifts_from_dt_corr">[docs]</a><span class="k">def</span> <span class="nf">estimate_reftr_shifts_from_dt_corr</span><span class="p">(</span><span class="n">multi_ref_panel</span><span class="p">,</span> <span class="n">return_sim_mat</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Combine velocity-change measurements of the same data performed with</span>
+<span class="sd">    different references to a single curve.</span>
+
+<span class="sd">    For a set of velocity-change measurements performed with different</span>
+<span class="sd">    references this function estimates the relative offsets between all pairs</span>
+<span class="sd">    of the measurements as a weighted average of their difference with the</span>
+<span class="sd">    function :py:class:`~miic.core.stretch_mod.est_shift_from_dt_corr`.</span>
+<span class="sd">    A least squares solution in computed that combines the pairwise</span>
+<span class="sd">    differences to a consistent set of reference shifts. These shifts should</span>
+<span class="sd">    be similar to the velocity variations measured between the reference</span>
+<span class="sd">    traces. The consistent set of reference shifts is used to correct i.e.</span>
+<span class="sd">    shift the similarity matricies to a common reference. Finally the</span>
+<span class="sd">    corrected similarity matrices are averaged resulting in a single matrix</span>
+<span class="sd">    that is interpreted as before. The position of the crest is the combined</span>
+<span class="sd">    velocity change and the height of the crest is the correlation value.</span>
+
+<span class="sd">    :type multi_ref_panel: dictionay</span>
+<span class="sd">    :param multi_ref_panel: It is a dictionary with one (key,value) pair</span>
+<span class="sd">        for each reference trace. Its structure is described</span>
+<span class="sd">        in :py:class:`~miic.core.stretch_mod.multi_ref_vchange`</span>
+<span class="sd">    :type return_sim_mat: bool</span>
+<span class="sd">    :param return_sim_mat: If `True` the returning dictionary contains also the</span>
+<span class="sd">        similarity matrix `sim_mat&#39;.</span>
+
+<span class="sd">    :rtype: Dictionary</span>
+<span class="sd">    :return: **dv**: Dictionary with the following keys</span>
+
+<span class="sd">        *corr*: 2d ndarray containing the correlation value for the best</span>
+<span class="sd">            match for each row of ``mat`` and for each time window.</span>
+<span class="sd">            Its dimension is: :func:(len(tw),mat.shape[1])</span>
+<span class="sd">        *value*: 2d ndarray containing the stretch amount corresponding to</span>
+<span class="sd">            the best match for each row of ``mat`` and for each time window.</span>
+<span class="sd">            Stretch is a relative value corresponding to the negative relative</span>
+<span class="sd">            velocity change -dv/v.</span>
+<span class="sd">            Its dimension is: :func:(len(tw),mat.shape[1])</span>
+<span class="sd">        *sim_mat*: 3d ndarray containing the similarity matricies that</span>
+<span class="sd">            indicate the correlation coefficient with the reference for the</span>
+<span class="sd">            different time windows, different times and different amount of</span>
+<span class="sd">            stretching.</span>
+<span class="sd">            Its dimension is: :py:func:`(len(tw),mat.shape[1],len(strvec))`</span>
+<span class="sd">        *second_axis*: It contains the stretch vector used for the velocity</span>
+<span class="sd">            change estimate.</span>
+<span class="sd">        *vale_type*: It is equal to &#39;stretch&#39; and specify the content of</span>
+<span class="sd">            the returned &#39;value&#39;.</span>
+<span class="sd">        *method*: It is equal to &#39;single_ref&#39; and specify in which &quot;way&quot; the</span>
+<span class="sd">            values have been obtained.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c"># Vector with the stretching amount</span>
+    <span class="n">stretch_vect</span> <span class="o">=</span> <span class="n">multi_ref_panel</span><span class="p">[</span><span class="s">&#39;reftr_0&#39;</span><span class="p">][</span><span class="s">&#39;second_axis&#39;</span><span class="p">]</span>
+    <span class="n">delta</span> <span class="o">=</span> <span class="n">stretch_vect</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">stretch_vect</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="n">n_ref</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">multi_ref_panel</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+
+    <span class="n">corr</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">shift</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">if</span> <span class="n">n_ref</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+
+        <span class="c"># Loop over reftr</span>
+        <span class="k">for</span> <span class="n">reftr1</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">multi_ref_panel</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+            <span class="n">ref_idx</span> <span class="o">=</span> <span class="p">[</span><span class="n">reftr</span> <span class="k">for</span> <span class="n">reftr</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">multi_ref_panel</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+                       <span class="k">if</span> <span class="n">reftr</span> <span class="o">!=</span> <span class="n">reftr1</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">reftr2</span> <span class="ow">in</span> <span class="n">ref_idx</span><span class="p">:</span>
+                <span class="n">ccorr</span><span class="p">,</span> <span class="n">sshift</span> <span class="o">=</span> <span class="n">est_shift_from_dt_corr</span><span class="p">(</span>
+                            <span class="n">np</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">multi_ref_panel</span><span class="p">[</span><span class="n">reftr1</span><span class="p">][</span><span class="s">&#39;value&#39;</span><span class="p">]),</span>
+                            <span class="n">np</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">multi_ref_panel</span><span class="p">[</span><span class="n">reftr2</span><span class="p">][</span><span class="s">&#39;value&#39;</span><span class="p">]),</span>
+                            <span class="n">np</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">multi_ref_panel</span><span class="p">[</span><span class="n">reftr1</span><span class="p">][</span><span class="s">&#39;corr&#39;</span><span class="p">]),</span>
+                            <span class="n">np</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">multi_ref_panel</span><span class="p">[</span><span class="n">reftr2</span><span class="p">][</span><span class="s">&#39;corr&#39;</span><span class="p">]))</span>
+                <span class="n">corr</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ccorr</span><span class="p">)</span>
+                <span class="n">shift</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sshift</span><span class="p">)</span>
+
+        <span class="n">G</span> <span class="o">=</span> <span class="n">_create_G</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">multi_ref_panel</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+        <span class="n">W</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">corr</span><span class="p">))</span>
+        <span class="n">D</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">shift</span><span class="p">)</span>
+
+        <span class="c"># This conversion is necessary to achive the same speed with diffrent</span>
+        <span class="c"># .dot implementation on different numpy versions.</span>
+        <span class="n">D</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan_to_num</span><span class="p">(</span><span class="n">D</span><span class="p">)</span>
+        <span class="n">W</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan_to_num</span><span class="p">(</span><span class="n">W</span><span class="p">)</span>
+
+        <span class="n">GTW</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">G</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">W</span><span class="p">)</span>
+
+        <span class="c"># to_invert = np.dot(G.T, np.dot(W, G))</span>
+        <span class="n">to_invert</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">GTW</span><span class="p">,</span> <span class="n">G</span><span class="p">)</span>
+
+        <span class="c"># TODO: Get rid of the matrix inversion</span>
+        <span class="n">left_op</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">pinv</span><span class="p">(</span><span class="n">to_invert</span><span class="p">)</span>
+
+        <span class="c"># This conversion is necessary to achive the same speed with diffrent</span>
+        <span class="c"># .dot implementation on different numpy versions.</span>
+        <span class="n">left_op</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan_to_num</span><span class="p">(</span><span class="n">left_op</span><span class="p">)</span>
+
+        <span class="n">m</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">left_op</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">GTW</span><span class="p">,</span> <span class="n">D</span><span class="p">))</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="n">m</span><span class="p">))</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="n">m</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+
+        <span class="c"># How many samples (int) each sim matrix must be rolled</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">around</span><span class="p">(</span><span class="n">m</span> <span class="o">/</span> <span class="n">delta</span><span class="p">,</span> <span class="n">out</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s">&#39;int32&#39;</span><span class="p">))</span>
+
+        <span class="n">row</span><span class="p">,</span> <span class="n">col</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">multi_ref_panel</span><span class="p">[</span><span class="s">&#39;reftr_0&#39;</span><span class="p">][</span><span class="s">&#39;sim_mat&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">shape</span>
+
+        <span class="n">stmp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="p">,</span> <span class="n">n_ref</span><span class="p">))</span>
+
+        <span class="c"># Roll the sim_mat</span>
+        <span class="k">for</span> <span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">reftr</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">multi_ref_panel</span><span class="o">.</span><span class="n">keys</span><span class="p">())):</span>
+
+            <span class="n">stmp</span><span class="p">[:,</span> <span class="p">:,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> \
+                <span class="n">np</span><span class="o">.</span><span class="n">roll</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">multi_ref_panel</span><span class="p">[</span><span class="n">reftr</span><span class="p">][</span><span class="s">&#39;sim_mat&#39;</span><span class="p">]),</span>
+                        <span class="n">m</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+                        <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="c"># Create a msked array to evaluate the mean</span>
+        <span class="n">stmp_masked</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ma</span><span class="o">.</span><span class="n">masked_array</span><span class="p">(</span><span class="n">stmp</span><span class="p">,</span>
+                                         <span class="n">mask</span><span class="o">=</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">stmp</span><span class="p">)</span> <span class="o">|</span> \
+                                               <span class="n">np</span><span class="o">.</span><span class="n">isinf</span><span class="p">(</span><span class="n">stmp</span><span class="p">)),</span>
+                                         <span class="n">fill_value</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+        <span class="c"># Evaluate the sim_mat for the multi-ref approach as the mean</span>
+        <span class="c"># of the rolled sim_mat corresponfing to the individual reference</span>
+        <span class="c"># traces</span>
+        <span class="c"># When operating with masked arrays this operation creates a new</span>
+        <span class="c"># object so the default fill_values returns to be 1e20</span>
+        <span class="n">bsimmat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">stmp_masked</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+
+        <span class="n">corr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">bsimmat</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">dt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">bsimmat</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="n">dt</span> <span class="o">=</span> <span class="n">stretch_vect</span><span class="p">[</span><span class="n">dt</span><span class="p">]</span>
+
+        <span class="c"># Remove the mask</span>
+        <span class="n">bsimmat</span> <span class="o">=</span> <span class="n">bsimmat</span><span class="o">.</span><span class="n">filled</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">corr</span> <span class="o">=</span> <span class="n">corr</span><span class="o">.</span><span class="n">filled</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">pass</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">dt</span> <span class="o">=</span> <span class="n">dt</span><span class="o">.</span><span class="n">filled</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s">&#39;int&#39;</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">pass</span>
+
+        <span class="n">ret_dict</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;corr&#39;</span><span class="p">:</span> <span class="n">corr</span><span class="p">,</span>
+                    <span class="s">&#39;value&#39;</span><span class="p">:</span> <span class="n">dt</span><span class="p">,</span>
+                    <span class="s">&#39;second_axis&#39;</span><span class="p">:</span> <span class="n">stretch_vect</span><span class="p">,</span>
+                    <span class="s">&#39;value_type&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="s">&#39;stretch&#39;</span><span class="p">]),</span>
+                    <span class="s">&#39;method&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="s">&#39;multi_ref&#39;</span><span class="p">])}</span>
+
+        <span class="k">if</span> <span class="n">return_sim_mat</span><span class="p">:</span>
+            <span class="n">ret_dict</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s">&#39;sim_mat&#39;</span><span class="p">:</span> <span class="n">bsimmat</span><span class="p">})</span>
+
+        <span class="k">return</span> <span class="n">ret_dict</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">print</span> <span class="s">&quot;For a single reference trace use the appropriate funtion&quot;</span>
+        <span class="k">return</span> <span class="bp">None</span>
+
+</div>
+<div class="viewcode-block" id="time_windows_creation"><a class="viewcode-back" href="../../../modules/autogen/miic.core.stretch_mod.time_windows_creation.html#miic.core.stretch_mod.time_windows_creation">[docs]</a><span class="k">def</span> <span class="nf">time_windows_creation</span><span class="p">(</span><span class="n">starting_list</span><span class="p">,</span> <span class="n">t_width</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Time windows creation.</span>
+
+<span class="sd">    A matrix containing one time window for each row is created. The starting</span>
+<span class="sd">    samples of each one of them are passed in the ``starting_list`` parameter.</span>
+<span class="sd">    The windows length ``t_width`` can be scalar or a list of values.</span>
+<span class="sd">    In the latter case both lists ``starting_list`` and ``t_width`` must</span>
+<span class="sd">    have the same length.</span>
+
+<span class="sd">    :type starting_list: list</span>
+<span class="sd">    :param starting_list: List of starting points</span>
+<span class="sd">    :type t_width: int or list of int</span>
+<span class="sd">    :param t_width: Windows length</span>
+
+<span class="sd">    :rtype: :class:`~numpy.ndarray`</span>
+<span class="sd">    :return: **tw_mat**: 2d ndarray containing the indexes of one time window</span>
+<span class="sd">        for each row</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isscalar</span><span class="p">(</span><span class="n">starting_list</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isscalar</span><span class="p">(</span><span class="n">t_width</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">t_width</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">starting_list</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;t_width must be a scalar or list of scalars of</span><span class="se">\</span>
+<span class="s">                            the same length as starting_list&quot;</span><span class="p">)</span>
+
+    <span class="n">tw_list</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isscalar</span><span class="p">(</span><span class="n">starting_list</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isscalar</span><span class="p">(</span><span class="n">t_width</span><span class="p">):</span>
+            <span class="n">wlen</span> <span class="o">=</span> <span class="n">t_width</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">wlen</span> <span class="o">=</span> <span class="n">t_width</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">tw_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">starting_list</span><span class="p">,</span> <span class="n">starting_list</span> <span class="o">+</span> <span class="n">wlen</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">for</span> <span class="p">(</span><span class="n">ii</span><span class="p">,</span> <span class="n">cstart</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">starting_list</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isscalar</span><span class="p">(</span><span class="n">t_width</span><span class="p">):</span>
+                <span class="n">wlen</span> <span class="o">=</span> <span class="n">t_width</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">wlen</span> <span class="o">=</span> <span class="n">t_width</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span>
+            <span class="n">tw_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">cstart</span><span class="p">,</span> <span class="n">cstart</span> <span class="o">+</span> <span class="n">wlen</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">tw_list</span>
+
+</div>
+<span class="k">if</span> <span class="n">BC_UI</span><span class="p">:</span>
+    <span class="k">class</span> <span class="nc">_time_windows_creation_view</span><span class="p">(</span><span class="n">HasTraits</span><span class="p">):</span>
+        <span class="n">starting_list</span> <span class="o">=</span> <span class="n">List</span><span class="p">(</span><span class="n">Int</span><span class="p">)</span>
+        <span class="n">t_width</span> <span class="o">=</span> <span class="n">List</span><span class="p">(</span><span class="n">Int</span><span class="p">(</span><span class="mi">50</span><span class="p">))</span>
+    
+        <span class="n">trait_view</span> <span class="o">=</span> <span class="n">View</span><span class="p">(</span><span class="n">Tabbed</span><span class="p">(</span><span class="n">Item</span><span class="p">(</span><span class="s">&#39;starting_list&#39;</span><span class="p">,</span>
+                                      <span class="n">height</span><span class="o">=</span><span class="mi">150</span><span class="p">,</span>
+                                      <span class="n">width</span><span class="o">=</span><span class="mi">80</span><span class="p">),</span>
+                                 <span class="n">Item</span><span class="p">(</span><span class="s">&#39;t_width&#39;</span><span class="p">,</span>
+                                      <span class="n">label</span><span class="o">=</span><span class="s">&#39;Win width in samples&#39;</span><span class="p">,</span>
+                                      <span class="n">height</span><span class="o">=</span><span class="mi">150</span><span class="p">,</span>
+                                      <span class="n">width</span><span class="o">=</span><span class="mi">80</span><span class="p">)))</span>
+
+
+<span class="k">def</span> <span class="nf">_create_G</span><span class="p">(</span><span class="n">n_ref</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Create the G matrix for the multi-trace alignment</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">G</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="k">for</span> <span class="n">jj</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_ref</span><span class="p">):</span>
+        <span class="n">line</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_ref</span><span class="p">)</span>
+        <span class="n">tline</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">line</span> <span class="k">if</span> <span class="n">i</span> <span class="o">!=</span> <span class="n">jj</span><span class="p">]</span>
+        <span class="n">tG</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">tline</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">tline</span><span class="p">)))</span>
+        <span class="k">if</span> <span class="n">jj</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">tG</span><span class="p">[:,</span> <span class="n">jj</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">tline</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="n">tline</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">tG</span><span class="p">[</span><span class="n">ii</span><span class="p">,</span> <span class="n">tline</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="n">G</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">G</span> <span class="o">=</span> <span class="n">tG</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">G</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">((</span><span class="n">G</span><span class="p">,</span> <span class="n">tG</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">G</span>
+
+
+<span class="k">def</span> <span class="nf">_id_from_stats</span><span class="p">(</span><span class="n">stats</span><span class="p">,</span> <span class="n">ret_id_dict</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+    <span class="n">id_dict</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">stats</span> <span class="o">=</span> <span class="n">flatten_recarray</span><span class="p">(</span><span class="n">stats</span><span class="p">)</span>
+    <span class="n">keywords</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;network&#39;</span><span class="p">,</span> <span class="s">&#39;station&#39;</span><span class="p">,</span> <span class="s">&#39;location&#39;</span><span class="p">,</span> <span class="s">&#39;channel&#39;</span><span class="p">]</span>
+    <span class="n">tr_id</span> <span class="o">=</span> <span class="s">&#39;.&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">stats</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39;-&#39;</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> \
+                      <span class="n">keywords</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">stats</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> <span class="nb">basestring</span><span class="p">)])</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">ret_id_dict</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">tr_id</span>
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">keywords</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">stats</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">!=</span> <span class="p">[]:</span>
+            <span class="n">id_dict</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">stats</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">id_dict</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
+    <span class="k">return</span> <span class="n">tr_id</span><span class="p">,</span> <span class="n">id_dict</span>
+
+
+<div class="viewcode-block" id="dv_panel_creation"><a class="viewcode-back" href="../../../modules/autogen/miic.core.stretch_mod.dv_panel_creation.html#miic.core.stretch_mod.dv_panel_creation">[docs]</a><span class="k">def</span> <span class="nf">dv_panel_creation</span><span class="p">(</span><span class="n">dv_list</span><span class="p">,</span> <span class="n">save_dir</span><span class="o">=</span><span class="s">&#39;./save&#39;</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Create :class:`pandas.Panel` objects recombining corr and dv curves</span>
+
+<span class="sd">    This function creates two :py:class:`pandas.Panel` object recombining</span>
+<span class="sd">    respectively all correlation `curve` and `dv/v` curve created for</span>
+<span class="sd">    a specific dataset and one :py:class:`pandas.DataFrame` containing all</span>
+<span class="sd">    the metainformation in each `stats` object associated with one stations</span>
+<span class="sd">    pair.</span>
+
+<span class="sd">    The function accept a list of dv dictionaries that could be created, e.g.,</span>
+<span class="sd">    with the function</span>
+<span class="sd">    :py:func:`~miic.core.stretch_mod.velocity_change_estimate` or with</span>
+<span class="sd">    :py:func:`~miic.core.stretch_mod.multi_ref_vchange_and_align`</span>
+<span class="sd">    that are checked for a consistent structure through</span>
+<span class="sd">    :py:func:`~miic.core.miic_utils.dv_check`.</span>
+
+<span class="sd">    Patterns that are processed without errors are logged in a file</span>
+<span class="sd">    ``success_patterns.npy`` saved in the `save_dir` directory.</span>
+
+<span class="sd">    :type dv_list: list of dv dictionaries</span>
+<span class="sd">    :param dv_list: List of dv dictionaries</span>
+<span class="sd">    :type save_dir: string</span>
+<span class="sd">    :param save_dir: Where the two Panels and the one DataFrame will be saved</span>
+
+<span class="sd">    :rtype: dict</span>
+<span class="sd">    :return: **panel_dict**: dictionary that has this structure:</span>
+<span class="sd">        *dv*: Velocity change panel</span>
+<span class="sd">        *corr*: Correlation panel</span>
+<span class="sd">        *stats*: Meta-information stored in a DataFrame</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">stats_df</span> <span class="o">=</span> <span class="n">DataFrame</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;evel&#39;</span><span class="p">,</span>
+                                  <span class="s">&#39;endtime&#39;</span><span class="p">,</span>
+                                  <span class="s">&#39;dist&#39;</span><span class="p">,</span>
+                                  <span class="s">&#39;network&#39;</span><span class="p">,</span>
+                                  <span class="s">&#39;channel&#39;</span><span class="p">,</span>
+                                  <span class="s">&#39;stlo&#39;</span><span class="p">,</span>
+                                  <span class="s">&#39;baz&#39;</span><span class="p">,</span>
+                                  <span class="s">&#39;stel&#39;</span><span class="p">,</span>
+                                  <span class="s">&#39;evla&#39;</span><span class="p">,</span>
+                                  <span class="s">&#39;npts&#39;</span><span class="p">,</span>
+                                  <span class="s">&#39;station&#39;</span><span class="p">,</span>
+                                  <span class="s">&#39;location&#39;</span><span class="p">,</span>
+                                  <span class="s">&#39;starttime&#39;</span><span class="p">,</span>
+                                  <span class="s">&#39;sampling_rate&#39;</span><span class="p">,</span>
+                                  <span class="s">&#39;stla&#39;</span><span class="p">,</span>
+                                  <span class="s">&#39;az&#39;</span><span class="p">,</span>
+                                  <span class="s">&#39;evlo&#39;</span><span class="p">])</span>
+
+    <span class="n">base_patterns</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">for</span> <span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">dv_dict</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">dv_list</span><span class="p">):</span>
+
+        <span class="n">check_state</span> <span class="o">=</span> <span class="n">dv_check</span><span class="p">(</span><span class="n">dv_dict</span><span class="p">)</span>
+
+        <span class="c"># Check if the dv dictionary is &quot;correct&quot;</span>
+        <span class="k">if</span> <span class="n">check_state</span><span class="p">[</span><span class="s">&#39;is_incomplete&#39;</span><span class="p">]:</span>
+            <span class="k">print</span> <span class="s">&quot;Error: Incomplete dv&quot;</span>
+            <span class="k">print</span> <span class="s">&quot;Possible errors:&quot;</span>
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">check_state</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">key</span> <span class="ow">is</span> <span class="ow">not</span> <span class="s">&#39;is_incomplete&#39;</span><span class="p">:</span>
+                    <span class="k">print</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s">: </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">check_state</span><span class="p">[</span><span class="n">key</span><span class="p">])</span>
+            <span class="k">continue</span>
+
+        <span class="c"># Extract the stats obj and use it to generate the pattern</span>
+        <span class="n">stats</span> <span class="o">=</span> <span class="n">flatten_recarray</span><span class="p">(</span><span class="n">dv_dict</span><span class="p">[</span><span class="s">&#39;stats&#39;</span><span class="p">])</span>
+        <span class="n">pattern</span> <span class="o">=</span> <span class="n">_id_from_stats</span><span class="p">(</span><span class="n">stats</span><span class="p">)</span>
+
+        <span class="c"># Add the current stats obj to the stats dataframe</span>
+        <span class="n">cdf</span> <span class="o">=</span> <span class="n">DataFrame</span><span class="p">(</span><span class="n">stats</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="p">[</span><span class="n">pattern</span><span class="p">])</span>
+        <span class="n">stats_df</span> <span class="o">=</span> <span class="n">stats_df</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cdf</span><span class="p">,</span> <span class="n">verify_integrity</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+        <span class="c"># Generate the time index</span>
+        <span class="n">time</span> <span class="o">=</span> <span class="n">convert_time</span><span class="p">(</span><span class="n">dv_dict</span><span class="p">[</span><span class="s">&#39;time&#39;</span><span class="p">])</span>
+
+        <span class="k">if</span> <span class="n">time</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">print</span> <span class="s">&quot;Time format error: skip pattern </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">pattern</span>
+            <span class="k">continue</span>
+
+        <span class="c"># Extract the corr and dv arrays</span>
+        <span class="n">corr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">dv_dict</span><span class="p">[</span><span class="s">&#39;corr&#39;</span><span class="p">])</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">dv</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">dv_dict</span><span class="p">[</span><span class="s">&#39;value&#39;</span><span class="p">])</span>  <span class="c"># New style dictionaries</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>  <span class="c"># Try the old style format</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">dv</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">dv_dict</span><span class="p">[</span><span class="s">&#39;dv&#39;</span><span class="p">])</span>
+            <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">dv</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">dv_dict</span><span class="p">[</span><span class="s">&#39;dt&#39;</span><span class="p">])</span>
+                <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">Exception</span>
+
+        <span class="c"># Adapt dv and corr in case they are single curves</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">dv</span><span class="o">.</span><span class="n">shape</span>
+        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+            <span class="n">dv</span> <span class="o">=</span> <span class="n">dv</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">,</span> <span class="p">:]</span>
+            <span class="n">corr</span> <span class="o">=</span> <span class="n">corr</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">,</span> <span class="p">:]</span>
+
+        <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">xyz</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="n">pqr</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="n">win_lab</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">dv</span><span class="p">)):</span>
+                <span class="n">lab</span> <span class="o">=</span> <span class="s">&#39;win-</span><span class="si">%i</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">k</span>
+                <span class="n">win_lab</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">lab</span><span class="p">)</span>
+                <span class="n">xyz</span><span class="p">[</span><span class="n">lab</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+                <span class="n">pqr</span><span class="p">[</span><span class="n">lab</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">dv</span><span class="p">)):</span>
+            <span class="n">cc</span> <span class="o">=</span> <span class="n">Series</span><span class="p">(</span><span class="n">corr</span><span class="p">[</span><span class="n">j</span><span class="p">],</span> <span class="n">index</span><span class="o">=</span><span class="n">time</span><span class="p">)</span>
+            <span class="c"># ss = Series(dv[j] - 1, index=time)</span>
+            <span class="n">ss</span> <span class="o">=</span> <span class="n">Series</span><span class="p">(</span><span class="n">dv</span><span class="p">[</span><span class="n">j</span><span class="p">],</span> <span class="n">index</span><span class="o">=</span><span class="n">time</span><span class="p">)</span>
+            <span class="n">xyz</span><span class="p">[</span><span class="n">win_lab</span><span class="p">[</span><span class="n">j</span><span class="p">]]</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">pattern</span><span class="p">:</span> <span class="n">ss</span><span class="p">})</span>
+            <span class="n">pqr</span><span class="p">[</span><span class="n">win_lab</span><span class="p">[</span><span class="n">j</span><span class="p">]]</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">pattern</span><span class="p">:</span> <span class="n">cc</span><span class="p">})</span>
+
+        <span class="n">base_patterns</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pattern</span><span class="p">)</span>
+
+    <span class="n">dv</span> <span class="o">=</span> <span class="n">Panel</span><span class="p">(</span><span class="n">xyz</span><span class="p">)</span>
+    <span class="n">corr</span> <span class="o">=</span> <span class="n">Panel</span><span class="p">(</span><span class="n">pqr</span><span class="p">)</span>
+
+    <span class="n">dv</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">save_dir</span><span class="p">,</span> <span class="s">&#39;dv.pickle&#39;</span><span class="p">))</span>
+    <span class="n">corr</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">save_dir</span><span class="p">,</span> <span class="s">&#39;corr.pickle&#39;</span><span class="p">))</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">stats_df</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">stats_df</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">save_dir</span><span class="p">,</span> <span class="s">&#39;stats.pickle&#39;</span><span class="p">))</span>
+
+    <span class="n">np</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">save_dir</span><span class="p">,</span> <span class="s">&#39;success_patterns.npy&#39;</span><span class="p">),</span> \
+        <span class="n">base_patterns</span><span class="p">)</span>
+
+    <span class="n">panel_dict</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">panel_dict</span><span class="p">[</span><span class="s">&#39;dv&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">dv</span>
+    <span class="n">panel_dict</span><span class="p">[</span><span class="s">&#39;corr&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">corr</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">stats_df</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">panel_dict</span><span class="p">[</span><span class="s">&#39;stats&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">stats_df</span>
+
+    <span class="k">return</span> <span class="n">panel_dict</span>
+
+<span class="c"># EOF</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MIIC 1.0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2012, Eraldo Pomponi.
+      Last updated on 2016-03-07T14:54:14.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </div>
+  </body>
+</html>

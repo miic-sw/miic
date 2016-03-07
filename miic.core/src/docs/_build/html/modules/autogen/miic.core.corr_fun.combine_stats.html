@@ -1,0 +1,150 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>miic.core.corr_fun.combine_stats &mdash; MIIC 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="MIIC 1.0 documentation" href="../../index.html" />
+    <link rel="up" title="Correlation" href="../corr_fun.html" />
+    <link rel="next" title="Signal stretching" href="../stretch_mod.html" />
+    <link rel="prev" title="miic.core.corr_fun.merge_id" href="miic.core.corr_fun.merge_id.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../stretch_mod.html" title="Signal stretching"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="miic.core.corr_fun.merge_id.html" title="miic.core.corr_fun.merge_id"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">MIIC 1.0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../core.html" >MIIC Library Reference</a> &raquo;</li>
+          <li class="nav-item nav-item-2"><a href="../corr_fun.html" accesskey="U">Correlation</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/modules/autogen/miic.core.corr_fun.combine_stats.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="miic-core-corr-fun-combine-stats">
+<h1>miic.core.corr_fun.combine_stats<a class="headerlink" href="#miic-core-corr-fun-combine-stats" title="Permalink to this headline">¶</a></h1>
+<dl class="function">
+<dt id="miic.core.corr_fun.combine_stats">
+<code class="descname">combine_stats</code><span class="sig-paren">(</span><em>tr1</em>, <em>tr2</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/miic/core/corr_fun.html#combine_stats"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#miic.core.corr_fun.combine_stats" title="Permalink to this definition">¶</a></dt>
+<dd><p>Combine the meta-information of two ObsPy Trace objects</p>
+<p>This function returns a ObsPy <code class="xref py py-class docutils literal"><span class="pre">Stats</span></code> object
+obtained combining the two associated with the input Traces.
+Namely <code class="docutils literal"><span class="pre">tr1.stats</span></code> and <code class="docutils literal"><span class="pre">tr2.stats</span></code>.</p>
+<p>The fields [&#8216;network&#8217;,&#8217;station&#8217;,&#8217;location&#8217;,&#8217;channel&#8217;] are combined in
+a <code class="docutils literal"><span class="pre">-</span></code> separated fashion to create a &#8220;pseudo&#8221; SEED like <code class="docutils literal"><span class="pre">id</span></code>.</p>
+<p>For all the others fields, only &#8220;common&#8221; information are retained: This
+means that only keywords that exist in both dictionaries will be included
+in the resulting one.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>tr1</strong> (<code class="xref py py-class docutils literal"><span class="pre">Trace</span></code>) &#8211; First Trace</li>
+<li><strong>tr2</strong> (<code class="xref py py-class docutils literal"><span class="pre">Trace</span></code>) &#8211; Second Trace</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first"><code class="xref py py-class docutils literal"><span class="pre">Stats</span></code></p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><strong>stats</strong>: combined Stats object</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../stretch_mod.html" title="Signal stretching"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="miic.core.corr_fun.merge_id.html" title="miic.core.corr_fun.merge_id"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">MIIC 1.0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../core.html" >MIIC Library Reference</a> &raquo;</li>
+          <li class="nav-item nav-item-2"><a href="../corr_fun.html" >Correlation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2012, Eraldo Pomponi.
+      Last updated on 2016-03-02T16:12:50.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </div>
+  </body>
+</html>

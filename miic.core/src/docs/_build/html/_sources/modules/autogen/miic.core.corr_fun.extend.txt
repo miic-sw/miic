@@ -1,0 +1,6 @@
+miic.core.corr_fun.extend
+=========================
+
+.. currentmodule:: miic.core.corr_fun
+
+.. autofunction:: extend

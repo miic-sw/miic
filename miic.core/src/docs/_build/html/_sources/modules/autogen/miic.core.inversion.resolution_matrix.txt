@@ -1,0 +1,6 @@
+miic.core.inversion.resolution_matrix
+=====================================
+
+.. currentmodule:: miic.core.inversion
+
+.. autofunction:: resolution_matrix

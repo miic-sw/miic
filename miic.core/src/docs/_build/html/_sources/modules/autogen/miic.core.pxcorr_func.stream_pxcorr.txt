@@ -1,0 +1,6 @@
+miic.core.pxcorr_func.stream_pxcorr
+===================================
+
+.. currentmodule:: miic.core.pxcorr_func
+
+.. autofunction:: stream_pxcorr

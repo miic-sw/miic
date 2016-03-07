@@ -1,0 +1,6 @@
+miic.core.corr_mat_processing.corr_mat_smooth
+=============================================
+
+.. currentmodule:: miic.core.corr_mat_processing
+
+.. autofunction:: corr_mat_smooth

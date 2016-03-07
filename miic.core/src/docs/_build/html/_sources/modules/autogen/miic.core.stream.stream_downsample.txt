@@ -1,0 +1,6 @@
+miic.core.stream.stream_downsample
+==================================
+
+.. currentmodule:: miic.core.stream
+
+.. autofunction:: stream_downsample

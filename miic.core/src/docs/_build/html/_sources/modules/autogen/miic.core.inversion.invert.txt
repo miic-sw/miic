@@ -1,0 +1,6 @@
+miic.core.inversion.invert
+==========================
+
+.. currentmodule:: miic.core.inversion
+
+.. autofunction:: invert

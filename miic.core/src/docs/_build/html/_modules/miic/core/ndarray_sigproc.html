@@ -1,0 +1,372 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>miic.core.ndarray_sigproc &mdash; MIIC 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="top" title="MIIC 1.0 documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MIIC 1.0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for miic.core.ndarray_sigproc</h1><div class="highlight"><pre>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">@author:</span>
+<span class="sd">Eraldo Pomponi</span>
+
+<span class="sd">@copyright:</span>
+<span class="sd">The MIIC Development Team (eraldo.pomponi@uni-leipzig.de)</span>
+
+<span class="sd">@license:</span>
+<span class="sd">GNU Lesser General Public License, Version 3</span>
+<span class="sd">(http://www.gnu.org/copyleft/lesser.html)</span>
+
+<span class="sd">Created on Oct 5, 2011</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="c"># Main imports</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+
+<span class="c"># ETS imports</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">BC_UI</span> <span class="o">=</span> <span class="bp">True</span>
+    <span class="kn">from</span> <span class="nn">traits.api</span> <span class="kn">import</span> <span class="n">HasTraits</span><span class="p">,</span> <span class="n">Int</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> \
+        <span class="n">Float</span><span class="p">,</span> <span class="n">Bool</span><span class="p">,</span> <span class="n">Enum</span><span class="p">,</span> <span class="n">Button</span>
+    <span class="kn">from</span> <span class="nn">traitsui.api</span> <span class="kn">import</span> <span class="n">View</span><span class="p">,</span> <span class="n">Item</span><span class="p">,</span> <span class="n">HGroup</span><span class="p">,</span> <span class="n">Tabbed</span><span class="p">,</span> <span class="n">VGroup</span><span class="p">,</span> <span class="n">Include</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="n">BC_UI</span> <span class="o">=</span> <span class="bp">False</span>
+    <span class="k">pass</span>
+
+<span class="c"># Local Imports</span>
+<span class="kn">from</span> <span class="nn">miic.core.corr_mat_processing</span> <span class="kn">import</span> <span class="n">corr_mat_smooth</span>
+
+<span class="c"># Obspy imports</span>
+<span class="kn">import</span> <span class="nn">obspy.signal</span> <span class="kn">as</span> <span class="nn">signal</span>
+
+
+<span class="c"># FIX: This function is marked to be removed. It is still in the library but it</span>
+<span class="c"># will be removed in the next release</span>
+<div class="viewcode-block" id="ndarray_smooth"><a class="viewcode-back" href="../../../modules/autogen/miic.core.ndarray_sigproc.ndarray_smooth.html#miic.core.ndarray_sigproc.ndarray_smooth">[docs]</a><span class="k">def</span> <span class="nf">ndarray_smooth</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">wsize</span><span class="p">,</span> <span class="n">wtype</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Moving average filter using a window with requested size.</span>
+
+<span class="sd">    This method is based on the convolution of a scaled window with the</span>
+<span class="sd">    signal. It is applied along the specified ``axis``.</span>
+<span class="sd">    Each row/col (i.e. depending on the selected ``axis``) is &quot;prepared&quot; by</span>
+<span class="sd">    introducing reflected copies of it (with the window size) in both ends so</span>
+<span class="sd">    that transient parts are minimized in the beginning and end part of the</span>
+<span class="sd">    resulting array.</span>
+
+<span class="sd">    :type X: :class:`~numpy.ndarray`</span>
+<span class="sd">    :param X: Matrix to be filtered</span>
+<span class="sd">    :type wsize: int</span>
+<span class="sd">    :param wsize: Window size</span>
+<span class="sd">    :type wtype: string</span>
+<span class="sd">    :param wtype: Window type. It can be one of:</span>
+<span class="sd">            [&#39;flat&#39;, &#39;hanning&#39;, &#39;hamming&#39;, &#39;bartlett&#39;, &#39;blackman&#39;]</span>
+<span class="sd">    :type axis: int</span>
+<span class="sd">    :param axis: Axis along with apply the filter. O: row by row</span>
+<span class="sd">                                                   1: col by col</span>
+
+<span class="sd">    :rtype: :class:`~numpy.ndarray`</span>
+<span class="sd">    :return: **X**: Filtered matrix</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">return</span> <span class="n">corr_mat_smooth</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">wsize</span><span class="p">,</span> <span class="n">wtype</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="n">axis</span><span class="p">)</span>
+
+</div>
+<span class="k">if</span> <span class="n">BC_UI</span><span class="p">:</span>
+    <span class="k">class</span> <span class="nc">_ndarray_smooth_view</span><span class="p">(</span><span class="n">HasTraits</span><span class="p">):</span>
+    
+        <span class="n">wsize</span> <span class="o">=</span> <span class="n">Int</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+        <span class="n">wtype</span> <span class="o">=</span> <span class="n">Enum</span><span class="p">([</span><span class="s">&#39;flat&#39;</span><span class="p">,</span> <span class="s">&#39;hanning&#39;</span><span class="p">,</span> <span class="s">&#39;hamming&#39;</span><span class="p">,</span> <span class="s">&#39;bartlett&#39;</span><span class="p">,</span> <span class="s">&#39;blackman&#39;</span><span class="p">])</span>
+        <span class="n">axis</span> <span class="o">=</span> <span class="n">Enum</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+    
+        <span class="n">trait_view</span> <span class="o">=</span> <span class="n">View</span><span class="p">(</span><span class="n">Item</span><span class="p">(</span><span class="s">&#39;wsize&#39;</span><span class="p">),</span>
+                          <span class="n">Item</span><span class="p">(</span><span class="s">&#39;wtype&#39;</span><span class="p">),</span>
+                          <span class="n">Item</span><span class="p">(</span><span class="s">&#39;axis&#39;</span><span class="p">))</span>
+
+
+<div class="viewcode-block" id="ndarray_filter"><a class="viewcode-back" href="../../../modules/autogen/miic.core.ndarray_sigproc.ndarray_filter.html#miic.core.ndarray_sigproc.ndarray_filter">[docs]</a><span class="k">def</span> <span class="nf">ndarray_filter</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">ftype</span><span class="p">,</span> <span class="n">sampling_rate</span><span class="p">,</span> <span class="n">filter_option</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Filters data on X row-wise.</span>
+
+<span class="sd">    This is performed &quot;in-place&quot; on each row array. The original data</span>
+<span class="sd">    are not accessible anymore afterwards.</span>
+
+<span class="sd">    :type X: :class:`~numpy.ndarray`</span>
+<span class="sd">    :param X: Matrix to be filtered</span>
+<span class="sd">    :type ftype: string</span>
+<span class="sd">    :param ftype: Filter type. It can be one of:</span>
+<span class="sd">            [&#39;bandpass&#39;,&#39;bandstop&#39;,&#39;lowpass&#39;,&#39;highpass&#39;]</span>
+<span class="sd">    :type sampling_rate: float</span>
+<span class="sd">    :param sampling_rate: Sampling rate</span>
+<span class="sd">    :type filter_option: dict</span>
+<span class="sd">    :param filter_option: Option specific for each type of filter. They are</span>
+<span class="sd">        described in the corresponding View</span>
+
+<span class="sd">    :rtype: :class:`~numpy.ndarray`</span>
+<span class="sd">    :return: **X_fil**: Filtered matrix</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">kw</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">([(</span><span class="n">kw_filed</span><span class="p">,</span> <span class="n">filter_option</span><span class="p">[</span><span class="n">kw_filed</span><span class="p">])</span>\
+                <span class="k">for</span> <span class="n">kw_filed</span> <span class="ow">in</span> <span class="n">filter_option</span><span class="p">])</span>
+
+    <span class="c"># dictionary to map given type-strings to filter functions</span>
+    <span class="n">filter_functions</span> <span class="o">=</span> <span class="p">{</span><span class="s">&quot;bandpass&quot;</span><span class="p">:</span> <span class="n">signal</span><span class="o">.</span><span class="n">bandpass</span><span class="p">,</span>
+                        <span class="s">&quot;bandstop&quot;</span><span class="p">:</span> <span class="n">signal</span><span class="o">.</span><span class="n">bandstop</span><span class="p">,</span>
+                        <span class="s">&quot;lowpass&quot;</span><span class="p">:</span> <span class="n">signal</span><span class="o">.</span><span class="n">lowpass</span><span class="p">,</span>
+                        <span class="s">&quot;highpass&quot;</span><span class="p">:</span> <span class="n">signal</span><span class="o">.</span><span class="n">highpass</span><span class="p">}</span>
+
+    <span class="c"># make type string comparison case insensitive</span>
+    <span class="n">ftype</span> <span class="o">=</span> <span class="n">ftype</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">ftype</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">filter_functions</span><span class="p">:</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="s">&quot;Filter type </span><span class="se">\&quot;</span><span class="si">%s</span><span class="se">\&quot;</span><span class="s"> not recognized. &quot;</span> <span class="o">%</span> <span class="n">ftype</span> <span class="o">+</span> \
+              <span class="s">&quot;Filter type must be one of: </span><span class="si">%s</span><span class="s">.&quot;</span> <span class="o">%</span> <span class="n">filter_functions</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+    <span class="n">row</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span>
+
+    <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">row</span><span class="p">):</span>
+        <span class="c"># do the actual filtering. the options dictionary is passed as</span>
+        <span class="c"># kwargs to the function that is mapped according to the</span>
+        <span class="c"># filter_functions dictionary.</span>
+        <span class="n">X</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">filter_functions</span><span class="p">[</span><span class="n">ftype</span><span class="p">](</span><span class="n">X</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span>
+                                           <span class="n">df</span><span class="o">=</span><span class="n">sampling_rate</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
+
+    <span class="n">X_fil</span> <span class="o">=</span> <span class="n">X</span>
+    <span class="k">return</span> <span class="n">X_fil</span>
+
+</div>
+<span class="k">if</span> <span class="n">BC_UI</span><span class="p">:</span>
+    <span class="k">class</span> <span class="nc">_ndarray_filter_view</span><span class="p">(</span><span class="n">HasTraits</span><span class="p">):</span>
+    
+        <span class="n">sampling_rate</span> <span class="o">=</span> <span class="n">Float</span>
+    
+        <span class="n">freq_l</span> <span class="o">=</span> <span class="n">Float</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>
+        <span class="n">df_l</span> <span class="o">=</span> <span class="n">Float</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>
+        <span class="n">corners_l</span> <span class="o">=</span> <span class="n">Int</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
+        <span class="n">zerophase_l</span> <span class="o">=</span> <span class="n">Bool</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
+    
+        <span class="n">freq_h</span> <span class="o">=</span> <span class="n">Float</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>
+        <span class="n">df_h</span> <span class="o">=</span> <span class="n">Float</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>
+        <span class="n">corners_h</span> <span class="o">=</span> <span class="n">Int</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
+        <span class="n">zerophase_h</span> <span class="o">=</span> <span class="n">Bool</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
+    
+        <span class="n">freqmin_bp</span> <span class="o">=</span> <span class="n">Float</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>
+        <span class="n">freqmax_bp</span> <span class="o">=</span> <span class="n">Float</span><span class="p">(</span><span class="mf">10.0</span><span class="p">)</span>
+        <span class="n">df_bp</span> <span class="o">=</span> <span class="n">Float</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>
+        <span class="n">corners_bp</span> <span class="o">=</span> <span class="n">Int</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
+        <span class="n">zerophase_bp</span> <span class="o">=</span> <span class="n">Bool</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
+    
+        <span class="n">freqmin_bs</span> <span class="o">=</span> <span class="n">Float</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>
+        <span class="n">freqmax_bs</span> <span class="o">=</span> <span class="n">Float</span><span class="p">(</span><span class="mf">10.0</span><span class="p">)</span>
+        <span class="n">df_bs</span> <span class="o">=</span> <span class="n">Float</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>
+        <span class="n">corners_bs</span> <span class="o">=</span> <span class="n">Int</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
+        <span class="n">zerophase_bs</span> <span class="o">=</span> <span class="n">Bool</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
+    
+        <span class="n">filter_option</span> <span class="o">=</span> <span class="n">Dict</span>
+        
+        <span class="n">save_b</span> <span class="o">=</span> <span class="n">Button</span><span class="p">(</span><span class="s">&#39;Save&#39;</span><span class="p">)</span>
+    
+        <span class="n">ftype</span> <span class="o">=</span> <span class="n">Enum</span><span class="p">(</span><span class="s">&#39;lowpass&#39;</span><span class="p">,</span> <span class="s">&#39;highpass&#39;</span><span class="p">,</span> <span class="s">&#39;bandpass&#39;</span><span class="p">,</span> <span class="s">&#39;bandstop&#39;</span><span class="p">)</span>
+    
+        <span class="n">trait_view</span> <span class="o">=</span> <span class="n">View</span><span class="p">(</span><span class="n">Item</span><span class="p">(</span><span class="s">&#39;sampling_rate&#39;</span><span class="p">),</span>
+                          <span class="n">Tabbed</span><span class="p">(</span><span class="n">VGroup</span><span class="p">(</span><span class="n">Item</span><span class="p">(</span><span class="s">&#39;ftype&#39;</span><span class="p">),</span>
+                                        <span class="n">Item</span><span class="p">(</span><span class="s">&#39;filter_option&#39;</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="s">&#39;readonly&#39;</span><span class="p">)),</span>
+                                        <span class="n">Include</span><span class="p">(</span><span class="s">&#39;lowpass_view&#39;</span><span class="p">),</span>
+                                        <span class="n">Include</span><span class="p">(</span><span class="s">&#39;highpass_view&#39;</span><span class="p">),</span>
+                                        <span class="n">Include</span><span class="p">(</span><span class="s">&#39;bandpass_view&#39;</span><span class="p">),</span>
+                                        <span class="n">Include</span><span class="p">(</span><span class="s">&#39;bandstop_view&#39;</span><span class="p">)))</span>
+    
+        <span class="n">lowpass_view</span> <span class="o">=</span> <span class="n">HGroup</span><span class="p">(</span><span class="n">Item</span><span class="p">(</span><span class="s">&#39;freq_l&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">&#39;f max&#39;</span><span class="p">),</span>
+                              <span class="n">Item</span><span class="p">(</span><span class="s">&#39;corners_l&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">&#39;corners&#39;</span><span class="p">),</span>
+                              <span class="n">Item</span><span class="p">(</span><span class="s">&#39;zerophase_l&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">&#39;zerophase&#39;</span><span class="p">),</span>
+                              <span class="n">Item</span><span class="p">(</span><span class="s">&#39;save_b&#39;</span><span class="p">,</span> <span class="n">show_label</span><span class="o">=</span><span class="bp">False</span><span class="p">),</span>
+                              <span class="n">label</span><span class="o">=</span><span class="s">&#39;lowpass&#39;</span><span class="p">,</span>
+                              <span class="n">enabled_when</span><span class="o">=</span><span class="s">&quot;type=&#39;lowpass&#39;&quot;</span><span class="p">)</span>
+    
+        <span class="n">highpass_view</span> <span class="o">=</span> <span class="n">HGroup</span><span class="p">(</span><span class="n">Item</span><span class="p">(</span><span class="s">&#39;freq_h&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">&#39;f min&#39;</span><span class="p">),</span>
+                              <span class="n">Item</span><span class="p">(</span><span class="s">&#39;corners_h&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">&#39;corners&#39;</span><span class="p">),</span>
+                              <span class="n">Item</span><span class="p">(</span><span class="s">&#39;zerophase_h&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">&#39;zerophase&#39;</span><span class="p">),</span>
+                              <span class="n">Item</span><span class="p">(</span><span class="s">&#39;save_b&#39;</span><span class="p">,</span> <span class="n">show_label</span><span class="o">=</span><span class="bp">False</span><span class="p">),</span>
+                              <span class="n">label</span><span class="o">=</span><span class="s">&#39;highpass&#39;</span><span class="p">,</span>
+                              <span class="n">enabled_when</span><span class="o">=</span><span class="s">&quot;type=&#39;highpass&#39;&quot;</span><span class="p">)</span>
+    
+        <span class="n">bandpass_view</span> <span class="o">=</span> <span class="n">HGroup</span><span class="p">(</span><span class="n">Item</span><span class="p">(</span><span class="s">&#39;freqmin_bp&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">&#39;f min&#39;</span><span class="p">),</span>
+                              <span class="n">Item</span><span class="p">(</span><span class="s">&#39;freqmax_bp&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">&#39;f max&#39;</span><span class="p">),</span>
+                              <span class="n">Item</span><span class="p">(</span><span class="s">&#39;corners_bp&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">&#39;corners&#39;</span><span class="p">),</span>
+                              <span class="n">Item</span><span class="p">(</span><span class="s">&#39;zerophase_bp&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">&#39;zerophase&#39;</span><span class="p">),</span>
+                              <span class="n">Item</span><span class="p">(</span><span class="s">&#39;save_b&#39;</span><span class="p">,</span> <span class="n">show_label</span><span class="o">=</span><span class="bp">False</span><span class="p">),</span>
+                              <span class="n">label</span><span class="o">=</span><span class="s">&#39;bandpass&#39;</span><span class="p">,</span>
+                              <span class="n">enabled_when</span><span class="o">=</span><span class="s">&quot;type=&#39;bandpass&#39;&quot;</span><span class="p">)</span>
+    
+        <span class="n">bandstop_view</span> <span class="o">=</span> <span class="n">HGroup</span><span class="p">(</span><span class="n">Item</span><span class="p">(</span><span class="s">&#39;freqmin_bs&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">&#39;f min&#39;</span><span class="p">),</span>
+                              <span class="n">Item</span><span class="p">(</span><span class="s">&#39;freqmax_bs&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">&#39;f max&#39;</span><span class="p">),</span>
+                              <span class="n">Item</span><span class="p">(</span><span class="s">&#39;corners_bs&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">&#39;corners&#39;</span><span class="p">),</span>
+                              <span class="n">Item</span><span class="p">(</span><span class="s">&#39;zerophase_bs&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">&#39;zerophase&#39;</span><span class="p">),</span>
+                              <span class="n">Item</span><span class="p">(</span><span class="s">&#39;save_b&#39;</span><span class="p">,</span> <span class="n">show_label</span><span class="o">=</span><span class="bp">False</span><span class="p">),</span>
+                              <span class="n">label</span><span class="o">=</span><span class="s">&#39;bandstop&#39;</span><span class="p">,</span>
+                              <span class="n">enabled_when</span><span class="o">=</span><span class="s">&quot;type=&#39;bandstop&#39;&quot;</span><span class="p">)</span>
+    
+        <span class="k">def</span> <span class="nf">_save_b_fired</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ftype</span> <span class="o">==</span> <span class="s">&#39;lowpass&#39;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">filter_option</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;freq&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">freq_l</span><span class="p">,</span>
+                                 <span class="s">&#39;corners&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">corners_l</span><span class="p">,</span>
+                                 <span class="s">&#39;zerophase&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">zerophase_l</span><span class="p">}</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">ftype</span> <span class="o">==</span> <span class="s">&#39;highpass&#39;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">filter_option</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;freq&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">freq_h</span><span class="p">,</span>
+                                 <span class="s">&#39;corners&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">corners_h</span><span class="p">,</span>
+                                 <span class="s">&#39;zerophase&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">zerophase_h</span><span class="p">}</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">ftype</span> <span class="o">==</span> <span class="s">&#39;bandpass&#39;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">filter_option</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;freqmin&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">freqmin_bp</span><span class="p">,</span>
+                                 <span class="s">&#39;freqmax&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">freqmax_bp</span><span class="p">,</span>
+                                 <span class="s">&#39;corners&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">corners_bp</span><span class="p">,</span>
+                                 <span class="s">&#39;zerophase&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">zerophase_bp</span><span class="p">}</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">ftype</span> <span class="o">==</span> <span class="s">&#39;bandstop&#39;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">filter_option</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;freqmin&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">freqmin_bs</span><span class="p">,</span>
+                                 <span class="s">&#39;freqmax&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">freqmax_bs</span><span class="p">,</span>
+                                 <span class="s">&#39;corners&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">corners_bs</span><span class="p">,</span>
+                                 <span class="s">&#39;zerophase&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">zerophase_bs</span><span class="p">}</span>
+    
+    
+<span class="c"># def ndarray_wt_denoise(X, family, order, level, mode=&#39;soft&#39;, axis=0):</span>
+<span class="c">#    &quot;&quot;&quot; Wavelet base ndarray denoising.</span>
+<span class="c">#</span>
+<span class="c">#    This function denoise each row/column, depending on the ``axis`` selected,</span>
+<span class="c">#    of the matrix ``X`` in wavelet domain.</span>
+<span class="c">#    Two approach are available: ``Soft`` and ``Hard`` threscholding.</span>
+<span class="c">#</span>
+<span class="c">#    :type X: :class:`~numpy.ndarray`</span>
+<span class="c">#    :param X: Matrix to be denoised</span>
+<span class="c">#    :type family: string</span>
+<span class="c">#    :param family: Wavelet type. It can be one of:</span>
+<span class="c">#            [&#39;haar&#39;, &#39;db&#39;, &#39;sym&#39;, &#39;coif&#39;, &#39;bior&#39;, &#39;rbio&#39;, &#39;dmey&#39;]</span>
+<span class="c">#    :type order: int</span>
+<span class="c">#    :param order: Wavelt order (e.g wavelet=sym, order=4 -&gt; sym4)</span>
+<span class="c">#    :type level: int</span>
+<span class="c">#    :param level: Decomposition level</span>
+<span class="c">#    :type mode: string</span>
+<span class="c">#    :param mode: Denoising strategy. It can be one of:</span>
+<span class="c">#            [&#39;soft&#39;, &#39;hard&#39;]</span>
+<span class="c">#    :type axis: int</span>
+<span class="c">#    :param axis: Axis along with apply the denoising algorithm.</span>
+<span class="c">#</span>
+<span class="c">#    :rtype: :class:`~numpy.ndarray`</span>
+<span class="c">#    :return: **X_den**: Denoised matrix</span>
+<span class="c">#</span>
+<span class="c">#    &quot;&quot;&quot;</span>
+<span class="c">#    from wt_fun import WT_Denoise</span>
+<span class="c">#</span>
+<span class="c">#    wt_c = WT_Denoise(family=family, order=order, level=level)</span>
+<span class="c">#</span>
+<span class="c">#    if axis == 1:</span>
+<span class="c">#        X = X.T</span>
+<span class="c">#</span>
+<span class="c">#    row, _ = X.shape</span>
+<span class="c">#</span>
+<span class="c">#    for idx in np.arange(row):</span>
+<span class="c">#        wt_c.sig = X[idx]</span>
+<span class="c">#        wt_c.filter(mode=mode)</span>
+<span class="c">#        X[idx] = wt_c.sig</span>
+<span class="c">#</span>
+<span class="c">#    if axis == 1:</span>
+<span class="c">#        X = X.T</span>
+<span class="c">#</span>
+<span class="c">#    X_den = X</span>
+<span class="c">#    return X_den</span>
+<span class="c">#</span>
+<span class="c">#</span>
+<span class="c"># class _ndarray_wt_denoise_view(HasTraits):</span>
+<span class="c">#</span>
+<span class="c">#    family = Enum([&#39;haar&#39;, &#39;db&#39;, &#39;sym&#39;, &#39;coif&#39;, &#39;bior&#39;, &#39;rbio&#39;, &#39;dmey&#39;])</span>
+<span class="c">#    order = Int(2)</span>
+<span class="c">#    level = Int(3)</span>
+<span class="c">#    mode = Enum(&#39;soft&#39;, &#39;hard&#39;)</span>
+<span class="c">#    axis = Enum(0, 1)</span>
+<span class="c">#</span>
+<span class="c">#    trait_view = View(Item(&#39;family&#39;),</span>
+<span class="c">#                      Item(&#39;order&#39;),</span>
+<span class="c">#                      Item(&#39;level&#39;),</span>
+<span class="c">#                      Item(&#39;mode&#39;, label=&#39;thresh. mode&#39;),</span>
+<span class="c">#                      Item(&#39;axis&#39;, label=&#39;0:by row - 1:by col&#39;))</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MIIC 1.0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2012, Eraldo Pomponi.
+      Last updated on 2016-03-07T14:54:14.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </div>
+  </body>
+</html>

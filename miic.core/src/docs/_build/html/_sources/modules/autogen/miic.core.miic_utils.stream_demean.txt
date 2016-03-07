@@ -1,0 +1,6 @@
+miic.core.miic_utils.stream_demean
+==================================
+
+.. currentmodule:: miic.core.miic_utils
+
+.. autofunction:: stream_demean

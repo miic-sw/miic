@@ -1,0 +1,321 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Working with loops &mdash; MIIC 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="MIIC 1.0 documentation" href="../../index.html" />
+    <link rel="up" title="Ambient Noise Correlation" href="../index.html" />
+    <link rel="prev" title="Pre-Processing" href="../CorrelationFunction2/CorrelationFunction2.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../CorrelationFunction2/CorrelationFunction2.html" title="Pre-Processing"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">MIIC 1.0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Ambient Noise Correlation</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/tutorials/Loops/Loops.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="working-with-loops">
+<span id="tutorial-loops"></span><h1>Working with loops<a class="headerlink" href="#working-with-loops" title="Permalink to this headline">¶</a></h1>
+<p>In <a class="reference internal" href="../CorrelationFunction1/CorrelationFunction1.html#basics-tutorial"><span>Basics</span></a>, <a class="reference internal" href="../CorrelationFunction2/CorrelationFunction2.html#preprocess-tutorial"><span>Pre-Processing</span></a>, we reported basics instructions about how to approach the ambient noise correlation study with the <em>MIIC</em> library.
+The work-flow illustrated there, are <em>straight</em> concatenation of successive tasks: from the access to the data to the “final” results.
+It was convenient in that context, to keep the exposition clear and focused on the main topics, not to mention the details about how to &#8220;feed&#8221; the process with the necessary raw data (i.e. seismic traces) so that it can produce useful results.
+More than a set of reading functions (i.e. already summarized in <a class="reference internal" href="../CorrelationFunction2/CorrelationFunction2.html#preprocess-tutorial"><span>Pre-Processing</span></a>), what is necessary is a way to successive “read &amp; process” different seismic traces in a well defined sequence till the whole data-set of interest is spanned: creating <strong>loops</strong>.
+Before describing the graphical handling of loops inside <strong>Blockcanvas</strong>, we need
+to clarify some details about their creation in <em>plain</em> Python
+(<a class="reference external" href="http://en.wikibooks.org/wiki/Python_Programming/Loops">http://en.wikibooks.org/wiki/Python_Programming/Loops</a>).</p>
+<p id="example1">(Example 1)</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="k">print</span> <span class="n">i</span>
+<span class="gp">...</span>
+<span class="go">0</span>
+<span class="go">1</span>
+<span class="go">2</span>
+<span class="go">3</span>
+<span class="go">4</span>
+<span class="go">5</span>
+<span class="go">6</span>
+<span class="go">7</span>
+<span class="go">8</span>
+<span class="go">9</span>
+</pre></div>
+</div>
+<p>The code snippet above is a simple example of a <strong>for</strong> loop. We can identify the index <em>i</em> that is updated at every iteration, the <em>iterable</em> <strong>range(10)</strong> that says which values will be assigned to <em>i</em> and in which order and the function to perform at each iteration “print i” that is the body of the loop. Running the code produce the reported output.
+The <strong>itarable</strong> concept needs to be clarified. An <em>iterable</em> is an object that supports iterations. All of Python&#8217;s standard built-in collection types support iteration
+(i.e. for details see <a class="reference external" href="http://docs.python.org/library/stdtypes.html#iterator-types">http://docs.python.org/library/stdtypes.html#iterator-types</a>).
+Examples of those standard collections are simple lists:</p>
+<p id="example2">(Example 2)</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">ex_list</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;a&#39;</span><span class="p">,</span><span class="s">&#39;b&#39;</span><span class="p">,</span><span class="s">&#39;c&#39;</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">ex_list</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="k">print</span> <span class="n">value</span>
+<span class="gp">...</span>
+<span class="go">a</span>
+<span class="go">b</span>
+<span class="go">c</span>
+</pre></div>
+</div>
+<p>lists of tuples:</p>
+<p id="example3">(Example 3)</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">list_of_tuples</span> <span class="o">=</span> <span class="p">[(</span><span class="s">&#39;a&#39;</span><span class="p">,</span><span class="mi">1</span><span class="p">),(</span><span class="s">&#39;b&#39;</span><span class="p">,</span><span class="mi">2</span><span class="p">),(</span><span class="s">&#39;c&#39;</span><span class="p">,</span><span class="mi">3</span><span class="p">)]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">)</span> <span class="ow">in</span> <span class="n">list_of_tuples</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="k">print</span> <span class="s">&quot;x=</span><span class="si">%s</span><span class="s"> - y=</span><span class="si">%d</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">)</span>
+<span class="gp">...</span>
+<span class="go">x=a - y=1</span>
+<span class="go">x=b - y=2</span>
+<span class="go">x=c – y=3</span>
+</pre></div>
+</div>
+<p>dictionaries:</p>
+<p id="example4">(Example 4)</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">ex_dict</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;first&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s">&#39;second&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">ex_dict</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="n">value</span> <span class="o">=</span> <span class="n">ex_dict</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+<span class="gp">... </span>    <span class="k">print</span> <span class="p">(</span><span class="n">key</span><span class="p">,</span><span class="n">value</span><span class="p">)</span>
+<span class="gp">...</span>
+<span class="go">(&#39;second&#39;, 2)</span>
+<span class="go">(&#39;first&#39;, 1)</span>
+</pre></div>
+</div>
+<p>When, for each iteration, we need the index in the collection of the selected item, it is of great help the function <strong>enumerate</strong> that works as shown in the following example:</p>
+<p id="example5">(Example 5)</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">ex_list</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;a&#39;</span><span class="p">,</span><span class="s">&#39;b&#39;</span><span class="p">,</span><span class="s">&#39;c&#39;</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="p">(</span><span class="n">index</span><span class="p">,</span><span class="n">value</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">ex_list</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="k">print</span> <span class="p">(</span><span class="n">index</span><span class="p">,</span><span class="n">value</span><span class="p">)</span>
+<span class="gp">...</span>
+<span class="go">(0, &#39;a&#39;)</span>
+<span class="go">(1, &#39;b&#39;)</span>
+<span class="go">(2, &#39;c&#39;)</span>
+</pre></div>
+</div>
+<p>This is a short introduction to one of the looping structure available in Python, the <strong>for loop</strong> and we will not go further ahead to exaplain other constructs because it is actually the only one available in <strong>Blockcanvas</strong>. Let&#8217;s see how the examples reported above are reproduced there.
+To create a loop in block canvas double-click on left pane where the red arrow in Fig. <a class="reference internal" href="#fig-newloop"><span>How to create a loop</span></a> is pointing.</p>
+<div class="align-center figure" id="id1">
+<span id="fig-newloop"></span><a class="reference internal image-reference" href="../../_images/bc.jpeg"><img alt="how to create a loop" src="../../_images/bc.jpeg" style="width: 60%;" /></a>
+<p class="caption"><span class="caption-text">How to create a loop</span></p>
+</div>
+<div class="align-center figure" id="id2">
+<span id="fig-for1-sel"></span><a class="reference internal image-reference" href="../../_images/bc_for1_sel.jpeg"><img alt="chose the type of loop" src="../../_images/bc_for1_sel.jpeg" style="width: 60%;" /></a>
+<p class="caption"><span class="caption-text">Example about how to chose the type of loop</span></p>
+</div>
+<p>After double-clicking a new window comes up that contains a drop-down menu where to select the “type” of loop to create. Actually there are three choices:</p>
+<blockquote>
+<div><ul class="simple">
+<li>For1</li>
+<li>For2</li>
+<li>Plain</li>
+</ul>
+</div></blockquote>
+<p>The “plain-loop” is <strong>not</strong> a loop but just a convenient way to “semantically” group (e.g. pre-processing, core, post-processing) a “sub-tree” of Blockcanvas functions together. After closing the “plain-loop” creation window, they will be represented in the main canvas by a unique block that shows all the input and output of the contained one. In this way, the graphical representation of complex work-flows can be simplified hiding the details of some operations (i.e. in agreement with OOP paradigms) but still leaving all the parameters accessible from outside.
+The “for1-loop” is the most simple and valuable in the list of available contructs: it offers the opportunity to create a loop exactly like what has been shown in <a class="reference internal" href="#example1"><span>Example 1</span></a> or <a class="reference internal" href="#example2"><span>Example 2</span></a>.
+After choosing the loop type, a new window is crated as shown in Fig. <a class="reference internal" href="#fig-for1"><span>“For1” loop creation window</span></a>.</p>
+<div class="align-center figure" id="id3">
+<span id="fig-for1"></span><a class="reference internal image-reference" href="../../_images/bc_for1.jpeg"><img alt="“For1” loop creation window" src="../../_images/bc_for1.jpeg" style="width: 80%;" /></a>
+<p class="caption"><span class="caption-text">“For1” loop creation window</span></p>
+</div>
+<p>In the red ellipse is highlighted the “current element”: a block that has been automatically added to the canvas and that offers access to the index/current_element of the loop, i.e., it represents the <strong>i</strong> variable in <a class="reference internal" href="#example1"><span>Example 1</span></a> and the <strong>value</strong> variable in <a class="reference internal" href="#example2"><span>Example 2</span></a>. For instance, adding a print function to the loop body is as simple as adding a new block to the canvas (see Fig. <a class="reference internal" href="#fig-for1-full"><span>Loop body creation</span></a>)</p>
+<div class="align-center figure" id="id4">
+<span id="fig-for1-full"></span><a class="reference internal image-reference" href="../../_images/bc_for1_full.jpeg"><img alt="Loop body creation" src="../../_images/bc_for1_full.jpeg" style="width: 80%;" /></a>
+<p class="caption"><span class="caption-text">Loop body creation</span></p>
+</div>
+<p>Closing the loop-creation window, the loop, as stated above, is represented by a single block, expose all the parameters of the underlying process plus the connector to pass the <strong>iterable</strong> that represents “range(10)” in the <a class="reference internal" href="#example1"><span>Example 1</span></a> and the “ex_list” in the <a class="reference internal" href="#example2"><span>Example 2</span></a>.</p>
+<div class="align-center figure" id="id5">
+<span id="fig-for1-complete"></span><a class="reference internal image-reference" href="../../_images/bc_for1_complete.jpeg"><img alt="“For1” complete example project" src="../../_images/bc_for1_complete.jpeg" style="width: 80%;" /></a>
+<p class="caption"><span class="caption-text">“For1” complete example project</span></p>
+</div>
+<p>We created an iterable adding a block that corresponds to the function <a class="reference internal" href="../../modules/autogen/miic.core.miic_utils.create_range_array.html#miic.core.miic_utils.create_range_array" title="miic.core.miic_utils.create_range_array"><code class="xref py py-class docutils literal"><span class="pre">create_range_array</span></code></a> and we fixed its parameters to produce the sequence [0,...,9]. The code corresponding to the project shown in Fig. <a class="reference internal" href="#fig-for1-complete"><span>“For1” complete example project</span></a> (i.e. exported directly from Blockcanvas) is:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">miic.core.miic_utils</span> <span class="kn">import</span> <span class="n">create_range_array</span><span class="p">,</span> <span class="n">print_input</span>
+
+<span class="n">ar1</span> <span class="o">=</span> <span class="n">create_range_array</span><span class="p">(</span><span class="n">low</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">high</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">nSamples</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span> 
+<span class="k">for</span> <span class="n">celem1</span> <span class="ow">in</span> <span class="n">ar1</span><span class="p">:</span>
+ 
+    <span class="n">print_input</span><span class="p">(</span><span class="n">celem1</span><span class="p">)</span>
+<span class="c">#EOF</span>
+</pre></div>
+</div>
+<p>And this is the output produced on the command line:</p>
+<div class="highlight-python"><div class="highlight"><pre>0
+1
+2
+3
+4
+5
+6
+7
+8
+9
+
+0.001251 seconds: Execution time
+</pre></div>
+</div>
+<p>So exactly the same as in <a class="reference internal" href="#example1"><span>Example 1</span></a> as we expected. The basic differences that exist in the two pieces of code are due to the fact that Blockcanvas doesn&#8217;t handle directly the built-in Python functions but we need to wrap them and rename them, e.g., the built-in “print” function that becomes “print_input” in the MIIC library.
+The “for2-loop” is almost identical to the “for1-loop” except that it is producing a loop of the form of <a class="reference internal" href="#example3"><span>Example 3</span></a> so with a tuple as a loop index.</p>
+<div class="align-center figure" id="id6">
+<span id="fig-for2"></span><a class="reference internal image-reference" href="../../_images/bc_for2.jpeg"><img alt="“For2” loop creation window" src="../../_images/bc_for2.jpeg" style="width: 80%;" /></a>
+<p class="caption"><span class="caption-text">“For2” loop creation window</span></p>
+</div>
+<p>In the loop-creation window now we have two blocks that are automatically added and that correspond to the first and second element of the tuple, i.e., respectively “x” and “y” in the <a class="reference internal" href="#example3"><span>Example 3</span></a>. All the other aspect reported about the “for1-loop” hold also for the “for2-loop”.
+Adding a print function in the body of the loop and the complete project for a “for2-loop” are reported in Fig. <a class="reference internal" href="#fig-for2-full"><span>Loop body creation</span></a> and Fig. <a class="reference internal" href="#fig-for2-complete"><span>“For2” complete example project</span></a></p>
+<div class="align-center figure" id="id7">
+<span id="fig-for2-full"></span><a class="reference internal image-reference" href="../../_images/bc_for2_full.jpeg"><img alt="Loop body creation" src="../../_images/bc_for2_full.jpeg" style="width: 80%;" /></a>
+<p class="caption"><span class="caption-text">Loop body creation</span></p>
+</div>
+<div class="align-center figure" id="id8">
+<span id="fig-for2-complete"></span><a class="reference internal image-reference" href="../../_images/bc_for2_complete.jpeg"><img alt="“For2” complete example project" src="../../_images/bc_for2_complete.jpeg" style="width: 80%;" /></a>
+<p class="caption"><span class="caption-text">“For2” complete example project</span></p>
+</div>
+<p>The generated code is:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">miic.core.miic_utils</span> <span class="kn">import</span> <span class="n">create_range_array</span><span class="p">,</span> <span class="n">print_tuple</span><span class="p">,</span> <span class="n">enum_list</span>
+
+<span class="n">ar1</span> <span class="o">=</span> <span class="n">create_range_array</span><span class="p">(</span><span class="n">low</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">high</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">nSamples</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span> 
+<span class="n">ls_enum1</span> <span class="o">=</span> <span class="n">enum_list</span><span class="p">(</span><span class="n">ar1</span><span class="p">)</span> 
+<span class="k">for</span> <span class="p">(</span><span class="n">tuple_x1</span><span class="p">,</span><span class="n">tuple_y1</span><span class="p">)</span> <span class="ow">in</span> <span class="n">ls_enum1</span><span class="p">:</span>
+ 
+    <span class="n">print_tuple</span><span class="p">(</span><span class="n">tuple_x1</span><span class="p">,</span> <span class="n">tuple_y1</span><span class="p">)</span>
+<span class="c">#EOF</span>
+</pre></div>
+</div>
+<p>Each element of a <strong>range</strong> array cannot be passed to a tuple so, to have a running example, we adopted the function <a class="reference internal" href="../../modules/autogen/miic.core.miic_utils.enum_list.html#miic.core.miic_utils.enum_list" title="miic.core.miic_utils.enum_list"><code class="xref py py-class docutils literal"><span class="pre">enum_list</span></code></a> that is just a wrapper for the built-in Python function “enumerate” so, what we are producing, is the same loop structure as shown in <a class="reference internal" href="#example5"><span>Example 5</span></a> where the range array is a sequence of 10 elements equally spaced ranging from 0 to 1 (i.e. this is the way we configured the <a class="reference internal" href="../../modules/autogen/miic.core.miic_utils.create_range_array.html#miic.core.miic_utils.create_range_array" title="miic.core.miic_utils.create_range_array"><code class="xref py py-class docutils literal"><span class="pre">create_range_array</span></code></a> function for this example). Running the project, on the command line we get this output:</p>
+<div class="highlight-python"><div class="highlight"><pre>(0,0.0)
+(1,0.111111111111)
+(2,0.222222222222)
+(3,0.333333333333)
+(4,0.444444444444)
+(5,0.555555555556)
+(6,0.666666666667)
+(7,0.777777777778)
+(8,0.888888888889)
+(9,1.0)
+
+0.003345 seconds: Execution time
+</pre></div>
+</div>
+<p>We are not reporting a case of looping on a dictionary like the code in <a class="reference internal" href="#example4"><span>Example 4</span></a> but it is straightforward to apply the same approach as shown above for a list.
+Going back to the main target of this tutorial, we need to show how to adopt loops to work with a data-set that contains different seismic traces.
+First of all, suppose that the data-set is stored in a directory; exactly we have six files in it. Using the <a class="reference internal" href="../../modules/autogen/miic.core.miic_utils.dir_read.html#miic.core.miic_utils.dir_read" title="miic.core.miic_utils.dir_read"><code class="xref py py-class docutils literal"><span class="pre">dir_read</span></code></a> function we can retrieve their filename organized in a list that looks like this:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">miic.core.miic_utils</span> <span class="kn">import</span> <span class="n">dir_read</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">files_list</span> <span class="o">=</span> <span class="n">dir_read</span><span class="p">(</span><span class="s">&#39;mseed_example&#39;</span><span class="p">,</span><span class="s">&#39;*&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">cf</span> <span class="ow">in</span> <span class="n">files_list</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="k">print</span> <span class="n">cf</span>
+<span class="gp">...</span>
+<span class="go">mseed_example/1-Z_20110207_1300.mseed</span>
+<span class="go">mseed_example/2-Z_20110207_1300.mseed</span>
+<span class="go">mseed_example/3-Z_20110207_1300.mseed</span>
+<span class="go">mseed_example/4-Z_20110207_1300.mseed</span>
+<span class="go">mseed_example/5-Z_20110207_1300.mseed</span>
+<span class="go">mseed_example/6-Z_20110207_1300.mseed</span>
+</pre></div>
+</div>
+<p>This list of filenames is a good candidate to be the iterable that we can adopt to successively apply a set of functions to the whole data-set.
+In Fig. <a class="reference internal" href="#fig-seis-for1-creation"><span>Seismic trace read in “For1” loop body</span></a> we showed the body of a “for1-loop” where the current element is wired with the “filename” input of the <a class="reference internal" href="../../modules/alpha_mod.html#miic.core.alpha_mod.stream_read" title="miic.core.alpha_mod.stream_read"><code class="xref py py-class docutils literal"><span class="pre">stream_read</span></code></a> function.</p>
+<div class="align-center figure" id="id9">
+<span id="fig-seis-for1-creation"></span><a class="reference internal image-reference" href="../../_images/seis_for1_creation.jpeg"><img alt="Seismic trace read in “For1” loop body" src="../../_images/seis_for1_creation.jpeg" style="width: 80%;" /></a>
+<p class="caption"><span class="caption-text">Seismic trace read in “For1” loop body</span></p>
+</div>
+<p>It is obvious that we can add as many functions as we like after the <a class="reference internal" href="../../modules/alpha_mod.html#miic.core.alpha_mod.stream_read" title="miic.core.alpha_mod.stream_read"><code class="xref py py-class docutils literal"><span class="pre">stream_read</span></code></a> one to realize the desired work-flow; Even nested loops are allowed giving us enough flexibility to work with seismic data.
+The complete project with the <a class="reference internal" href="../../modules/autogen/miic.core.miic_utils.dir_read.html#miic.core.miic_utils.dir_read" title="miic.core.miic_utils.dir_read"><code class="xref py py-class docutils literal"><span class="pre">dir_read</span></code></a> function used to produce the list of filenames is reported in Fig. <a class="reference internal" href="#fig-seis-for1-complete"><span>Multiple seismic traces read with a “For1” loop</span></a></p>
+<div class="align-center figure" id="id10">
+<span id="fig-seis-for1-complete"></span><a class="reference internal image-reference" href="../../_images/seis_for1_complete.jpeg"><img alt="Multiple seismic traces read with a “For1” loop" src="../../_images/seis_for1_complete.jpeg" style="width: 80%;" /></a>
+<p class="caption"><span class="caption-text">Multiple seismic traces read with a “For1” loop</span></p>
+</div>
+<p>The corresponding generated code is:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">miic.core.miic_utils</span> <span class="kn">import</span> <span class="n">dir_read</span> 
+<span class="kn">from</span> <span class="nn">miic.core.alpha_mod</span> <span class="kn">import</span> <span class="n">stream_read</span>
+
+<span class="n">files_list1</span> <span class="o">=</span> <span class="n">dir_read</span><span class="p">(</span><span class="n">base_dir</span><span class="o">=</span><span class="s">&#39;./mseed_example&#39;</span><span class="p">,</span> <span class="n">pattern</span><span class="o">=</span><span class="s">&#39;*.mseed&#39;</span><span class="p">,</span> <span class="n">sort_flag</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span> 
+<span class="k">for</span> <span class="n">celem1</span> <span class="ow">in</span> <span class="n">files_list1</span><span class="p">:</span>
+ 
+    <span class="n">st1</span><span class="p">,</span> <span class="n">n_trace1</span><span class="p">,</span> <span class="n">base_name1</span><span class="p">,</span> <span class="n">start_time1</span> <span class="o">=</span> <span class="n">stream_read</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="n">celem1</span><span class="p">,</span> <span class="n">format</span><span class="o">=</span><span class="s">&#39;None (Automatic)&#39;</span><span class="p">,</span> <span class="n">example</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+<span class="c">#EOF</span>
+</pre></div>
+</div>
+<p>Having the possibility to handle loops directly in <strong>Blockcanvas</strong> makes this application capable to be adopted as a prototyping tool for a wide set of Seismic problems.</p>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../CorrelationFunction2/CorrelationFunction2.html" title="Pre-Processing"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">MIIC 1.0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Ambient Noise Correlation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2012, Eraldo Pomponi.
+      Last updated on 2016-03-02T14:12:35.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </div>
+  </body>
+</html>

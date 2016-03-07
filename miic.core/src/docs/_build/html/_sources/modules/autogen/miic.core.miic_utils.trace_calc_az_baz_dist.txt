@@ -1,0 +1,6 @@
+miic.core.miic_utils.trace_calc_az_baz_dist
+===========================================
+
+.. currentmodule:: miic.core.miic_utils
+
+.. autofunction:: trace_calc_az_baz_dist

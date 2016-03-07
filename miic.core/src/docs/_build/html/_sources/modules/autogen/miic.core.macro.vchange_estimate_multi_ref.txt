@@ -1,0 +1,6 @@
+miic.core.macro.vchange_estimate_multi_ref
+==========================================
+
+.. currentmodule:: miic.core.macro
+
+.. autofunction:: vchange_estimate_multi_ref

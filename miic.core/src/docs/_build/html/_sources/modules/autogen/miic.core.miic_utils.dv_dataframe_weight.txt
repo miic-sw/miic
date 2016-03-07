@@ -1,0 +1,6 @@
+miic.core.miic_utils.dv_dataframe_weight
+========================================
+
+.. currentmodule:: miic.core.miic_utils
+
+.. autofunction:: dv_dataframe_weight

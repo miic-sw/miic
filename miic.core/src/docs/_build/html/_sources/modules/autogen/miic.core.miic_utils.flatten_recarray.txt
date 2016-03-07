@@ -1,0 +1,6 @@
+miic.core.miic_utils.flatten_recarray
+=====================================
+
+.. currentmodule:: miic.core.miic_utils
+
+.. autofunction:: flatten_recarray

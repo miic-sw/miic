@@ -1,0 +1,158 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Manipulation of Data Streams &mdash; MIIC 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="MIIC 1.0 documentation" href="../index.html" />
+    <link rel="up" title="MIIC Library Reference" href="core.html" />
+    <link rel="next" title="miic.core.stream.read_from_filesystem" href="autogen/miic.core.stream.read_from_filesystem.html" />
+    <link rel="prev" title="miic.core.pxcorr_func.stream_pxcorr" href="autogen/miic.core.pxcorr_func.stream_pxcorr.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="autogen/miic.core.stream.read_from_filesystem.html" title="miic.core.stream.read_from_filesystem"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="autogen/miic.core.pxcorr_func.stream_pxcorr.html" title="miic.core.pxcorr_func.stream_pxcorr"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">MIIC 1.0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="core.html" accesskey="U">MIIC Library Reference</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Manipulation of Data Streams</a><ul>
+<li><a class="reference internal" href="#blockcanvas-oriented">BlockCanvas oriented</a></li>
+</ul>
+</li>
+</ul>
+
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/modules/stream.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="manipulation-of-data-streams">
+<h1>Manipulation of Data Streams<a class="headerlink" href="#manipulation-of-data-streams" title="Permalink to this headline">¶</a></h1>
+<p>Set of functions specific to manipulate <code class="xref py py-class docutils literal"><span class="pre">Stream</span></code>
+Objects.</p>
+<span class="target" id="module-miic.core.stream"></span><div class="section" id="blockcanvas-oriented">
+<h2>BlockCanvas oriented<a class="headerlink" href="#blockcanvas-oriented" title="Permalink to this headline">¶</a></h2>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="autogen/miic.core.stream.read_from_filesystem.html#miic.core.stream.read_from_filesystem" title="miic.core.stream.read_from_filesystem"><code class="xref py py-obj docutils literal"><span class="pre">read_from_filesystem</span></code></a></td>
+<td>Function to read data from a filesystem with a give file structure just by specifying ID and time interval.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="autogen/miic.core.stream.stream_combine.html#miic.core.stream.stream_combine" title="miic.core.stream.stream_combine"><code class="xref py py-obj docutils literal"><span class="pre">stream_combine</span></code></a></td>
+<td>Combins two streams into a single one</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="autogen/miic.core.stream.stream_add_lat_lon_ele.html#miic.core.stream.stream_add_lat_lon_ele" title="miic.core.stream.stream_add_lat_lon_ele"><code class="xref py py-obj docutils literal"><span class="pre">stream_add_lat_lon_ele</span></code></a></td>
+<td>Add lat lon ele information to each trace if of a stream, if available.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="autogen/miic.core.stream.stream_save_sac.html#miic.core.stream.stream_save_sac" title="miic.core.stream.stream_save_sac"><code class="xref py py-obj docutils literal"><span class="pre">stream_save_sac</span></code></a></td>
+<td>Save a stream in sac format</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="autogen/miic.core.stream.stream_downsample.html#miic.core.stream.stream_downsample" title="miic.core.stream.stream_downsample"><code class="xref py py-obj docutils literal"><span class="pre">stream_downsample</span></code></a></td>
+<td>Downsample all the traces in the input stream to a desired frequency.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="autogen/miic.core.stream.stream_filter.html#miic.core.stream.stream_filter" title="miic.core.stream.stream_filter"><code class="xref py py-obj docutils literal"><span class="pre">stream_filter</span></code></a></td>
+<td>Filter each trace of a Stream according to the given parameters</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="autogen/miic.core.stream.trace_sym_pad_shrink_to_npts.html#miic.core.stream.trace_sym_pad_shrink_to_npts" title="miic.core.stream.trace_sym_pad_shrink_to_npts"><code class="xref py py-obj docutils literal"><span class="pre">trace_sym_pad_shrink_to_npts</span></code></a></td>
+<td>Pads with 0 or shrink the trace data symmetrically to npts points.</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="autogen/miic.core.stream.read_from_filesystem.html" title="miic.core.stream.read_from_filesystem"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="autogen/miic.core.pxcorr_func.stream_pxcorr.html" title="miic.core.pxcorr_func.stream_pxcorr"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">MIIC 1.0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="core.html" >MIIC Library Reference</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2012, Eraldo Pomponi.
+      Last updated on 2016-03-07T14:54:14.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </div>
+  </body>
+</html>

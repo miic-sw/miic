@@ -1,0 +1,6 @@
+miic.core.pxcorr_func.taper
+===========================
+
+.. currentmodule:: miic.core.pxcorr_func
+
+.. autofunction:: taper

@@ -1,0 +1,6 @@
+miic.core.corr_fun.corr_trace_fun
+=================================
+
+.. currentmodule:: miic.core.corr_fun
+
+.. autofunction:: corr_trace_fun

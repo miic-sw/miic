@@ -1,0 +1,6 @@
+miic.core.miic_utils.convert_to_matlab
+======================================
+
+.. currentmodule:: miic.core.miic_utils
+
+.. autofunction:: convert_to_matlab

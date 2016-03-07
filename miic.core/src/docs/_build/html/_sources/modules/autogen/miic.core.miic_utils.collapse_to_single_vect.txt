@@ -1,0 +1,6 @@
+miic.core.miic_utils.collapse_to_single_vect
+============================================
+
+.. currentmodule:: miic.core.miic_utils
+
+.. autofunction:: collapse_to_single_vect

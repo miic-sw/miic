@@ -1,0 +1,6 @@
+miic.core.macro.plot_corr_matrix
+================================
+
+.. currentmodule:: miic.core.macro
+
+.. autofunction:: plot_corr_matrix

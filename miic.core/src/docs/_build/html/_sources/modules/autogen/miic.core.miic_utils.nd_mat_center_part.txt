@@ -1,0 +1,6 @@
+miic.core.miic_utils.nd_mat_center_part
+=======================================
+
+.. currentmodule:: miic.core.miic_utils
+
+.. autofunction:: nd_mat_center_part

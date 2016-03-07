@@ -1,0 +1,6 @@
+miic.core.macro.one_step_vchange_estimate_and_plot
+==================================================
+
+.. currentmodule:: miic.core.macro
+
+.. autofunction:: one_step_vchange_estimate_and_plot

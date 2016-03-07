@@ -1,0 +1,6 @@
+miic.core.miic_utils.matrix_product
+===================================
+
+.. currentmodule:: miic.core.miic_utils
+
+.. autofunction:: matrix_product

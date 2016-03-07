@@ -1,0 +1,162 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>miic.core.miic_utils.convert_to_matlab &mdash; MIIC 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="MIIC 1.0 documentation" href="../../index.html" />
+    <link rel="up" title="Utilities" href="../miic_utils.html" />
+    <link rel="next" title="miic.core.miic_utils.stack" href="miic.core.miic_utils.stack.html" />
+    <link rel="prev" title="miic.core.miic_utils.mat_to_ndarray" href="miic.core.miic_utils.mat_to_ndarray.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="miic.core.miic_utils.stack.html" title="miic.core.miic_utils.stack"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="miic.core.miic_utils.mat_to_ndarray.html" title="miic.core.miic_utils.mat_to_ndarray"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">MIIC 1.0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../core.html" >MIIC Library Reference</a> &raquo;</li>
+          <li class="nav-item nav-item-2"><a href="../miic_utils.html" accesskey="U">Utilities</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/modules/autogen/miic.core.miic_utils.convert_to_matlab.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="miic-core-miic-utils-convert-to-matlab">
+<h1>miic.core.miic_utils.convert_to_matlab<a class="headerlink" href="#miic-core-miic-utils-convert-to-matlab" title="Permalink to this headline">¶</a></h1>
+<dl class="function">
+<dt id="miic.core.miic_utils.convert_to_matlab">
+<code class="descname">convert_to_matlab</code><span class="sig-paren">(</span><em>st</em>, <em>base_name</em>, <em>base_dir</em>, <em>suffix=''</em>, <em>seconds=0</em>, <em>is_corr=False</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/miic/core/miic_utils.html#convert_to_matlab"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#miic.core.miic_utils.convert_to_matlab" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save an ObsPy Stream to a series of Matlab files.</p>
+<p>Each <code class="docutils literal"><span class="pre">Trace</span></code> contained in the <code class="docutils literal"><span class="pre">Stream</span></code> object will be stored in a
+different file which name is formatted as
+<code class="docutils literal"><span class="pre">&lt;timestamp&gt;_'base_name'_&lt;trace_seed_id_no_dash&gt;_'suffix'_.mat</span></code>.
+Both &lt;timestamp&gt; and &lt;trace_seed_id_no_dash&gt; are generated directly
+reading trace meta-information so they are not accessible.
+If <code class="docutils literal"><span class="pre">base_name</span> <span class="pre">==</span> <span class="pre">None</span> <span class="pre">or</span> <span class="pre">base_name</span> <span class="pre">==</span> <span class="pre">''</span></code> it is substituted with the
+string <code class="docutils literal"><span class="pre">trace</span></code>.
+if <code class="docutils literal"><span class="pre">suffix</span> <span class="pre">==</span> <span class="pre">None</span> <span class="pre">or</span> <span class="pre">suffix</span> <span class="pre">==''</span></code> it simply omitted keeping just one
+underscore to close the filename.
+This way to compose the filename is consistent with what expected by
+functions like <a class="reference internal" href="miic.core.macro.recombine_corr_data.html#miic.core.macro.recombine_corr_data" title="miic.core.macro.recombine_corr_data"><code class="xref py py-class docutils literal"><span class="pre">recombine_corr_data</span></code></a> that are
+supposed to read back the data from them.
+In case the parameter <code class="docutils literal"><span class="pre">second</span></code> is passed and different from 0 just
+<code class="docutils literal"><span class="pre">second</span></code> seconds will be saved in the Matlab file so that, for each
+<code class="docutils literal"><span class="pre">Trace</span></code> <code class="docutils literal"><span class="pre">tr</span></code>, what is taken is <code class="docutils literal"><span class="pre">tr(tr.stats.starttime,</span>
+<span class="pre">tr.stats.starttime</span> <span class="pre">+</span> <span class="pre">seconds).</span>
+<span class="pre">If</span> <span class="pre">the</span> <span class="pre">``is_corr</span></code> flag is <cite>True`</cite>, the time interval is doubled and is
+symmetric respect to the default &#8220;zero-timelag&#8221; of
+UTCDateTime(1971, 1, 1, 0, 0, 0).</p>
+<p>&gt;&gt;&gt;ref = UTCDateTime(1971, 1, 1, 0, 0, 0)
+&gt;&gt;&gt;tr = tr.slice(ref-seconds,ref+seconds)</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>st</strong> (<code class="xref py py-class docutils literal"><span class="pre">Stream</span></code>) &#8211; ObsPy <code class="docutils literal"><span class="pre">Stream</span></code> object to be saved</li>
+<li><strong>base_name</strong> (<em>string</em>) &#8211; Common &#8220;root&#8221; for every generated filename.
+It must not include underscores.</li>
+<li><strong>base_dir</strong> (<em>directory</em>) &#8211; Path where to save the files</li>
+<li><strong>suffix</strong> (<em>string</em>) &#8211; Optional suffix for the filename</li>
+<li><strong>seconds</strong> (<em>int (Optional)</em>) &#8211; How many seconds to retain of the original trace</li>
+<li><strong>is_corr</strong> (<em>bool (Optional)</em>) &#8211; If True the seconds</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="miic.core.miic_utils.stack.html" title="miic.core.miic_utils.stack"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="miic.core.miic_utils.mat_to_ndarray.html" title="miic.core.miic_utils.mat_to_ndarray"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">MIIC 1.0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../core.html" >MIIC Library Reference</a> &raquo;</li>
+          <li class="nav-item nav-item-2"><a href="../miic_utils.html" >Utilities</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2012, Eraldo Pomponi.
+      Last updated on 2016-03-02T16:12:50.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </div>
+  </body>
+</html>

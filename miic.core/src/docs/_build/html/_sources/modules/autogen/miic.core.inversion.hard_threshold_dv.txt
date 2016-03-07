@@ -1,0 +1,6 @@
+miic.core.inversion.hard_threshold_dv
+=====================================
+
+.. currentmodule:: miic.core.inversion
+
+.. autofunction:: hard_threshold_dv

@@ -1,0 +1,6 @@
+miic.core.miic_utils.save_dict_to_matlab_file
+=============================================
+
+.. currentmodule:: miic.core.miic_utils
+
+.. autofunction:: save_dict_to_matlab_file

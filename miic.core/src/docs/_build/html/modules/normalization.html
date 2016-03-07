@@ -1,0 +1,157 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Normalization &mdash; MIIC 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="MIIC 1.0 documentation" href="../index.html" />
+    <link rel="up" title="MIIC Library Reference" href="core.html" />
+    <link rel="next" title="miic.core.normalization.temp_norm" href="autogen/miic.core.normalization.temp_norm.html" />
+    <link rel="prev" title="miic.core.stream.trace_sym_pad_shrink_to_npts" href="autogen/miic.core.stream.trace_sym_pad_shrink_to_npts.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="autogen/miic.core.normalization.temp_norm.html" title="miic.core.normalization.temp_norm"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="autogen/miic.core.stream.trace_sym_pad_shrink_to_npts.html" title="miic.core.stream.trace_sym_pad_shrink_to_npts"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">MIIC 1.0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="core.html" accesskey="U">MIIC Library Reference</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Normalization</a><ul>
+<li><a class="reference internal" href="#blockcanvas-oriented">BlockCanvas oriented</a></li>
+</ul>
+</li>
+</ul>
+
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/modules/normalization.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="normalization">
+<h1>Normalization<a class="headerlink" href="#normalization" title="Permalink to this headline">¶</a></h1>
+<p>&#64;author:
+Eraldo Pomponi, Mohammad Javad Fallahi</p>
+<p>&#64;copyright:
+The MIIC Development Team (<a class="reference external" href="mailto:eraldo&#46;pomponi&#37;&#52;&#48;uni-leipzig&#46;de">eraldo<span>&#46;</span>pomponi<span>&#64;</span>uni-leipzig<span>&#46;</span>de</a>)</p>
+<p>&#64;license:
+GNU Lesser General Public License, Version 3
+(<a class="reference external" href="http://www.gnu.org/copyleft/lesser.html">http://www.gnu.org/copyleft/lesser.html</a>)</p>
+<span class="target" id="module-miic.core.normalization"></span><div class="section" id="blockcanvas-oriented">
+<h2>BlockCanvas oriented<a class="headerlink" href="#blockcanvas-oriented" title="Permalink to this headline">¶</a></h2>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="autogen/miic.core.normalization.temp_norm.html#miic.core.normalization.temp_norm" title="miic.core.normalization.temp_norm"><code class="xref py py-obj docutils literal"><span class="pre">temp_norm</span></code></a></td>
+<td>Computes the running-absolute-mean normalization of 1D numpy array x</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="autogen/miic.core.normalization.stream_temp_norm.html#miic.core.normalization.stream_temp_norm" title="miic.core.normalization.stream_temp_norm"><code class="xref py py-obj docutils literal"><span class="pre">stream_temp_norm</span></code></a></td>
+<td>Computes the running-absolute-mean normaliz.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="autogen/miic.core.normalization.stream_1bit_norm.html#miic.core.normalization.stream_1bit_norm" title="miic.core.normalization.stream_1bit_norm"><code class="xref py py-obj docutils literal"><span class="pre">stream_1bit_norm</span></code></a></td>
+<td>Compute the 1-bit normalization of all Traces in the Stream object</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="autogen/miic.core.normalization.spect_norm.html#miic.core.normalization.spect_norm" title="miic.core.normalization.spect_norm"><code class="xref py py-obj docutils literal"><span class="pre">spect_norm</span></code></a></td>
+<td>Computes the spectral normalization of  1D numpy array x</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="autogen/miic.core.normalization.stream_spect_norm.html#miic.core.normalization.stream_spect_norm" title="miic.core.normalization.stream_spect_norm"><code class="xref py py-obj docutils literal"><span class="pre">stream_spect_norm</span></code></a></td>
+<td>Computes the spectral normalization of all Traces in st</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="autogen/miic.core.normalization.temp_norm.html" title="miic.core.normalization.temp_norm"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="autogen/miic.core.stream.trace_sym_pad_shrink_to_npts.html" title="miic.core.stream.trace_sym_pad_shrink_to_npts"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">MIIC 1.0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="core.html" >MIIC Library Reference</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2012, Eraldo Pomponi.
+      Last updated on 2016-03-02T16:12:50.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </div>
+  </body>
+</html>

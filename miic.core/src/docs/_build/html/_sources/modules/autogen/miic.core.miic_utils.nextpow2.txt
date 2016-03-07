@@ -1,0 +1,6 @@
+miic.core.miic_utils.nextpow2
+=============================
+
+.. currentmodule:: miic.core.miic_utils
+
+.. autofunction:: nextpow2

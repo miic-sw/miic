@@ -1,0 +1,196 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Correlation matrix dictionary processing &mdash; MIIC 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="MIIC 1.0 documentation" href="../index.html" />
+    <link rel="up" title="MIIC Library Reference" href="core.html" />
+    <link rel="next" title="miic.core.corr_mat_processing.corr_mat_smooth" href="autogen/miic.core.corr_mat_processing.corr_mat_smooth.html" />
+    <link rel="prev" title="miic.core.inversion.hard_threshold_dv" href="autogen/miic.core.inversion.hard_threshold_dv.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="autogen/miic.core.corr_mat_processing.corr_mat_smooth.html" title="miic.core.corr_mat_processing.corr_mat_smooth"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="autogen/miic.core.inversion.hard_threshold_dv.html" title="miic.core.inversion.hard_threshold_dv"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">MIIC 1.0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="core.html" accesskey="U">MIIC Library Reference</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Correlation matrix dictionary processing</a><ul>
+<li><a class="reference internal" href="#id1">Correlation matrix dictionary processing</a></li>
+</ul>
+</li>
+</ul>
+
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/modules/corr_mat_processing.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="correlation-matrix-dictionary-processing">
+<h1>Correlation matrix dictionary processing<a class="headerlink" href="#correlation-matrix-dictionary-processing" title="Permalink to this headline">¶</a></h1>
+<p>This modules collect all those functions that are capable to manipulate a
+correlation matrix dictionary.</p>
+<p>&#64;author:
+Christoph Sens-Schönefelder</p>
+<p>&#64;copyright:
+The MIIC Development Team (<a class="reference external" href="mailto:eraldo&#46;pomponi&#37;&#52;&#48;uni-leipzig&#46;de">eraldo<span>&#46;</span>pomponi<span>&#64;</span>uni-leipzig<span>&#46;</span>de</a>)</p>
+<p>&#64;license:
+GNU Lesser General Public License, Version 3
+(<a class="reference external" href="http://www.gnu.org/copyleft/lesser.html">http://www.gnu.org/copyleft/lesser.html</a>)</p>
+<p>Created on Nov 25, 2012</p>
+<span class="target" id="module-miic.core.corr_mat_processing"></span><div class="section" id="id1">
+<h2>Correlation matrix dictionary processing<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="autogen/miic.core.corr_mat_processing.corr_mat_smooth.html#miic.core.corr_mat_processing.corr_mat_smooth" title="miic.core.corr_mat_processing.corr_mat_smooth"><code class="xref py py-obj docutils literal"><span class="pre">corr_mat_smooth</span></code></a></td>
+<td>Moving average filter using a window with requested size.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="autogen/miic.core.corr_mat_processing.corr_mat_filter.html#miic.core.corr_mat_processing.corr_mat_filter" title="miic.core.corr_mat_processing.corr_mat_filter"><code class="xref py py-obj docutils literal"><span class="pre">corr_mat_filter</span></code></a></td>
+<td>Filter a correlation matrix.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="autogen/miic.core.corr_mat_processing.corr_mat_trim.html#miic.core.corr_mat_processing.corr_mat_trim" title="miic.core.corr_mat_processing.corr_mat_trim"><code class="xref py py-obj docutils literal"><span class="pre">corr_mat_trim</span></code></a></td>
+<td>Trim the correlation matrix to a given period.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="autogen/miic.core.corr_mat_processing.corr_mat_merge.html#miic.core.corr_mat_processing.corr_mat_merge" title="miic.core.corr_mat_processing.corr_mat_merge"><code class="xref py py-obj docutils literal"><span class="pre">corr_mat_merge</span></code></a></td>
+<td>Merge correlation matrices.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="autogen/miic.core.corr_mat_processing.corr_mat_resample.html#miic.core.corr_mat_processing.corr_mat_resample" title="miic.core.corr_mat_processing.corr_mat_resample"><code class="xref py py-obj docutils literal"><span class="pre">corr_mat_resample</span></code></a></td>
+<td>Function to create correlation matrices with constant sampling</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="autogen/miic.core.corr_mat_processing.corr_mat_reverse.html#miic.core.corr_mat_processing.corr_mat_reverse" title="miic.core.corr_mat_processing.corr_mat_reverse"><code class="xref py py-obj docutils literal"><span class="pre">corr_mat_reverse</span></code></a></td>
+<td>Reverse the data in a correlation matrix.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="autogen/miic.core.corr_mat_processing.corr_mat_time_select.html#miic.core.corr_mat_processing.corr_mat_time_select" title="miic.core.corr_mat_processing.corr_mat_time_select"><code class="xref py py-obj docutils literal"><span class="pre">corr_mat_time_select</span></code></a></td>
+<td>Select time period from a correlation matrix.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="autogen/miic.core.corr_mat_processing.corr_mat_correct_decay.html#miic.core.corr_mat_processing.corr_mat_correct_decay" title="miic.core.corr_mat_processing.corr_mat_correct_decay"><code class="xref py py-obj docutils literal"><span class="pre">corr_mat_correct_decay</span></code></a></td>
+<td>Correct for the amplitude decay in a correlation matrix.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="autogen/miic.core.corr_mat_processing.corr_mat_envelope.html#miic.core.corr_mat_processing.corr_mat_envelope" title="miic.core.corr_mat_processing.corr_mat_envelope"><code class="xref py py-obj docutils literal"><span class="pre">corr_mat_envelope</span></code></a></td>
+<td>Calculate the envelope of a correlation matrix.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="autogen/miic.core.corr_mat_processing.corr_mat_normalize.html#miic.core.corr_mat_processing.corr_mat_normalize" title="miic.core.corr_mat_processing.corr_mat_normalize"><code class="xref py py-obj docutils literal"><span class="pre">corr_mat_normalize</span></code></a></td>
+<td>Correct amplitude variations with time in acorrelation matrix.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="autogen/miic.core.corr_mat_processing.corr_mat_mirrow.html#miic.core.corr_mat_processing.corr_mat_mirrow" title="miic.core.corr_mat_processing.corr_mat_mirrow"><code class="xref py py-obj docutils literal"><span class="pre">corr_mat_mirrow</span></code></a></td>
+<td>Average the causal and acausal parts of a correlation matrix.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="autogen/miic.core.corr_mat_processing.corr_mat_taper_center.html#miic.core.corr_mat_processing.corr_mat_taper_center" title="miic.core.corr_mat_processing.corr_mat_taper_center"><code class="xref py py-obj docutils literal"><span class="pre">corr_mat_taper_center</span></code></a></td>
+<td>Taper the central part of a correlation matrix.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal"><span class="pre">corr_mat_import_stream</span></code></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="autogen/miic.core.corr_mat_processing.corr_mat_extract_trace.html#miic.core.corr_mat_processing.corr_mat_extract_trace" title="miic.core.corr_mat_processing.corr_mat_extract_trace"><code class="xref py py-obj docutils literal"><span class="pre">corr_mat_extract_trace</span></code></a></td>
+<td>Extract a representative trace from a correlation matrix.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="autogen/miic.core.corr_mat_processing.corr_mat_stretch.html#miic.core.corr_mat_processing.corr_mat_stretch" title="miic.core.corr_mat_processing.corr_mat_stretch"><code class="xref py py-obj docutils literal"><span class="pre">corr_mat_stretch</span></code></a></td>
+<td>Time stretch estimate through stretch and comparison.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="autogen/miic.core.corr_mat_processing.corr_mat_add_lat_lon_ele.html#miic.core.corr_mat_processing.corr_mat_add_lat_lon_ele" title="miic.core.corr_mat_processing.corr_mat_add_lat_lon_ele"><code class="xref py py-obj docutils literal"><span class="pre">corr_mat_add_lat_lon_ele</span></code></a></td>
+<td>Add coordinates to correlation matrix.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="autogen/miic.core.corr_mat_processing.corr_mat_create_from_traces.html#miic.core.corr_mat_processing.corr_mat_create_from_traces" title="miic.core.corr_mat_processing.corr_mat_create_from_traces"><code class="xref py py-obj docutils literal"><span class="pre">corr_mat_create_from_traces</span></code></a></td>
+<td>Create correlation matrix files from a set or correlation trace files</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="autogen/miic.core.corr_mat_processing.corr_mat_smooth.html" title="miic.core.corr_mat_processing.corr_mat_smooth"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="autogen/miic.core.inversion.hard_threshold_dv.html" title="miic.core.inversion.hard_threshold_dv"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">MIIC 1.0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="core.html" >MIIC Library Reference</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2012, Eraldo Pomponi.
+      Last updated on 2016-03-02T16:12:50.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </div>
+  </body>
+</html>

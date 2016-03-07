@@ -1,0 +1,6 @@
+miic.core.ndarray_sigproc.ndarray_filter
+========================================
+
+.. currentmodule:: miic.core.ndarray_sigproc
+
+.. autofunction:: ndarray_filter

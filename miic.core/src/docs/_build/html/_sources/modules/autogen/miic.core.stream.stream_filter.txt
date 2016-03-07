@@ -1,0 +1,6 @@
+miic.core.stream.stream_filter
+==============================
+
+.. currentmodule:: miic.core.stream
+
+.. autofunction:: stream_filter

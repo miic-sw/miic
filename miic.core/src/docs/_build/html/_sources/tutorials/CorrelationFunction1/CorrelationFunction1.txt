@@ -1,0 +1,49 @@
+.. _basics_tutorial:
+
+======
+Basics
+======
+
+************
+Introduction
+************
+
+The `MIIC Software Suite <http://theo1.geo.uni-leipzig.de/trac>`_ is a library of python functions for data processing in seismic interferometry. It features a graphic user interface based on the Enthought `BlockCanvas <http://code.enthought.com/projects/block_canvas/>`_ Project. The MIIC suit is created within the `BMBF <http://www.bmbf.de/>`_ funded research and development project on *Monitoring and Imaging based on Interferometric Concepts* `MIIC <http://theo1.geo.uni-leipzig.de>`_.
+
+In this tutorial we explain the use of the GUI in parallel to the command line functions.
+
+********************
+Correlation Function
+********************
+
+BC implementation
+=================
+The most fundamental operation in seismic interferometry is the correlation of seismic records. In the most simple case
+one wishes to correalte two time series. This is implemented in the BC project described in the following section.
+
+
+.. figure:: Img/CorrelationFunction1.png
+   :width: 90%
+   :align: center
+   :alt: BC implementation of simple signal correlation
+   
+   Block structure of the BC implementation of a correlation between two time series
+
+The project consist of two :class:`~miic.core.alpha_mod.stream_read` blocks that take a filename as input and deliver an :class:`~obspy.core.stream.Stream` object. 
+These two objects are combined in the :class:`~miic.core.stream.stream_combine` block. The variable ``st11`` now is a stream that contains two traces 
+which are passed to the :class:`~miic.core.corr_fun.corr_trace_fun` block that correalates the traces in the stream. In case the stream contains 
+many traces it is handy to be able to specify the combinations of the traces that are to be correlated. This feature is 
+provided by the ``combinations`` block that outputs a list of tuples to :class:`~miic.core.corr_fun.corr_trace_fun` block. The output of ``Corr_trace_fun``
+is again a stream that contains as much correlation functions as combinations are passed. :class:`~miic.core.corr_fun.corr_trace_fun` modifies the
+metainformation in the stream to be appropriate for a correlation function. The stream can either be plotted or saved.
+Because of the modified metainformation the stanard seismological dataformats are not suitable to store the stream of
+correlation functions. The :class:`~miic.core.miic_utils.convert_to_matlab` function provides the possibility to save the individual 
+traces in a stream into individual ``matlab.mat`` files together with the required metainformation.
+
+Python Code
+===========
+The project implemented above can be exported as the following python code.
+
+.. include:: Code/CorrelationFunction1.py
+   :literal:
+   

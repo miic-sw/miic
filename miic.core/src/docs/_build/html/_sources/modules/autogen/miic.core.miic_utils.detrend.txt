@@ -1,0 +1,6 @@
+miic.core.miic_utils.detrend
+============================
+
+.. currentmodule:: miic.core.miic_utils
+
+.. autofunction:: detrend

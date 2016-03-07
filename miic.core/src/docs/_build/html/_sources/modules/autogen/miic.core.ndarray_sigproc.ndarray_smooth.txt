@@ -1,0 +1,6 @@
+miic.core.ndarray_sigproc.ndarray_smooth
+========================================
+
+.. currentmodule:: miic.core.ndarray_sigproc
+
+.. autofunction:: ndarray_smooth

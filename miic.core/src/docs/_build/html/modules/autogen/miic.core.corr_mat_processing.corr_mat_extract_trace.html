@@ -1,0 +1,154 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>miic.core.corr_mat_processing.corr_mat_extract_trace &mdash; MIIC 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="MIIC 1.0 documentation" href="../../index.html" />
+    <link rel="up" title="Correlation matrix dictionary processing" href="../corr_mat_processing.html" />
+    <link rel="next" title="miic.core.corr_mat_processing.corr_mat_stretch" href="miic.core.corr_mat_processing.corr_mat_stretch.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="miic.core.corr_mat_processing.corr_mat_stretch.html" title="miic.core.corr_mat_processing.corr_mat_stretch"
+             accesskey="N">next</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">MIIC 1.0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../core.html" >MIIC Library Reference</a> &raquo;</li>
+          <li class="nav-item nav-item-2"><a href="../corr_mat_processing.html" accesskey="U">Correlation matrix dictionary processing</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/modules/autogen/miic.core.corr_mat_processing.corr_mat_extract_trace.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="miic-core-corr-mat-processing-corr-mat-extract-trace">
+<h1>miic.core.corr_mat_processing.corr_mat_extract_trace<a class="headerlink" href="#miic-core-corr-mat-processing-corr-mat-extract-trace" title="Permalink to this headline">¶</a></h1>
+<dl class="function">
+<dt id="miic.core.corr_mat_processing.corr_mat_extract_trace">
+<code class="descname">corr_mat_extract_trace</code><span class="sig-paren">(</span><em>corr_mat</em>, <em>method='mean'</em>, <em>percentile=50.0</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/miic/core/corr_mat_processing.html#corr_mat_extract_trace"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#miic.core.corr_mat_processing.corr_mat_extract_trace" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extract a representative trace from a correlation matrix.</p>
+<p>Extract a correlation trace from the that best represents the correlation
+matrix. <code class="docutils literal"><span class="pre">Method</span></code> decides about method to extract the trace. The following
+possibilities are available</p>
+<ul>
+<li><p class="first"><code class="docutils literal"><span class="pre">mean</span></code> averages all traces in the matrix</p>
+</li>
+<li><p class="first"><code class="docutils literal"><span class="pre">norm_mean</span></code> averages the traces normalized after normalizing for maxima</p>
+</li>
+<li><dl class="first docutils">
+<dt><code class="docutils literal"><span class="pre">similarity_percentile</span></code> averages the <code class="docutils literal"><span class="pre">percentile</span></code> % of traces that</dt>
+<dd><p class="first last">best correlate with the mean of all traces. This will exclude abnormal
+traces. <code class="docutils literal"><span class="pre">percentile</span></code> = 50 will return an average of traces with
+correlation (with mean trace) above the median.</p>
+</dd>
+</dl>
+</li>
+</ul>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>corr_mat</strong> (<em>dictionary</em>) &#8211; correlation matrix dictionary</li>
+<li><strong>method</strong> (<em>string</em>) &#8211; method to extract the trace</li>
+<li><strong>percentile</strong> (<em>float</em>) &#8211; only used for method==&#8217;similarity_percentile&#8217;</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first">trace dictionary of type correlation trace</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name" colspan="2">Return trace<strong>trace</strong>:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body"><p class="first last">extracted trace</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="miic.core.corr_mat_processing.corr_mat_stretch.html" title="miic.core.corr_mat_processing.corr_mat_stretch"
+             >next</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">MIIC 1.0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../core.html" >MIIC Library Reference</a> &raquo;</li>
+          <li class="nav-item nav-item-2"><a href="../corr_mat_processing.html" >Correlation matrix dictionary processing</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2012, Eraldo Pomponi.
+      Last updated on 2016-03-02T16:12:50.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </div>
+  </body>
+</html>

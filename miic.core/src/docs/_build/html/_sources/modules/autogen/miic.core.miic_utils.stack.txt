@@ -1,0 +1,6 @@
+miic.core.miic_utils.stack
+==========================
+
+.. currentmodule:: miic.core.miic_utils
+
+.. autofunction:: stack

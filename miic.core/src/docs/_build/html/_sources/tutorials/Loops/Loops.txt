@@ -1,0 +1,303 @@
+﻿.. _tutorial_loops:
+
+==================
+Working with loops
+==================
+
+In :ref:`basics_tutorial`, :ref:`preprocess_tutorial`, we reported basics instructions about how to approach the ambient noise correlation study with the *MIIC* library.
+The work-flow illustrated there, are *straight* concatenation of successive tasks: from the access to the data to the “final” results. 
+It was convenient in that context, to keep the exposition clear and focused on the main topics, not to mention the details about how to "feed" the process with the necessary raw data (i.e. seismic traces) so that it can produce useful results. 
+More than a set of reading functions (i.e. already summarized in :ref:`preprocess_tutorial`), what is necessary is a way to successive “read & process” different seismic traces in a well defined sequence till the whole data-set of interest is spanned: creating **loops**.
+Before describing the graphical handling of loops inside **Blockcanvas**, we need 
+to clarify some details about their creation in *plain* Python 
+(http://en.wikibooks.org/wiki/Python_Programming/Loops).   
+
+.. _example1:
+
+(Example 1)
+
+::
+
+	>>> for i in range(10):
+	...     print i
+	... 
+	0
+	1
+	2
+	3
+	4
+	5
+	6
+	7
+	8
+	9
+
+The code snippet above is a simple example of a **for** loop. We can identify the index *i* that is updated at every iteration, the *iterable* **range(10)** that says which values will be assigned to *i* and in which order and the function to perform at each iteration “print i” that is the body of the loop. Running the code produce the reported output.  
+The **itarable** concept needs to be clarified. An *iterable* is an object that supports iterations. All of Python's standard built-in collection types support iteration
+(i.e. for details see http://docs.python.org/library/stdtypes.html#iterator-types). 
+Examples of those standard collections are simple lists:
+
+.. _example2:
+
+(Example 2)
+
+::
+
+	>>> ex_list = ['a','b','c']
+	>>> for value in ex_list:
+	...     print value
+	... 
+	a
+	b
+	c
+
+lists of tuples: 
+
+.. _example3:
+
+(Example 3)
+
+::
+
+      >>> list_of_tuples = [('a',1),('b',2),('c',3)]
+      >>> for (x,y) in list_of_tuples:
+      ...     print "x=%s - y=%d" % (x,y)
+      ... 
+      x=a - y=1
+      x=b - y=2
+      x=c – y=3
+
+dictionaries: 
+
+.. _example4:
+
+(Example 4)
+
+::
+
+      >>> ex_dict = {'first': 1, 'second': 2}
+      >>> for key in ex_dict:
+      ...     value = ex_dict[key]
+      ...     print (key,value)
+      ... 
+      ('second', 2)
+      ('first', 1)
+
+When, for each iteration, we need the index in the collection of the selected item, it is of great help the function **enumerate** that works as shown in the following example:
+
+.. _example5:
+
+(Example 5)
+
+:: 
+
+	>>> ex_list = ['a','b','c']
+	>>> for (index,value) in enumerate(ex_list):
+	...     print (index,value)
+	... 
+	(0, 'a')
+	(1, 'b')
+	(2, 'c')
+
+
+This is a short introduction to one of the looping structure available in Python, the **for loop** and we will not go further ahead to exaplain other constructs because it is actually the only one available in **Blockcanvas**. Let's see how the examples reported above are reproduced there. 
+To create a loop in block canvas double-click on left pane where the red arrow in Fig. :ref:`fig_newloop` is pointing.
+
+.. _fig_newloop:
+
+.. figure:: Img/bc.jpeg
+       	:width: 60%
+       	:align: center
+       	:alt: how to create a loop
+       	:figclass: align-center
+
+       	How to create a loop
+
+
+.. _fig_for1_sel:
+
+.. figure:: Img/bc_for1_sel.jpeg
+       	:width: 60%
+       	:align: center
+       	:alt: chose the type of loop
+       	:figclass: align-center
+
+       	Example about how to chose the type of loop
+
+After double-clicking a new window comes up that contains a drop-down menu where to select the “type” of loop to create. Actually there are three choices: 
+
+	- For1
+	- For2
+	- Plain
+
+The “plain-loop” is **not** a loop but just a convenient way to “semantically” group (e.g. pre-processing, core, post-processing) a “sub-tree” of Blockcanvas functions together. After closing the “plain-loop” creation window, they will be represented in the main canvas by a unique block that shows all the input and output of the contained one. In this way, the graphical representation of complex work-flows can be simplified hiding the details of some operations (i.e. in agreement with OOP paradigms) but still leaving all the parameters accessible from outside. 
+The “for1-loop” is the most simple and valuable in the list of available contructs: it offers the opportunity to create a loop exactly like what has been shown in :ref:`Example 1 <example1>` or :ref:`Example 2 <example2>`.
+After choosing the loop type, a new window is crated as shown in Fig. :ref:`fig_for1`. 
+
+.. _fig_for1:
+
+.. figure:: Img/bc_for1.jpeg
+       	:width: 80%
+       	:align: center
+       	:alt: “For1” loop creation window
+       	:figclass: align-center
+
+       	“For1” loop creation window
+
+In the red ellipse is highlighted the “current element”: a block that has been automatically added to the canvas and that offers access to the index/current_element of the loop, i.e., it represents the **i** variable in :ref:`Example 1 <example1>` and the **value** variable in :ref:`Example 2 <example2>`. For instance, adding a print function to the loop body is as simple as adding a new block to the canvas (see Fig. :ref:`fig_for1_full`)
+
+.. _fig_for1_full:
+
+.. figure:: Img/bc_for1_full.jpeg
+       	:width: 80%
+       	:align: center
+       	:alt: Loop body creation 
+       	:figclass: align-center
+
+       	Loop body creation 
+
+Closing the loop-creation window, the loop, as stated above, is represented by a single block, expose all the parameters of the underlying process plus the connector to pass the **iterable** that represents “range(10)” in the :ref:`Example 1 <example1>` and the “ex_list” in the :ref:`Example 2 <example2>`. 
+
+.. _fig_for1_complete:
+
+.. figure:: Img/bc_for1_complete.jpeg
+       	:width: 80%
+       	:align: center
+       	:alt: “For1” complete example project
+       	:figclass: align-center
+
+       	“For1” complete example project
+
+We created an iterable adding a block that corresponds to the function :class:`~miic.core.miic_utils.create_range_array` and we fixed its parameters to produce the sequence [0,...,9]. The code corresponding to the project shown in Fig. :ref:`fig_for1_complete` (i.e. exported directly from Blockcanvas) is:
+
+.. include:: Code/bc_for1_code.py
+   :literal:
+
+
+And this is the output produced on the command line:
+
+::
+
+    0
+    1
+    2
+    3
+    4
+    5
+    6
+    7
+    8
+    9
+
+    0.001251 seconds: Execution time
+
+So exactly the same as in :ref:`Example 1 <example1>` as we expected. The basic differences that exist in the two pieces of code are due to the fact that Blockcanvas doesn't handle directly the built-in Python functions but we need to wrap them and rename them, e.g., the built-in “print” function that becomes “print_input” in the MIIC library.
+The “for2-loop” is almost identical to the “for1-loop” except that it is producing a loop of the form of :ref:`Example 3 <example3>` so with a tuple as a loop index.  
+
+.. _fig_for2:
+
+.. figure:: Img/bc_for2.jpeg
+       	:width: 80%
+       	:align: center
+       	:alt: “For2” loop creation window
+       	:figclass: align-center
+
+       	“For2” loop creation window
+
+In the loop-creation window now we have two blocks that are automatically added and that correspond to the first and second element of the tuple, i.e., respectively “x” and “y” in the :ref:`Example 3 <example3>`. All the other aspect reported about the “for1-loop” hold also for the “for2-loop”. 
+Adding a print function in the body of the loop and the complete project for a “for2-loop” are reported in Fig. :ref:`fig_for2_full` and Fig. :ref:`fig_for2_complete`
+
+.. _fig_for2_full:
+
+.. figure:: Img/bc_for2_full.jpeg
+       	:width: 80%
+       	:align: center
+       	:alt: Loop body creation 
+       	:figclass: align-center
+
+       	Loop body creation 
+
+
+.. _fig_for2_complete:
+
+.. figure:: Img/bc_for2_complete.jpeg
+       	:width: 80%
+       	:align: center
+       	:alt: “For2” complete example project
+       	:figclass: align-center
+
+       	“For2” complete example project
+
+The generated code is: 
+
+.. include:: Code/bc_for2_code.py
+   :literal:
+
+
+Each element of a **range** array cannot be passed to a tuple so, to have a running example, we adopted the function :class:`~miic.core.miic_utils.enum_list` that is just a wrapper for the built-in Python function “enumerate” so, what we are producing, is the same loop structure as shown in :ref:`Example 5 <example5>` where the range array is a sequence of 10 elements equally spaced ranging from 0 to 1 (i.e. this is the way we configured the :class:`~miic.core.miic_utils.create_range_array` function for this example). Running the project, on the command line we get this output:
+
+:: 
+
+    (0,0.0)
+    (1,0.111111111111)
+    (2,0.222222222222)
+    (3,0.333333333333)
+    (4,0.444444444444)
+    (5,0.555555555556)
+    (6,0.666666666667)
+    (7,0.777777777778)
+    (8,0.888888888889)
+    (9,1.0)
+
+    0.003345 seconds: Execution time
+
+We are not reporting a case of looping on a dictionary like the code in :ref:`Example 4 <example4>` but it is straightforward to apply the same approach as shown above for a list.
+Going back to the main target of this tutorial, we need to show how to adopt loops to work with a data-set that contains different seismic traces. 
+First of all, suppose that the data-set is stored in a directory; exactly we have six files in it. Using the :class:`~miic.core.miic_utils.dir_read` function we can retrieve their filename organized in a list that looks like this: 
+
+:: 
+
+    >>> from miic.core.miic_utils import dir_read
+    >>> files_list = dir_read('mseed_example','*')
+    >>> for cf in files_list:
+    ...     print cf
+    ... 
+    mseed_example/1-Z_20110207_1300.mseed
+    mseed_example/2-Z_20110207_1300.mseed
+    mseed_example/3-Z_20110207_1300.mseed
+    mseed_example/4-Z_20110207_1300.mseed
+    mseed_example/5-Z_20110207_1300.mseed
+    mseed_example/6-Z_20110207_1300.mseed
+
+This list of filenames is a good candidate to be the iterable that we can adopt to successively apply a set of functions to the whole data-set. 
+In Fig. :ref:`fig_seis_for1_creation` we showed the body of a “for1-loop” where the current element is wired with the “filename” input of the :class:`~miic.core.alpha_mod.stream_read` function. 
+
+.. _fig_seis_for1_creation:
+
+.. figure:: Img/seis_for1_creation.jpeg
+       	:width: 80%
+       	:align: center
+       	:alt: Seismic trace read in “For1” loop body
+       	:figclass: align-center
+
+       	Seismic trace read in “For1” loop body
+
+It is obvious that we can add as many functions as we like after the :class:`~miic.core.alpha_mod.stream_read` one to realize the desired work-flow; Even nested loops are allowed giving us enough flexibility to work with seismic data.  
+The complete project with the :class:`~miic.core.miic_utils.dir_read` function used to produce the list of filenames is reported in Fig. :ref:`fig_seis_for1_complete`
+
+.. _fig_seis_for1_complete:
+
+.. figure:: Img/seis_for1_complete.jpeg
+       	:width: 80%
+       	:align: center
+       	:alt: Multiple seismic traces read with a “For1” loop
+       	:figclass: align-center
+
+       	Multiple seismic traces read with a “For1” loop
+
+The corresponding generated code is: 
+
+.. include:: Code/seis_for1_code.py
+   :literal:
+
+Having the possibility to handle loops directly in **Blockcanvas** makes this application capable to be adopted as a prototyping tool for a wide set of Seismic problems.

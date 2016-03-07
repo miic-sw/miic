@@ -1,0 +1,6 @@
+miic.core.miic_utils.nd_nan_to_num
+==================================
+
+.. currentmodule:: miic.core.miic_utils
+
+.. autofunction:: nd_nan_to_num

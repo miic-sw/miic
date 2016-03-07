@@ -1,0 +1,6 @@
+miic.core.miic_utils.transpose
+==============================
+
+.. currentmodule:: miic.core.miic_utils
+
+.. autofunction:: transpose

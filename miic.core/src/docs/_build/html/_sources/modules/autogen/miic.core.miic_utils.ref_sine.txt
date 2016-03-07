@@ -1,0 +1,6 @@
+miic.core.miic_utils.ref_sine
+=============================
+
+.. currentmodule:: miic.core.miic_utils
+
+.. autofunction:: ref_sine

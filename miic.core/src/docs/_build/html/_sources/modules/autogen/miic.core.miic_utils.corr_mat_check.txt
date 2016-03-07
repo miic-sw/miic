@@ -1,0 +1,6 @@
+miic.core.miic_utils.corr_mat_check
+===================================
+
+.. currentmodule:: miic.core.miic_utils
+
+.. autofunction:: corr_mat_check

@@ -1,0 +1,6 @@
+miic.core.plot_fun.plot_single_corr_matrix
+==========================================
+
+.. currentmodule:: miic.core.plot_fun
+
+.. autofunction:: plot_single_corr_matrix

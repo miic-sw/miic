@@ -1,0 +1,6 @@
+miic.core.pxcorr_func.normalizeStandardDeviation
+================================================
+
+.. currentmodule:: miic.core.pxcorr_func
+
+.. autofunction:: normalizeStandardDeviation

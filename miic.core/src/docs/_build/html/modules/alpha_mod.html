@@ -1,0 +1,394 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>miic.core.alpha_mod &mdash; MIIC 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="MIIC 1.0 documentation" href="../index.html" />
+    <link rel="up" title="MIIC Library Reference" href="core.html" />
+    <link rel="next" title="Numpy array specific signal processing functions" href="ndarray_sigproc.html" />
+    <link rel="prev" title="MIIC Library Reference" href="core.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="ndarray_sigproc.html" title="Numpy array specific signal processing functions"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="core.html" title="MIIC Library Reference"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">MIIC 1.0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="core.html" accesskey="U">MIIC Library Reference</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">miic.core.alpha_mod</a></li>
+<li><a class="reference internal" href="#sgsdfg">sgsdfg</a></li>
+</ul>
+
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/modules/alpha_mod.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-miic.core.alpha_mod">
+<span id="miic-core-alpha-mod"></span><h1>miic.core.alpha_mod<a class="headerlink" href="#module-miic.core.alpha_mod" title="Permalink to this headline">¶</a></h1>
+<dl class="exception">
+<dt id="miic.core.alpha_mod.InputError">
+<em class="property">exception </em><code class="descname">InputError</code><span class="sig-paren">(</span><em>msg</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/miic/core/alpha_mod.html#InputError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#miic.core.alpha_mod.InputError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">exceptions.Exception</span></code></p>
+<p>Exception for Input errors.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="miic.core.alpha_mod.clear_st_stack">
+<code class="descname">clear_st_stack</code><span class="sig-paren">(</span><em>fake</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/miic/core/alpha_mod.html#clear_st_stack"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#miic.core.alpha_mod.clear_st_stack" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="miic.core.alpha_mod.corn_freq_2_paz">
+<code class="descname">corn_freq_2_paz</code><span class="sig-paren">(</span><em>fc</em>, <em>damp</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/miic/core/alpha_mod.html#corn_freq_2_paz"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#miic.core.alpha_mod.corn_freq_2_paz" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="miic.core.alpha_mod.correct_responce">
+<code class="descname">correct_responce</code><span class="sig-paren">(</span><em>st</em>, <em>paz_orig</em>, <em>paz_desidered</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/miic/core/alpha_mod.html#correct_responce"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#miic.core.alpha_mod.correct_responce" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="miic.core.alpha_mod.dir_read_stream">
+<code class="descname">dir_read_stream</code><span class="sig-paren">(</span><em>base_dir=''</em>, <em>pattern='*.raw'</em>, <em>sort_flag=True</em>, <em>format='None (Automatic)'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/miic/core/alpha_mod.html#dir_read_stream"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#miic.core.alpha_mod.dir_read_stream" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read all files in specified directory into one single stream object.</p>
+<p>Reads all files in the directory assuming one trace per file and stores it
+in one stream.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="miic.core.alpha_mod.hello_world">
+<code class="descname">hello_world</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/miic/core/alpha_mod.html#hello_world"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#miic.core.alpha_mod.hello_world" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="miic.core.alpha_mod.instrument_caracterization">
+<code class="descname">instrument_caracterization</code><span class="sig-paren">(</span><em>poles</em>, <em>zeros</em>, <em>gain</em>, <em>sensitivity</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/miic/core/alpha_mod.html#instrument_caracterization"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#miic.core.alpha_mod.instrument_caracterization" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="miic.core.alpha_mod.kutec_read">
+<code class="descname">kutec_read</code><span class="sig-paren">(</span><em>fname</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/miic/core/alpha_mod.html#kutec_read"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#miic.core.alpha_mod.kutec_read" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read the K-UTec proprietary file format.</p>
+<p>Read data in the K-UTec specific IMC FAMOS format into a stream object.
+As there is no obvious station information in the data file
+Network is set to KU and Station is set to the first five letters of the
+filename.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"></td>
+</tr>
+</tbody>
+</table>
+<dl class="docutils">
+<dt>fname <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
+<dd>path to the file containing the data to be read</dd>
+</dl>
+<p class="rubric">Returns</p>
+<dl class="docutils">
+<dt>st <span class="classifier-delimiter">:</span> <span class="classifier">obspy.core.Stream object</span></dt>
+<dd>Obspy stream object containing the data</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="miic.core.alpha_mod.stream_arklink_read">
+<code class="descname">stream_arklink_read</code><span class="sig-paren">(</span><em>host='webdc.eu'</em>, <em>port=18001</em>, <em>timeout=100</em>, <em>start_time='2009-08-24 00:20:03'</em>, <em>time_interval=30</em>, <em>network_id='BW'</em>, <em>station_id='RJOB'</em>, <em>location_id=''</em>, <em>channel_id='EH*'</em>, <em>get_paz=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/miic/core/alpha_mod.html#stream_arklink_read"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#miic.core.alpha_mod.stream_arklink_read" title="Permalink to this definition">¶</a></dt>
+<dd><p>Arklink server client.</p>
+<p>For a detailed description of how it works refer to ObsPy website
+(obspy.org)</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="miic.core.alpha_mod.stream_collapse_tr">
+<code class="descname">stream_collapse_tr</code><span class="sig-paren">(</span><em>st</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/miic/core/alpha_mod.html#stream_collapse_tr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#miic.core.alpha_mod.stream_collapse_tr" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="miic.core.alpha_mod.stream_collapse_tr_new">
+<code class="descname">stream_collapse_tr_new</code><span class="sig-paren">(</span><em>st</em>, <em>npts</em>, <em>onacopy=True</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/miic/core/alpha_mod.html#stream_collapse_tr_new"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#miic.core.alpha_mod.stream_collapse_tr_new" title="Permalink to this definition">¶</a></dt>
+<dd><p>Collapse all the traces with the same id averaging their points value.</p>
+<p>This function collapse (adds) all the traces in one Stream that shares the
+same id to a single one with averaged data vector and the same
+meta-information (i.e. tr.stats object).
+All the traces are padded/shriked to npts points before averaging.
+This function works by default on a copy of the original Stream so that it
+is not affected by the function execution. To override the original one put
+the flag <code class="docutils literal"><span class="pre">onacopy</span></code> to <code class="docutils literal"><span class="pre">False</span></code></p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>st</strong> (<code class="xref py py-class docutils literal"><span class="pre">Stream</span></code>) &#8211; Stream that contains the traces that will be collapsed</li>
+<li><strong>npts</strong> (<em>Int</em>) &#8211; Number of points in the resulting traces</li>
+<li><strong>onacopy</strong> (<em>Bool</em>) &#8211; Work on a copy of the original stream if True</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first"><code class="xref py py-class docutils literal"><span class="pre">Stream</span></code></p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><strong>st_collapsed</strong>: Stream with one trace for each unique tr.id.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="miic.core.alpha_mod.stream_copy">
+<code class="descname">stream_copy</code><span class="sig-paren">(</span><em>st</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/miic/core/alpha_mod.html#stream_copy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#miic.core.alpha_mod.stream_copy" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="miic.core.alpha_mod.stream_empty_creation">
+<code class="descname">stream_empty_creation</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/miic/core/alpha_mod.html#stream_empty_creation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#miic.core.alpha_mod.stream_empty_creation" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="miic.core.alpha_mod.stream_extract_ndarray">
+<code class="descname">stream_extract_ndarray</code><span class="sig-paren">(</span><em>st</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/miic/core/alpha_mod.html#stream_extract_ndarray"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#miic.core.alpha_mod.stream_extract_ndarray" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="miic.core.alpha_mod.stream_normalize">
+<code class="descname">stream_normalize</code><span class="sig-paren">(</span><em>st</em>, <em>global_max=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/miic/core/alpha_mod.html#stream_normalize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#miic.core.alpha_mod.stream_normalize" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="miic.core.alpha_mod.stream_plot">
+<code class="descname">stream_plot</code><span class="sig-paren">(</span><em>st</em>, <em>automerge=False</em>, <em>type='normal'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/miic/core/alpha_mod.html#stream_plot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#miic.core.alpha_mod.stream_plot" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="miic.core.alpha_mod.stream_read">
+<code class="descname">stream_read</code><span class="sig-paren">(</span><em>filename=None</em>, <em>format=None</em>, <em>example=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/miic/core/alpha_mod.html#stream_read"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#miic.core.alpha_mod.stream_read" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="miic.core.alpha_mod.stream_remove_mean">
+<code class="descname">stream_remove_mean</code><span class="sig-paren">(</span><em>st</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/miic/core/alpha_mod.html#stream_remove_mean"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#miic.core.alpha_mod.stream_remove_mean" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="miic.core.alpha_mod.stream_rotation">
+<code class="descname">stream_rotation</code><span class="sig-paren">(</span><em>st</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/miic/core/alpha_mod.html#stream_rotation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#miic.core.alpha_mod.stream_rotation" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="miic.core.alpha_mod.stream_seishub_read">
+<code class="descname">stream_seishub_read</code><span class="sig-paren">(</span><em>host='localhost'</em>, <em>port=8080</em>, <em>timeout=100</em>, <em>start_time='2010-01-01 00:20:03'</em>, <em>time_interval=30</em>, <em>network_id='PF'</em>, <em>station_id=''</em>, <em>location_id=''</em>, <em>channel_id='HLE'</em>, <em>get_paz=False</em>, <em>remove_mean=False</em>, <em>remove_trend=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/miic/core/alpha_mod.html#stream_seishub_read"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#miic.core.alpha_mod.stream_seishub_read" title="Permalink to this definition">¶</a></dt>
+<dd><p>Seishub server client.</p>
+<p>For a detailed description of how it works refer to ObsPy website
+(obspy.org)</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="miic.core.alpha_mod.stream_select">
+<code class="descname">stream_select</code><span class="sig-paren">(</span><em>st</em>, <em>network=None</em>, <em>station=None</em>, <em>location=None</em>, <em>channel=None</em>, <em>sampling_rate=None</em>, <em>npts=None</em>, <em>component=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/miic/core/alpha_mod.html#stream_select"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#miic.core.alpha_mod.stream_select" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="miic.core.alpha_mod.stream_slice">
+<code class="descname">stream_slice</code><span class="sig-paren">(</span><em>st</em>, <em>start_time='2008-12-17 00:01:00'</em>, <em>interval=10</em>, <em>keep_empty_traces=False</em>, <em>displacement=0</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/miic/core/alpha_mod.html#stream_slice"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#miic.core.alpha_mod.stream_slice" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="miic.core.alpha_mod.stream_sort">
+<code class="descname">stream_sort</code><span class="sig-paren">(</span><em>st</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/miic/core/alpha_mod.html#stream_sort"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#miic.core.alpha_mod.stream_sort" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sort the Traces by station name</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="miic.core.alpha_mod.stream_stack">
+<code class="descname">stream_stack</code><span class="sig-paren">(</span><em>st_curr</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/miic/core/alpha_mod.html#stream_stack"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#miic.core.alpha_mod.stream_stack" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="miic.core.alpha_mod.stream_tr_count">
+<code class="descname">stream_tr_count</code><span class="sig-paren">(</span><em>st</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/miic/core/alpha_mod.html#stream_tr_count"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#miic.core.alpha_mod.stream_tr_count" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="miic.core.alpha_mod.summit_seg2_read">
+<code class="descname">summit_seg2_read</code><span class="sig-paren">(</span><em>fname</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/miic/core/alpha_mod.html#summit_seg2_read"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#miic.core.alpha_mod.summit_seg2_read" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read SEG2 data recorded with the DMT summit aquisition unit.</p>
+<p>Read the SEG2 formatted seismic data aquired with the summit recorder
+and fill the ID fields in the stats.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"></td>
+</tr>
+</tbody>
+</table>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>fname</strong> (<em>string</em>) &#8211; Path to the file containing the data to be read</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><code class="xref py py-class docutils literal"><span class="pre">Stream</span></code> object</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><strong>st</strong>: obspy.core.Stream object
+Obspy stream object containing the data</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="miic.core.alpha_mod.t_extract_ymd">
+<code class="descname">t_extract_ymd</code><span class="sig-paren">(</span><em>t</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/miic/core/alpha_mod.html#t_extract_ymd"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#miic.core.alpha_mod.t_extract_ymd" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="miic.core.alpha_mod.time_windows_list_generation">
+<code class="descname">time_windows_list_generation</code><span class="sig-paren">(</span><em>t_start='2009-08-24 00:20:03'</em>, <em>width=3600</em>, <em>how_many=10</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/miic/core/alpha_mod.html#time_windows_list_generation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#miic.core.alpha_mod.time_windows_list_generation" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="miic.core.alpha_mod.time_windows_list_reduction">
+<code class="descname">time_windows_list_reduction</code><span class="sig-paren">(</span><em>t_win_list</em>, <em>width=3600</em>, <em>host='localhost'</em>, <em>port=8080</em>, <em>timeout=100</em>, <em>network_id='PF'</em>, <em>station_id='FOR'</em>, <em>location_id=''</em>, <em>channel_id='HLE'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/miic/core/alpha_mod.html#time_windows_list_reduction"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#miic.core.alpha_mod.time_windows_list_reduction" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="miic.core.alpha_mod.tw_gen">
+<code class="descname">tw_gen</code><span class="sig-paren">(</span><em>t_start='2009-08-24 00:20:03'</em>, <em>width=3600</em>, <em>how_many=10</em>, <em>host='localhost'</em>, <em>port=8080</em>, <em>timeout=100</em>, <em>network_id='PF'</em>, <em>station_id='FOR'</em>, <em>location_id=''</em>, <em>channel_id='HLE'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/miic/core/alpha_mod.html#tw_gen"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#miic.core.alpha_mod.tw_gen" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="miic.core.alpha_mod.usarray_read">
+<code class="descname">usarray_read</code><span class="sig-paren">(</span><em>fname</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/miic/core/alpha_mod.html#usarray_read"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#miic.core.alpha_mod.usarray_read" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read the BAM US-Array lbv data format used on Mike-2 test specimen.</p>
+<p>Read the BAM US-Array lbv data format used on Mike-2 test specimen into a
+stream object.
+As there is no obvious station (or any other) information in the data file.
+As the parameters are not supposed to change, they are hardcoded here.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"></td>
+</tr>
+</tbody>
+</table>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>fname</strong> (<em>string</em>) &#8211; Path to the file containing the data to be read
+(WITHOUT EXTENSION) extensions .dat and .hdr will be added
+automatically</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><code class="xref py py-class docutils literal"><span class="pre">Stream</span></code> object</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><strong>st</strong>: obspy.core.Stream object
+Obspy stream object containing the data</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="sgsdfg">
+<h1>sgsdfg<a class="headerlink" href="#sgsdfg" title="Permalink to this headline">¶</a></h1>
+<p>..autosummary:</p>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="ndarray_sigproc.html" title="Numpy array specific signal processing functions"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="core.html" title="MIIC Library Reference"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">MIIC 1.0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="core.html" >MIIC Library Reference</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2012, Eraldo Pomponi.
+      Last updated on 2016-03-02T16:12:50.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </div>
+  </body>
+</html>

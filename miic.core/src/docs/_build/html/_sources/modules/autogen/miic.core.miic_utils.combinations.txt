@@ -1,0 +1,6 @@
+miic.core.miic_utils.combinations
+=================================
+
+.. currentmodule:: miic.core.miic_utils
+
+.. autofunction:: combinations

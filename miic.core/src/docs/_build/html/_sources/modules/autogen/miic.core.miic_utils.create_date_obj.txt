@@ -1,0 +1,6 @@
+miic.core.miic_utils.create_date_obj
+====================================
+
+.. currentmodule:: miic.core.miic_utils
+
+.. autofunction:: create_date_obj

@@ -1,0 +1,180 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>miic.core.stretch_mod.multi_ref_vchange &mdash; MIIC 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="MIIC 1.0 documentation" href="../../index.html" />
+    <link rel="up" title="Signal stretching" href="../stretch_mod.html" />
+    <link rel="next" title="miic.core.stretch_mod.est_shift_from_dt_corr" href="miic.core.stretch_mod.est_shift_from_dt_corr.html" />
+    <link rel="prev" title="miic.core.stretch_mod.multi_ref_vchange_and_align" href="miic.core.stretch_mod.multi_ref_vchange_and_align.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="miic.core.stretch_mod.est_shift_from_dt_corr.html" title="miic.core.stretch_mod.est_shift_from_dt_corr"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="miic.core.stretch_mod.multi_ref_vchange_and_align.html" title="miic.core.stretch_mod.multi_ref_vchange_and_align"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">MIIC 1.0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../core.html" >MIIC Library Reference</a> &raquo;</li>
+          <li class="nav-item nav-item-2"><a href="../stretch_mod.html" accesskey="U">Signal stretching</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/modules/autogen/miic.core.stretch_mod.multi_ref_vchange.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="miic-core-stretch-mod-multi-ref-vchange">
+<h1>miic.core.stretch_mod.multi_ref_vchange<a class="headerlink" href="#miic-core-stretch-mod-multi-ref-vchange" title="Permalink to this headline">¶</a></h1>
+<dl class="function">
+<dt id="miic.core.stretch_mod.multi_ref_vchange">
+<code class="descname">multi_ref_vchange</code><span class="sig-paren">(</span><em>corr_data</em>, <em>ref_trs</em>, <em>tw=None</em>, <em>stretch_range=0.1</em>, <em>stretch_steps=100</em>, <em>sides='both'</em>, <em>remove_nans=True</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/miic/core/stretch_mod.html#multi_ref_vchange"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#miic.core.stretch_mod.multi_ref_vchange" title="Permalink to this definition">¶</a></dt>
+<dd><p>Velocity change estimate with single or multiple reference traces.</p>
+<p>This function estimates the velocity change corresponding to each row of
+the <code class="docutils literal"><span class="pre">corr_data</span></code> matrix respect to the reference trace/s passed in
+<code class="docutils literal"><span class="pre">ref_trs</span></code>.</p>
+<p>The velocity change is estimated comparing each correlation function stored
+in the <code class="docutils literal"><span class="pre">corr_data</span></code> matrix (one for each row) with <code class="docutils literal"><span class="pre">stretch_steps</span></code>
+stretched versions of reference/s trace stored in <code class="docutils literal"><span class="pre">ref_trs</span></code>.
+The maximum amount of stretching may be passed in <code class="docutils literal"><span class="pre">stretch_range</span></code>.
+The best match (stretching amount and corresponding correlation value) is
+calculated on different time windows. If <code class="docutils literal"><span class="pre">tw</span> <span class="pre">=</span> <span class="pre">None</span></code> the stretching is
+estimated on the whole trace.</p>
+<p>The output is a dictionary with keys of the form <code class="docutils literal"><span class="pre">&quot;reftr_%d&quot;</span> <span class="pre">%</span> <span class="pre">i</span></code>: One
+for each reference trace. The corresponding <code class="docutils literal"><span class="pre">value</span></code> is aslo a dictionary
+that has a structure conforming with
+<a class="reference internal" href="miic.core.stretch_mod.time_stretch_estimate.html#miic.core.stretch_mod.time_stretch_estimate" title="miic.core.stretch_mod.time_stretch_estimate"><code class="xref py py-class docutils literal"><span class="pre">time_stretch_estimate</span></code></a> output.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>corr_data</strong> (<code class="xref py py-class docutils literal"><span class="pre">ndarray</span></code>) &#8211; 2d ndarray containing the correlation functions.
+One for each row.</li>
+<li><strong>ref_trc</strong> (<code class="xref py py-class docutils literal"><span class="pre">ndarray</span></code>) &#8211; 1D array containing the reference trace to be shifted and
+compared to the individual traces in <code class="docutils literal"><span class="pre">mat</span></code></li>
+<li><strong>tw</strong> (list of <code class="xref py py-class docutils literal"><span class="pre">ndarray</span></code> of int) &#8211; list of 1D ndarrays holding the indices of sampels in the time
+windows to be use in the time shift estimate. The sampels are counted
+from the zero lag time with the index of the first sample being 0. If
+<code class="docutils literal"><span class="pre">tw</span> <span class="pre">=</span> <span class="pre">None</span></code> the full time range is used.</li>
+<li><strong>stretch_range</strong> (<em>scalar</em>) &#8211; Maximum amount of relative stretching.
+Stretching and compression is tested from <code class="docutils literal"><span class="pre">-stretch_range</span></code> to
+<code class="docutils literal"><span class="pre">stretch_range</span></code>.</li>
+<li><strong>stretch_steps</strong> (<em>scalar`</em>) &#8211; Number of shifted version to be tested. The
+increment will be <code class="docutils literal"><span class="pre">(2</span> <span class="pre">*</span> <span class="pre">stretch_range)</span> <span class="pre">/</span> <span class="pre">stretch_steps</span></code></li>
+<li><strong>single_sided</strong> (<em>bool</em>) &#8211; if True zero lag time is on the first sample. If
+False the zero lag time is in the center of the traces.</li>
+<li><strong>sides</strong> (<em>str</em>) &#8211; Side of the reference matrix to be used for the stretching
+estimate (&#8216;both&#8217; | &#8216;left&#8217; | &#8216;right&#8217; | &#8216;single&#8217;) <code class="docutils literal"><span class="pre">single</span></code> is used for
+one-sided signals from active sources with zero lag time is on the
+first sample. Other options assume that the zero lag time is in the
+center of the traces.</li>
+<li><strong>remove_nans</strong> (<em>bool</em>) &#8211; If <cite>True</cite> applay <code class="xref py py-func docutils literal"><span class="pre">nan_to_num()</span></code> to the
+given correlation matrix before any other operation.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first">dictionary</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><strong>multi_ref_panel</strong>: It is a dictionary that contains as much
+dictionaries as reference traces have been used. The key format is
+<code class="docutils literal"><span class="pre">&quot;reftr_%d&quot;</span> <span class="pre">%</span> <span class="pre">i</span></code> and the corresponding value is also a dictionary
+with the structure described in
+<a class="reference internal" href="miic.core.stretch_mod.time_stretch_estimate.html#miic.core.stretch_mod.time_stretch_estimate" title="miic.core.stretch_mod.time_stretch_estimate"><code class="xref py py-class docutils literal"><span class="pre">time_stretch_estimate</span></code></a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="miic.core.stretch_mod.est_shift_from_dt_corr.html" title="miic.core.stretch_mod.est_shift_from_dt_corr"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="miic.core.stretch_mod.multi_ref_vchange_and_align.html" title="miic.core.stretch_mod.multi_ref_vchange_and_align"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">MIIC 1.0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../core.html" >MIIC Library Reference</a> &raquo;</li>
+          <li class="nav-item nav-item-2"><a href="../stretch_mod.html" >Signal stretching</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2012, Eraldo Pomponi.
+      Last updated on 2016-03-02T16:12:50.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </div>
+  </body>
+</html>

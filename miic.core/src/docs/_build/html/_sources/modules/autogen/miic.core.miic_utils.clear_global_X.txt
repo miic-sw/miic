@@ -1,0 +1,6 @@
+miic.core.miic_utils.clear_global_X
+===================================
+
+.. currentmodule:: miic.core.miic_utils
+
+.. autofunction:: clear_global_X

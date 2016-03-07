@@ -1,0 +1,6 @@
+miic.core.miic_utils.norm1
+==========================
+
+.. currentmodule:: miic.core.miic_utils
+
+.. autofunction:: norm1

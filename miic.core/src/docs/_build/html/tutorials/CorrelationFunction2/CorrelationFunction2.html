@@ -1,0 +1,361 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Pre-Processing &mdash; MIIC 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="MIIC 1.0 documentation" href="../../index.html" />
+    <link rel="up" title="Ambient Noise Correlation" href="../index.html" />
+    <link rel="next" title="Working with loops" href="../Loops/Loops.html" />
+    <link rel="prev" title="Basics" href="../CorrelationFunction1/CorrelationFunction1.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../Loops/Loops.html" title="Working with loops"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="../CorrelationFunction1/CorrelationFunction1.html" title="Basics"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">MIIC 1.0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Ambient Noise Correlation</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Pre-Processing</a><ul>
+<li><a class="reference internal" href="#loading-the-data">Loading the data</a></li>
+<li><a class="reference internal" href="#selecting-the-proper-trace-s">Selecting the proper trace/s</a></li>
+<li><a class="reference internal" href="#remove-the-mean">Remove the mean</a></li>
+<li><a class="reference internal" href="#downsampling-the-data">Downsampling the data</a></li>
+<li><a class="reference internal" href="#filtering">Filtering</a></li>
+<li><a class="reference internal" href="#normalization">Normalization</a></li>
+<li><a class="reference internal" href="#ordering-the-traces">Ordering the traces</a></li>
+<li><a class="reference internal" href="#summary">Summary</a></li>
+</ul>
+</li>
+</ul>
+
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/tutorials/CorrelationFunction2/CorrelationFunction2.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="pre-processing">
+<span id="preprocess-tutorial"></span><h1>Pre-Processing<a class="headerlink" href="#pre-processing" title="Permalink to this headline">¶</a></h1>
+<p>The aim of this tutorial is to describe step-by-step all the pre-processing operations that are necessary/suggested when working with <em>ambient noise
+correlation</em>. Pre-processing here means all the operations applied to the seismic
+data prior to the actual correlation. We will explain the operations and show how
+to perform those operations inside <strong>BlockCanvas</strong> (BC) with the functions provided
+by the MIIC library. The sequence in which we report them is not casual but reflects
+a common practice. Working on an example stream, we will create a project in BC to show the
+&#8220;partial&#8221; results that are obtained after each pre-prcessing step.</p>
+<div class="section" id="loading-the-data">
+<h2>Loading the data<a class="headerlink" href="#loading-the-data" title="Permalink to this headline">¶</a></h2>
+<p>On one hand, we will not go deep in the explanation about how to load the data
+for further elaborations as this process strongly depends on the type of
+archive that stores the data.
+On the other hand we want to report the list of functions  available in the
+<strong>MIIC</strong> library to load data:</p>
+<blockquote>
+<div><ul class="simple">
+<li><a class="reference internal" href="../../modules/alpha_mod.html#miic.core.alpha_mod.stream_read" title="miic.core.alpha_mod.stream_read"><code class="xref py py-class docutils literal"><span class="pre">stream_read</span></code></a> : It handles multiple formats  (GSE2, MSEED, SAC, SEISAN, WAV, Q, SH_ASC) and other proprietary formats (i.e. K-UTec)</li>
+<li><a class="reference internal" href="../../modules/alpha_mod.html#miic.core.alpha_mod.stream_seishub_read" title="miic.core.alpha_mod.stream_seishub_read"><code class="xref py py-class docutils literal"><span class="pre">stream_seishub_read</span></code></a> : This is a specific client for the SeisHub server (<a class="reference external" href="http://www.seishub.org">http://www.seishub.org</a>)</li>
+<li><a class="reference internal" href="../../modules/alpha_mod.html#miic.core.alpha_mod.stream_arklink_read" title="miic.core.alpha_mod.stream_arklink_read"><code class="xref py py-class docutils literal"><span class="pre">stream_arklink_read</span></code></a> : This is a specific client for the ArcLink/WebDC server (e.g. <a class="reference external" href="http://docs.obspy.org/packages/obspy.arclink.html">http://docs.obspy.org/packages/obspy.arclink.html</a>)</li>
+<li><a class="reference internal" href="../../modules/alpha_mod.html#miic.core.alpha_mod.dir_read_stream" title="miic.core.alpha_mod.dir_read_stream"><code class="xref py py-class docutils literal"><span class="pre">dir_read_stream</span></code></a> : This is a function that sequentially reads the content of a directory (i.e. file-by-file) using the funtion  <a class="reference internal" href="../../modules/alpha_mod.html#miic.core.alpha_mod.stream_read" title="miic.core.alpha_mod.stream_read"><code class="xref py py-class docutils literal"><span class="pre">stream_read</span></code></a> stated above and appends all the data to the same data structure <strong>Stream</strong> that is then passed to the successive blocks as input.</li>
+</ul>
+</div></blockquote>
+<p>We will focuse on the first and simplest function
+<a class="reference internal" href="../../modules/alpha_mod.html#miic.core.alpha_mod.stream_read" title="miic.core.alpha_mod.stream_read"><code class="xref py py-class docutils literal"><span class="pre">stream_read</span></code></a> that will provide us the necessary
+data to explain the successive pre-processing steps.
+Its specific GUI when opened in BC is:</p>
+<blockquote>
+<div><div class="align-center figure" id="id1">
+<a class="reference internal image-reference" href="../../_images/stream_read.jpeg"><img alt="stream_read function specific GUI" src="../../_images/stream_read.jpeg" style="width: 40%;" /></a>
+<p class="caption"><span class="caption-text">stream_read function specific GUI</span></p>
+</div>
+</div></blockquote>
+<p>Here you would usually enter the name of the data file or select it with the file browser. But there is also the option to load an example stream that
+contains three traces, one for each components (i.e. Z, N, E).
+From now on we will work on this example stream so that all the computations that we
+will perform can be simply reproduced. It is convenient to show the &#8220;plain&#8221;
+waveforms before going ahead. This is most easiely done by adding a <a class="reference internal" href="../../modules/alpha_mod.html#miic.core.alpha_mod.stream_plot" title="miic.core.alpha_mod.stream_plot"><code class="xref py py-class docutils literal"><span class="pre">stream_plot</span></code></a> block to the canvas and conect the
+<a class="reference internal" href="../../modules/alpha_mod.html#miic.core.alpha_mod.stream_read" title="miic.core.alpha_mod.stream_read"><code class="xref py py-class docutils literal"><span class="pre">stream_read</span></code></a> output stream <em>st</em> to the input variable <em>st</em> of <a class="reference internal" href="../../modules/alpha_mod.html#miic.core.alpha_mod.stream_plot" title="miic.core.alpha_mod.stream_plot"><code class="xref py py-class docutils literal"><span class="pre">stream_plot</span></code></a> to construct a project like:</p>
+<blockquote>
+<div><div class="align-center figure" id="id2">
+<a class="reference internal image-reference" href="../../_images/stream_plot.jpeg"><img alt="BC project to display a stream" src="../../_images/stream_plot.jpeg" style="width: 60%;" /></a>
+<p class="caption"><span class="caption-text">BC project to display a stream</span></p>
+</div>
+</div></blockquote>
+<p>Running the project shows the result:</p>
+<blockquote>
+<div><div class="align-center figure" id="id3">
+<a class="reference internal image-reference" href="../../_images/example_stream.jpeg"><img alt="Example stream" src="../../_images/example_stream.jpeg" style="width: 60%;" /></a>
+<p class="caption"><span class="caption-text">Example stream</span></p>
+</div>
+</div></blockquote>
+</div>
+<div class="section" id="selecting-the-proper-trace-s">
+<h2>Selecting the proper trace/s<a class="headerlink" href="#selecting-the-proper-trace-s" title="Permalink to this headline">¶</a></h2>
+<p>It is not always possible to load just the interesting traces from a huge
+dataset. Quite offen we are forced to read, e.g., a single file that contains
+much more than what we need/want. For example, we could have the data for a
+specific time window regarding all the stations in a specific network but we are
+interested just in a reduced set of them or, for instance, here there are traces
+for all the three component while we are interested only in the <em>Z</em>-component.
+It is therefore necessasry to manipulate the stream so that we can obtain the
+desired set of traces to pass to the next blocks.
+This task can be done using the
+<a class="reference internal" href="../../modules/alpha_mod.html#miic.core.alpha_mod.stream_select" title="miic.core.alpha_mod.stream_select"><code class="xref py py-class docutils literal"><span class="pre">stream_select</span></code></a> function. The allows to specify properties (according to the <code class="xref py py-class docutils literal"><span class="pre">obspy.core.stream.select</span></code> method) that a trace in the stream has to fulfill to be passed to the output. This is how to
+select, e.g., the <em>Z</em> component from the example stream:</p>
+<blockquote>
+<div><div class="align-center figure" id="id4">
+<a class="reference internal image-reference" href="../../_images/stream_select_z.jpeg"><img alt="stream_select function specific GUI" src="../../_images/stream_select_z.jpeg" style="width: 60%;" /></a>
+<p class="caption"><span class="caption-text">stream_select function specific GUI</span></p>
+</div>
+</div></blockquote>
+<p>And this is what is obtained.</p>
+<blockquote>
+<div><div class="align-center figure" id="id5">
+<a class="reference internal image-reference" href="../../_images/example_stream_z.jpeg"><img alt="Example stream *Z* component" src="../../_images/example_stream_z.jpeg" style="width: 60%;" /></a>
+<p class="caption"><span class="caption-text">Example stream <em>Z</em> component</span></p>
+</div>
+</div></blockquote>
+<p>Has you can see, the function accepts wildcards so it is simple to realize a complex
+&#8220;filter&#8221; to get just the desired data. Sometimes is also a good idea to include
+a block like this just after the reading function to be sure that spurious data
+will not affect our computation.</p>
+</div>
+<div class="section" id="remove-the-mean">
+<h2>Remove the mean<a class="headerlink" href="#remove-the-mean" title="Permalink to this headline">¶</a></h2>
+<p>This step can be accompished with the
+<a class="reference internal" href="../../modules/alpha_mod.html#miic.core.alpha_mod.stream_remove_mean" title="miic.core.alpha_mod.stream_remove_mean"><code class="xref py py-class docutils literal"><span class="pre">stream_remove_mean</span></code></a> function. It is a trivial
+operation that, in case of multiple traces contained in a single <strong>Stream</strong>, it
+is performed <em>trace-by-trace</em>.  No parameter is necessary for its computation
+so the associated GUI is empty.
+The example stream has already zero mean so this step will not affect it.</p>
+</div>
+<div class="section" id="downsampling-the-data">
+<h2>Downsampling the data<a class="headerlink" href="#downsampling-the-data" title="Permalink to this headline">¶</a></h2>
+<p>This is another pre-processing step that is often necessary when we have data
+sampled at high frequency but we are interested in a much lower frequency band.
+Downsampling can reduce the computational effort for the calculations significantly.
+The function that the <strong>MIIC</strong> library exposes for that purpose is
+<code class="xref py py-class docutils literal"><span class="pre">stream_downsample</span></code>.
+Its specific GUI  is shown below:</p>
+<blockquote>
+<div><div class="align-center figure" id="id6">
+<a class="reference internal image-reference" href="../../_images/stream_downsample.jpeg"><img alt="stream_downsample specific GUI" src="../../_images/stream_downsample.jpeg" style="width: 40%;" /></a>
+<p class="caption"><span class="caption-text">stream_downsample specific GUI</span></p>
+</div>
+</div></blockquote>
+<p>Leaving the details to the function help, what must be noticed is that it
+requires the final frequency instead of the downsampling factor so that traces
+with different original <em>sample frequency</em> can be handled at the same time.
+Going ahead with our example, suppose we want to reduce the frequency of the
+selected trace to 25 Hz. The project is now looks as follows together with the produced
+result:</p>
+<blockquote>
+<div><div class="align-center figure" id="id7">
+<a class="reference internal image-reference" href="../../_images/after_downsampling.jpeg"><img alt="Example project after downsampling the trace and produced result" src="../../_images/after_downsampling.jpeg" style="width: 90%;" /></a>
+<p class="caption"><span class="caption-text">Example project after downsampling the trace and produced result</span></p>
+</div>
+</div></blockquote>
+</div>
+<div class="section" id="filtering">
+<h2>Filtering<a class="headerlink" href="#filtering" title="Permalink to this headline">¶</a></h2>
+<p>It is rather common to not work with the broadband signal after downsampling but
+apply some sort of filter. The goal is often to focus the attention on a
+specific frequency range or just because it is convenient to remove part of the
+spectra where a known process is active and, if left there, will mask the
+intresting results.
+The specific function that does the filtering is
+<code class="xref py py-class docutils literal"><span class="pre">stream_filter</span></code>.
+It provides four dirrent filter types:
+- lowpass
+- highpass
+- bandpass
+- bandstop</p>
+<p>Its GUI contains different tabs: one general tab where it is possible to chose
+the filter type and read the stored parameters then one tab for each filter type
+where to pass the specific parameters. The &#8220;general&#8221; tab:</p>
+<blockquote>
+<div><div class="align-center figure" id="id8">
+<a class="reference internal image-reference" href="../../_images/stream_filter_general.jpeg"><img alt="stream_filter specific GUI: &quot;general&quot; tab" src="../../_images/stream_filter_general.jpeg" style="width: 60%;" /></a>
+<p class="caption"><span class="caption-text">stream_filter specific GUI: &#8220;general&#8221; tab</span></p>
+</div>
+</div></blockquote>
+<p>The &#8220;bandpass&#8221; tab:</p>
+<blockquote>
+<div><div class="align-center figure" id="id9">
+<a class="reference internal image-reference" href="../../_images/stream_filter_bandpass.jpeg"><img alt="stream_filter specific GUI: &quot;bandpass&quot; tab" src="../../_images/stream_filter_bandpass.jpeg" style="width: 60%;" /></a>
+<p class="caption"><span class="caption-text">stream_filter specific GUI: &#8220;bandpass&#8221; tab</span></p>
+</div>
+</div></blockquote>
+<p>Remember to save the parameters usign the specific button before closing the
+GUI.
+Let&#8217;s see the filtering function in action in the example project. We fix the
+two cut-off frequencies for the bandpass filter at 2 Hz and 5 Hz.
+Below the project and the produced result.</p>
+<blockquote>
+<div><div class="align-center figure" id="id10">
+<a class="reference internal image-reference" href="../../_images/example_prj_filtering.jpeg"><img alt="Example project after filtering the trace and produced result" src="../../_images/example_prj_filtering.jpeg" style="width: 90%;" /></a>
+<p class="caption"><span class="caption-text">Example project after filtering the trace and produced result</span></p>
+</div>
+</div></blockquote>
+</div>
+<div class="section" id="normalization">
+<h2>Normalization<a class="headerlink" href="#normalization" title="Permalink to this headline">¶</a></h2>
+<p>This is the most important step in the preprocessing that, depending on the type of application, admits
+different approaches. An early article that discusses the use of different normalization strategies is
+<a class="reference external" href="http://doi.wiley.com/10.1111/j.1365-246X.2007.03374.x">Benson et al., Geophys. J. Int., (2007)</a>.
+The aim of the normalization is to re-balance different portions of the signal in order to enhance the
+reconstruction of diffenrent parts of the Greens function during the correlation. One example it the
+different influence on the of a short  high amplitude earthquake signal in comparison to a long weak ambient
+noise signal on the correlations with and without the 1-bit normalization.</p>
+<p>As the amplitude of earthquake records may be order of magnitude above the ambient noise they will dominate
+the raw correlation function despite their short duration. In contrast if amplitudes are equalized or even removed
+the influence of the earthquake is limited by its duration.</p>
+<p>Three functions are available in the <strong>MIIC</strong> library for that purpose:</p>
+<ul class="simple">
+<li>Time domain normalization (i.e. <a class="reference internal" href="../../modules/autogen/miic.core.normalization.stream_temp_norm.html#miic.core.normalization.stream_temp_norm" title="miic.core.normalization.stream_temp_norm"><code class="xref py py-class docutils literal"><span class="pre">stream_temp_norm</span></code></a>)</li>
+<li>Spectral whitening (i.e. <a class="reference internal" href="../../modules/autogen/miic.core.normalization.stream_spect_norm.html#miic.core.normalization.stream_spect_norm" title="miic.core.normalization.stream_spect_norm"><code class="xref py py-class docutils literal"><span class="pre">stream_spect_norm</span></code></a>)</li>
+<li>1-bit normalization (i.e. <a class="reference internal" href="../../modules/autogen/miic.core.normalization.stream_1bit_norm.html#miic.core.normalization.stream_1bit_norm" title="miic.core.normalization.stream_1bit_norm"><code class="xref py py-class docutils literal"><span class="pre">stream_1bit_norm</span></code></a>)</li>
+</ul>
+<p>Time domain normalization and 1-bit normalization are &#8220;general purpose&#8221; in the
+sense that there are no specific limitation on their use rather than the spectral
+withening that cannot be adopted when working with the autocorrelation
+(i.e. in this case the phase spectrum is constant).
+Just the time domain normalization which is a normalization by the running average of the signal envelope needs a parameter to be passed and thus has
+a non-empty GUI. This parameter is the width of the averaging window in samples:</p>
+<blockquote>
+<div><div class="align-center figure" id="id11">
+<a class="reference internal image-reference" href="../../_images/stream_temp_norm.jpeg"><img alt="stream_temp_norm specific GUI" src="../../_images/stream_temp_norm.jpeg" style="width: 40%;" /></a>
+<p class="caption"><span class="caption-text">stream_temp_norm specific GUI</span></p>
+</div>
+</div></blockquote>
+<p>The example project with the 1-bit normalization function is:</p>
+<blockquote>
+<div><div class="align-center figure" id="id12">
+<a class="reference internal image-reference" href="../../_images/example_prj_normalization.jpeg"><img alt="Example project including the 1-bit normalization" src="../../_images/example_prj_normalization.jpeg" style="width: 90%;" /></a>
+<p class="caption"><span class="caption-text">Example project including the 1-bit normalization</span></p>
+</div>
+</div></blockquote>
+<p>Now we report the produced trace after the application of each one of the three
+proposed normalizatin function:</p>
+<blockquote>
+<div><div class="align-center figure" id="id13">
+<a class="reference internal image-reference" href="../../_images/1-bit.jpeg"><img alt="Trace after 1-bit normalization" src="../../_images/1-bit.jpeg" style="width: 80%;" /></a>
+<p class="caption"><span class="caption-text">Trace after 1-bit normalization</span></p>
+</div>
+<div class="align-center figure" id="id14">
+<a class="reference internal image-reference" href="../../_images/spec_norm.jpeg"><img alt="Trace after 1-bit normalization" src="../../_images/spec_norm.jpeg" style="width: 80%;" /></a>
+<p class="caption"><span class="caption-text">Trace after spectral whitening</span></p>
+</div>
+<div class="align-center figure" id="id15">
+<a class="reference internal image-reference" href="../../_images/temp_norm.jpeg"><img alt="Trace after 1-bit normalization" src="../../_images/temp_norm.jpeg" style="width: 80%;" /></a>
+<p class="caption"><span class="caption-text">Trace after temporal normalization with time window lenght 10 samples.</span></p>
+</div>
+</div></blockquote>
+<p>It should be noticed that spectral whitening may cause boundary problems that can be removed by the application of a filter. Please also note how much the resulting waveforms differ in the three cases.</p>
+</div>
+<div class="section" id="ordering-the-traces">
+<h2>Ordering the traces<a class="headerlink" href="#ordering-the-traces" title="Permalink to this headline">¶</a></h2>
+<p>The calculation of the auto/cross correlation being done following the order
+of the traces as they are stored in the <strong>Stream</strong> structure, to obtain
+consistent results, it is a good practice to sort the traces with respect to their
+seed-id. For that purpose, the <strong>MIIC</strong> library provides the
+<a class="reference internal" href="../../modules/alpha_mod.html#miic.core.alpha_mod.stream_sort" title="miic.core.alpha_mod.stream_sort"><code class="xref py py-class docutils literal"><span class="pre">stream_sort</span></code></a> funtion. It doesn&#8217;t need parameters
+so its GUI is empty.</p>
+</div>
+<div class="section" id="summary">
+<h2>Summary<a class="headerlink" href="#summary" title="Permalink to this headline">¶</a></h2>
+<p>The steps discussed above can be used as they are to condition seismic signals prior to correlation. How to perform the correlation
+step is subject to another tutorial.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../Loops/Loops.html" title="Working with loops"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="../CorrelationFunction1/CorrelationFunction1.html" title="Basics"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">MIIC 1.0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Ambient Noise Correlation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2012, Eraldo Pomponi.
+      Last updated on 2016-03-02T14:12:35.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,686 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>miic.core.corr_fun &mdash; MIIC 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="top" title="MIIC 1.0 documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MIIC 1.0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for miic.core.corr_fun</h1><div class="highlight"><pre>
+<span class="c"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">This modules collect all those functions that are necessary to correlate</span>
+<span class="sd">seismic traces. It is possible to fully exploit multi-core CPU capability</span>
+<span class="sd">working in parallel. The base structure that collects the traces must</span>
+<span class="sd">be :class:`obspy.core.Stream&#39;.</span>
+
+<span class="sd">@author:</span>
+<span class="sd">Eraldo Pomponi</span>
+
+<span class="sd">@copyright:</span>
+<span class="sd">The MIIC Development Team (eraldo.pomponi@uni-leipzig.de)</span>
+
+<span class="sd">@license:</span>
+<span class="sd">GNU Lesser General Public License, Version 3</span>
+<span class="sd">(http://www.gnu.org/copyleft/lesser.html)</span>
+
+<span class="sd">Created on Nov 25, 2010</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="c"># Main imports</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">scipy.fftpack</span> <span class="kn">import</span> <span class="n">fftn</span><span class="p">,</span> <span class="n">ifftn</span><span class="p">,</span> <span class="n">fftfreq</span>
+<span class="kn">from</span> <span class="nn">multiprocessing</span> <span class="kn">import</span> <span class="n">Pool</span>
+
+<span class="c"># ETS imports</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">BC_UI</span> <span class="o">=</span> <span class="bp">True</span>
+    <span class="kn">from</span> <span class="nn">traits.api</span> <span class="kn">import</span> <span class="n">HasTraits</span><span class="p">,</span> <span class="n">Int</span><span class="p">,</span> <span class="n">Bool</span>
+    <span class="kn">from</span> <span class="nn">traitsui.api</span> <span class="kn">import</span> <span class="n">View</span><span class="p">,</span> <span class="n">Item</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="n">BC_UI</span> <span class="o">=</span> <span class="bp">False</span>
+    <span class="k">pass</span>
+
+<span class="c"># Obspy import</span>
+<span class="kn">from</span> <span class="nn">obspy.core</span> <span class="kn">import</span> <span class="n">Stream</span><span class="p">,</span> <span class="n">Trace</span><span class="p">,</span> <span class="n">Stats</span><span class="p">,</span> <span class="n">UTCDateTime</span>
+<span class="kn">from</span> <span class="nn">obspy.signal.invsim</span> <span class="kn">import</span> <span class="n">cosTaper</span>
+
+<span class="c"># Local import</span>
+<span class="kn">from</span> <span class="nn">miic.core.miic_utils</span> <span class="kn">import</span> <span class="n">trace_calc_az_baz_dist</span>
+
+
+<span class="k">class</span> <span class="nc">InputError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Exception for Input errors &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
+        <span class="ne">Exception</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">)</span>
+
+
+<span class="k">if</span> <span class="n">BC_UI</span><span class="p">:</span>
+    <span class="k">class</span> <span class="nc">_AppendST</span><span class="p">:</span>
+    
+        <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">st</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">st</span> <span class="o">=</span> <span class="n">st</span>
+
+        <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">trs</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">tr</span> <span class="ow">in</span> <span class="n">trs</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">st</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tr</span><span class="p">)</span>
+
+
+<span class="c"># From MLPY #</span>
+<div class="viewcode-block" id="extend"><a class="viewcode-back" href="../../../modules/autogen/miic.core.corr_fun.extend.html#miic.core.corr_fun.extend">[docs]</a><span class="k">def</span> <span class="nf">extend</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s">&#39;reflection&#39;</span><span class="p">,</span> <span class="n">length</span><span class="o">=</span><span class="s">&#39;powerof2&#39;</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Extend the 1D numpy array x beyond its original length</span>
+
+<span class="sd">    This function comes from MLPY package with just a minor change.</span>
+
+<span class="sd">    :type x: :class:`~numpy.ndarray`</span>
+<span class="sd">    :param x: 1D ndarray.</span>
+
+<span class="sd">    :type method: string, optional, `default`: ``reflection``</span>
+<span class="sd">    :param method: Indicates which extension method to use. Possible choice</span>
+<span class="sd">        are ``reflection``, ``periodic`` and ``zeros``.</span>
+<span class="sd">    :type length: string,  optional, `default`:``powerof2``</span>
+<span class="sd">    :param length: Indicates how to determinate the length of the extended</span>
+<span class="sd">        data. Possible choices are ``powerof2`` and ``double`` and ``fixed``</span>
+
+<span class="sd">    :rtype: :class:`~numpy.ndarray`</span>
+<span class="sd">    :return: **xe**: Extended version of x</span>
+
+<span class="sd">    .. rubric:: Basic Usage</span>
+
+<span class="sd">    &gt;&gt;&gt; import numpy as np</span>
+<span class="sd">    &gt;&gt;&gt; from corr_fun import extend</span>
+<span class="sd">    &gt;&gt;&gt; a = np.array([1,2,3,4,5])</span>
+<span class="sd">    &gt;&gt;&gt; xe = extend(a, method=&#39;periodic&#39;, length=&#39;powerof2&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; xe</span>
+<span class="sd">    array([1, 2, 3, 4, 5, 1, 2, 3])</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="n">length</span> <span class="o">==</span> <span class="s">&#39;powerof2&#39;</span><span class="p">:</span>
+        <span class="n">lt</span> <span class="o">=</span> <span class="nb">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])))</span>
+        <span class="n">lp</span> <span class="o">=</span> <span class="n">lt</span> <span class="o">-</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="k">elif</span> <span class="n">length</span> <span class="o">==</span> <span class="s">&#39;double&#39;</span><span class="p">:</span>
+        <span class="n">lp</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="k">elif</span> <span class="n">length</span> <span class="o">==</span> <span class="s">&#39;fixed&#39;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">size</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">lp</span> <span class="o">=</span> <span class="n">size</span> <span class="o">-</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;length </span><span class="si">%s</span><span class="s"> is not available&quot;</span> <span class="o">%</span> <span class="n">length</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s">&#39;reflection&#39;</span><span class="p">:</span>
+        <span class="n">xret</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">x</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">][:</span><span class="n">lp</span><span class="p">])</span>
+
+    <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s">&#39;periodic&#39;</span><span class="p">:</span>
+        <span class="n">xret</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">x</span><span class="p">[:</span><span class="n">lp</span><span class="p">])</span>
+
+    <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s">&#39;zeros&#39;</span><span class="p">:</span>
+        <span class="n">xret</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">lp</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">x</span><span class="o">.</span><span class="n">dtype</span><span class="p">))</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;method </span><span class="si">%s</span><span class="s"> is not available&quot;</span> <span class="o">%</span> <span class="n">method</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">xret</span>
+
+</div>
+<div class="viewcode-block" id="merge_id"><a class="viewcode-back" href="../../../modules/autogen/miic.core.corr_fun.merge_id.html#miic.core.corr_fun.merge_id">[docs]</a><span class="k">def</span> <span class="nf">merge_id</span><span class="p">(</span><span class="n">tr1</span><span class="p">,</span> <span class="n">tr2</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Create a SEED like `id` for an ObsPy Trace object that stores corr data</span>
+
+<span class="sd">    It creates a SEED like `id` for the :class:`~obspy.core.trace.Trace`</span>
+<span class="sd">    objects that stores the obtained correlation data between the two input</span>
+<span class="sd">    Traces. It is created as a ``-`` separated combination of the</span>
+<span class="sd">    [&#39;network&#39;,&#39;station&#39;,&#39;location&#39;,&#39;channel&#39;] informations of each one</span>
+<span class="sd">    of them.</span>
+
+<span class="sd">    :type tr1: :class:`~obspy.core.trace.Trace`</span>
+<span class="sd">    :param tr1: First Trace</span>
+<span class="sd">    :type tr2: :class:`~obspy.core.trace.Trace`</span>
+<span class="sd">    :param tr2: Second Trace</span>
+
+<span class="sd">    :rtype: string</span>
+<span class="sd">    :return: **id**: SEED like `id` for the given combination of traces.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tr1</span><span class="p">,</span> <span class="n">Trace</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s">&quot;tr1 must be an obspy Trace object.&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tr2</span><span class="p">,</span> <span class="n">Trace</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s">&quot;tr2 must be an obspy Trace object.&quot;</span><span class="p">)</span>
+
+    <span class="n">keywords</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;network&#39;</span><span class="p">,</span> <span class="s">&#39;station&#39;</span><span class="p">,</span> <span class="s">&#39;location&#39;</span><span class="p">,</span> <span class="s">&#39;channel&#39;</span><span class="p">]</span>
+
+    <span class="n">m_id</span> <span class="o">=</span> <span class="s">&#39;.&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">tr1</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">+</span> <span class="s">&#39;-&#39;</span> <span class="o">+</span> <span class="n">tr2</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> \
+                     <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">keywords</span><span class="p">])</span>
+
+    <span class="k">return</span> <span class="n">m_id</span>
+
+</div>
+<div class="viewcode-block" id="combine_stats"><a class="viewcode-back" href="../../../modules/autogen/miic.core.corr_fun.combine_stats.html#miic.core.corr_fun.combine_stats">[docs]</a><span class="k">def</span> <span class="nf">combine_stats</span><span class="p">(</span><span class="n">tr1</span><span class="p">,</span> <span class="n">tr2</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Combine the meta-information of two ObsPy Trace objects</span>
+
+<span class="sd">    This function returns a ObsPy :class:`~obspy.core.trace.Stats` object</span>
+<span class="sd">    obtained combining the two associated with the input Traces.</span>
+<span class="sd">    Namely ``tr1.stats`` and ``tr2.stats``.</span>
+
+<span class="sd">    The fields [&#39;network&#39;,&#39;station&#39;,&#39;location&#39;,&#39;channel&#39;] are combined in</span>
+<span class="sd">    a ``-`` separated fashion to create a &quot;pseudo&quot; SEED like ``id``.</span>
+
+<span class="sd">    For all the others fields, only &quot;common&quot; information are retained: This</span>
+<span class="sd">    means that only keywords that exist in both dictionaries will be included</span>
+<span class="sd">    in the resulting one.</span>
+
+<span class="sd">    :type tr1: :class:`~obspy.core.trace.Trace`</span>
+<span class="sd">    :param tr1: First Trace</span>
+<span class="sd">    :type tr2: :class:`~obspy.core.trace.Trace`</span>
+<span class="sd">    :param tr2: Second Trace</span>
+
+<span class="sd">    :rtype: :class:`~obspy.core.trace.Stats`</span>
+<span class="sd">    :return: **stats**: combined Stats object</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tr1</span><span class="p">,</span> <span class="n">Trace</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s">&quot;tr1 must be an obspy Trace object.&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tr2</span><span class="p">,</span> <span class="n">Trace</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s">&quot;tr2 must be an obspy Trace object.&quot;</span><span class="p">)</span>
+
+    <span class="n">tr1_keys</span> <span class="o">=</span> <span class="n">tr1</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+    <span class="n">tr2_keys</span> <span class="o">=</span> <span class="n">tr2</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+
+    <span class="n">stats</span> <span class="o">=</span> <span class="n">Stats</span><span class="p">()</span>
+
+    <span class="c"># Adjust the information to create a new SEED like id</span>
+    <span class="n">keywords</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;network&#39;</span><span class="p">,</span> <span class="s">&#39;station&#39;</span><span class="p">,</span> <span class="s">&#39;location&#39;</span><span class="p">,</span> <span class="s">&#39;channel&#39;</span><span class="p">]</span>
+    <span class="n">sac_keywords</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;sac&#39;</span><span class="p">]</span>
+
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">keywords</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">tr1_keys</span> <span class="ow">and</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">tr2_keys</span><span class="p">:</span>
+            <span class="n">stats</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">tr1</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">+</span> <span class="s">&#39;-&#39;</span> <span class="o">+</span> <span class="n">tr2</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">tr1_keys</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">keywords</span> <span class="ow">and</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">sac_keywords</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">tr2_keys</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">tr1</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">==</span> <span class="n">tr2</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="n">key</span><span class="p">]:</span>
+                    <span class="c"># in the stats object there are read only objects</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="n">stats</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">tr1</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+                    <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+                        <span class="k">pass</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">stats</span><span class="p">[</span><span class="s">&#39;sac&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">stats</span><span class="o">.</span><span class="n">sac</span><span class="p">[</span><span class="s">&#39;stla&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">tr1</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">sac</span><span class="o">.</span><span class="n">stla</span>
+        <span class="n">stats</span><span class="o">.</span><span class="n">sac</span><span class="p">[</span><span class="s">&#39;stlo&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">tr1</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">sac</span><span class="o">.</span><span class="n">stlo</span>
+        <span class="n">stats</span><span class="o">.</span><span class="n">sac</span><span class="p">[</span><span class="s">&#39;stel&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">tr1</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">sac</span><span class="o">.</span><span class="n">stel</span>
+        <span class="n">stats</span><span class="o">.</span><span class="n">sac</span><span class="p">[</span><span class="s">&#39;evla&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">tr2</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">sac</span><span class="o">.</span><span class="n">stla</span>
+        <span class="n">stats</span><span class="o">.</span><span class="n">sac</span><span class="p">[</span><span class="s">&#39;evlo&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">tr2</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">sac</span><span class="o">.</span><span class="n">stlo</span>
+        <span class="n">stats</span><span class="o">.</span><span class="n">sac</span><span class="p">[</span><span class="s">&#39;evel&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">tr2</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">sac</span><span class="o">.</span><span class="n">stel</span>
+
+        <span class="n">az</span><span class="p">,</span> <span class="n">baz</span><span class="p">,</span> <span class="n">dist</span> <span class="o">=</span> <span class="n">trace_calc_az_baz_dist</span><span class="p">(</span><span class="n">tr1</span><span class="p">,</span> <span class="n">tr2</span><span class="p">)</span>
+
+        <span class="n">stats</span><span class="o">.</span><span class="n">sac</span><span class="p">[</span><span class="s">&#39;dist&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">dist</span> <span class="o">/</span> <span class="mi">1000</span>
+        <span class="n">stats</span><span class="o">.</span><span class="n">sac</span><span class="p">[</span><span class="s">&#39;az&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">az</span>
+        <span class="n">stats</span><span class="o">.</span><span class="n">sac</span><span class="p">[</span><span class="s">&#39;baz&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">baz</span>
+    <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+        <span class="n">stats</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;sac&#39;</span><span class="p">)</span>
+        <span class="k">print</span> <span class="s">&quot;No station coordinates provided.&quot;</span>
+
+    <span class="k">return</span> <span class="n">stats</span>
+
+</div>
+<div class="viewcode-block" id="conv_traces"><a class="viewcode-back" href="../../../modules/autogen/miic.core.corr_fun.conv_traces.html#miic.core.corr_fun.conv_traces">[docs]</a><span class="k">def</span> <span class="nf">conv_traces</span><span class="p">(</span><span class="n">tr1</span><span class="p">,</span> <span class="n">tr2</span><span class="p">,</span> <span class="n">normal</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Convolve two Traces and merge their meta-information</span>
+
+<span class="sd">    It convolves the data stored in two :class:`~obspy.core.trace.Trace`</span>
+<span class="sd">    Objects in frequency domain. If ``normal==True`` the resulting correlation</span>
+<span class="sd">    data are normalized by a factor of</span>
+<span class="sd">    :func:`sqrt(||tr1.data||^2 x ||tr2.data||^2)`</span>
+
+<span class="sd">    Meta-informations associated to the resulting Trace are obtained through:</span>
+
+<span class="sd">        - Merging the original meta-informations of the two input traces</span>
+<span class="sd">          according to the :func:`~miic.core.corr_fun.combine_stats` function.</span>
+
+<span class="sd">        - Adding the original two `Stats` objects to the newly</span>
+<span class="sd">          created :class:`~obspy.core.trace.Trace` object as:</span>
+<span class="sd">          &gt;&gt;&gt; conv_tr.stats_tr1 = tr1.stats</span>
+<span class="sd">          &gt;&gt;&gt; conv_tr.stats_tr2 = tr2.stats</span>
+<span class="sd">        - Fixing:</span>
+<span class="sd">          &gt;&gt;&gt; conv_tr.stats[&#39;npts&#39;] = &#39;...number of correlation points...&#39;</span>
+<span class="sd">          &gt;&gt;&gt; conv_tr.stats[&#39;starttime&#39;] = tr2.stats[&#39;starttime&#39;] -</span>
+<span class="sd">              tr1.stats[&#39;starttime&#39;]</span>
+
+<span class="sd">    :type tr1: :class:`~obspy.core.trace.Trace`</span>
+<span class="sd">    :param tr1: First Trace</span>
+<span class="sd">    :type tr2: :class:`~obspy.core.trace.Trace`</span>
+<span class="sd">    :param tr2: Second Trace</span>
+<span class="sd">    :type normal: bool</span>
+<span class="sd">    :param normal: Normalization flag</span>
+
+<span class="sd">    :rtype: :class:`~obspy.core.trace.Trace`</span>
+<span class="sd">    :return: **conv_tr**: Trace that stores convolved data and meta-information</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tr1</span><span class="p">,</span> <span class="n">Trace</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s">&quot;tr1 must be an obspy Trace object.&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tr2</span><span class="p">,</span> <span class="n">Trace</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s">&quot;tr2 must be an obspy Trace object.&quot;</span><span class="p">)</span>
+    
+    <span class="n">zerotime</span> <span class="o">=</span> <span class="n">UTCDateTime</span><span class="p">(</span><span class="mi">1971</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">conv_tr</span> <span class="o">=</span> <span class="n">Trace</span><span class="p">()</span>
+
+    <span class="c"># extend traces to the next power of 2 of the longest trace</span>
+    <span class="n">lt</span> <span class="o">=</span> <span class="nb">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">([</span><span class="n">tr1</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;npts&#39;</span><span class="p">],</span>
+             <span class="n">tr2</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;npts&#39;</span><span class="p">]]))))</span>
+    <span class="n">s1</span> <span class="o">=</span> <span class="n">extend</span><span class="p">(</span><span class="n">tr1</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s">&#39;zeros&#39;</span><span class="p">,</span> <span class="n">length</span><span class="o">=</span><span class="s">&#39;fixed&#39;</span><span class="p">,</span><span class="n">size</span><span class="o">=</span><span class="n">lt</span><span class="p">)</span>
+    <span class="n">s2</span> <span class="o">=</span> <span class="n">extend</span><span class="p">(</span><span class="n">tr2</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s">&#39;zeros&#39;</span><span class="p">,</span> <span class="n">length</span><span class="o">=</span><span class="s">&#39;fixed&#39;</span><span class="p">,</span><span class="n">size</span><span class="o">=</span><span class="n">lt</span><span class="p">)</span>
+
+    <span class="c"># create the combined stats</span>
+    <span class="n">conv_tr</span><span class="o">.</span><span class="n">stats</span> <span class="o">=</span> <span class="n">combine_stats</span><span class="p">(</span><span class="n">tr1</span><span class="p">,</span> <span class="n">tr2</span><span class="p">)</span>
+    <span class="n">conv_tr</span><span class="o">.</span><span class="n">stats_tr1</span> <span class="o">=</span> <span class="n">tr1</span><span class="o">.</span><span class="n">stats</span>
+    <span class="n">conv_tr</span><span class="o">.</span><span class="n">stats_tr2</span> <span class="o">=</span> <span class="n">tr2</span><span class="o">.</span><span class="n">stats</span>
+
+    <span class="n">conv_tr</span><span class="o">.</span><span class="n">stats_tr1</span><span class="o">.</span><span class="n">npts</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">tr1</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">npts</span><span class="p">,</span> <span class="n">tr2</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">npts</span><span class="p">)</span>
+    <span class="n">conv_tr</span><span class="o">.</span><span class="n">stats_tr2</span><span class="o">.</span><span class="n">npts</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">tr1</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">npts</span><span class="p">,</span> <span class="n">tr2</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">npts</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">normal</span><span class="p">:</span>
+        <span class="n">denom</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">s1</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">),</span> <span class="n">s1</span><span class="o">.</span><span class="n">T</span><span class="p">)</span> <span class="o">*</span>
+                        <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">s2</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">),</span> <span class="n">s2</span><span class="o">.</span><span class="n">T</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">denom</span> <span class="o">=</span> <span class="mf">1.</span>
+
+    <span class="c"># remaining offset in samples (just remove fractions of samples)</span>
+    <span class="n">roffset</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">((</span><span class="n">tr2</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">starttime</span> <span class="o">-</span> <span class="n">tr1</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">starttime</span><span class="p">)</span> <span class="o">*</span>
+                        <span class="n">tr1</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">sampling_rate</span><span class="p">)</span>
+    <span class="n">offset</span> <span class="o">=</span> <span class="p">(</span><span class="n">tr2</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">starttime</span> <span class="o">-</span> <span class="n">tr1</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">starttime</span><span class="p">)</span> <span class="o">*</span> \
+        <span class="n">tr1</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">sampling_rate</span> <span class="o">-</span> <span class="n">roffset</span>
+    <span class="c"># remaining offset in seconds</span>
+    <span class="n">roffset</span> <span class="o">/=</span> <span class="n">tr1</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">sampling_rate</span>
+
+
+    <span class="n">convData</span> <span class="o">=</span> <span class="n">_fftconvolve</span><span class="p">(</span><span class="n">s1</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">s2</span><span class="p">,</span> <span class="n">offset</span><span class="p">)</span>
+    <span class="n">convData</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="n">convData</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">denom</span><span class="p">))</span>
+    
+    <span class="c"># set number of samples</span>
+    <span class="n">conv_tr</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;npts&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">convData</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="c"># time lag of the zero position, i.e. lag time of alignent</span>
+    <span class="n">t_offset_zeroleg</span> <span class="o">=</span> <span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">convData</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">-</span> <span class="mf">1.</span><span class="p">)</span> <span class="o">/</span> \
+        <span class="p">(</span><span class="mf">2.</span> <span class="o">*</span> <span class="n">tr1</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">sampling_rate</span><span class="p">)</span>
+
+    <span class="c"># set starttime</span>
+    <span class="n">conv_tr</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;starttime&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">zerotime</span> <span class="o">-</span> <span class="n">t_offset_zeroleg</span> <span class="o">+</span> \
+        <span class="n">roffset</span>
+
+    <span class="n">conv_tr</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">convData</span>
+
+    <span class="k">return</span> <span class="n">conv_tr</span>
+    
+    </div>
+<span class="k">def</span> <span class="nf">deconvolve_traces</span><span class="p">(</span><span class="n">signal</span><span class="p">,</span> <span class="n">divisor</span><span class="p">,</span> <span class="n">eps</span><span class="p">,</span> <span class="n">freq</span><span class="o">=</span><span class="p">[],</span> <span class="n">residual</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Deconvolve a time series from a set of time series.</span>
+
+<span class="sd">    The function is a wrapper for the :class:`scipy.signal.convolve`</span>
+<span class="sd">    function.</span>
+<span class="sd">    </span>
+<span class="sd">    :type signal: :class:`~obspy.core.stream.Stream`</span>
+<span class="sd">    :param signal: signal from which the divisor is to be deconvolved</span>
+<span class="sd">    :type divisor: :class:`~obspy.core.trace.Trace`</span>
+<span class="sd">    :param divisor: time series that is to be deconvolved from signal</span>
+<span class="sd">    :type eps: float</span>
+<span class="sd">    :param eps: fraction of spectral mean used as a water level to </span>
+<span class="sd">        avoid spectral holes in the deconvolution.</span>
+<span class="sd">    :type freq: two element array-like</span>
+<span class="sd">    :param freq: frequency range for the estimation of the mean power</span>
+<span class="sd">        that is scaled with ``eps`` to obtian the water level  </span>
+<span class="sd">    :type residual: bool</span>
+<span class="sd">    :param residual: return residual if True, defaults to False</span>
+
+<span class="sd">    :rtype: obspy.core.stream</span>
+<span class="sd">    :return: **(dcst, rst)**: decorrelated stream and residual (only</span>
+<span class="sd">        if ``residual=True``</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    
+    <span class="n">zerotime</span> <span class="o">=</span> <span class="n">UTCDateTime</span><span class="p">(</span><span class="mi">1971</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+    <span class="c"># trace length is taken from signal (must be even to use real fft)</span>
+    <span class="k">if</span> <span class="n">signal</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;npts&#39;</span><span class="p">]</span> <span class="o">%</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="n">trlen</span> <span class="o">=</span> <span class="n">signal</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;npts&#39;</span><span class="p">]</span><span class="o">+</span><span class="mi">1</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">trlen</span> <span class="o">=</span> <span class="n">signal</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;npts&#39;</span><span class="p">]</span>
+    <span class="n">delta</span> <span class="o">=</span> <span class="n">divisor</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;delta&#39;</span><span class="p">]</span>
+    
+    
+    <span class="c"># prepare divisor</span>
+    <span class="n">divisor</span><span class="o">.</span><span class="n">detrend</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="s">&#39;constant&#39;</span><span class="p">)</span>
+    <span class="n">taper</span> <span class="o">=</span> <span class="n">cosTaper</span><span class="p">(</span><span class="n">divisor</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;npts&#39;</span><span class="p">],</span><span class="n">p</span><span class="o">=</span><span class="mf">0.05</span><span class="p">)</span>
+    <span class="n">divisor</span><span class="o">.</span><span class="n">data</span> <span class="o">*=</span> <span class="n">taper</span>
+
+    <span class="n">divisor</span><span class="o">.</span><span class="n">trim</span><span class="p">(</span><span class="n">starttime</span><span class="o">=</span><span class="n">divisor</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;starttime&#39;</span><span class="p">],</span><span class="n">endtime</span><span class="o">=</span><span class="n">divisor</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;starttime&#39;</span><span class="p">]</span><span class="o">+</span>
+                 <span class="p">(</span><span class="n">trlen</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">delta</span><span class="p">,</span><span class="n">pad</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span><span class="n">fill_value</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span><span class="n">nearest_sample</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+    <span class="c"># FFT divisor</span>
+    <span class="n">fd</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fftpack</span><span class="o">.</span><span class="n">rfft</span><span class="p">(</span><span class="n">divisor</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+    <span class="c"># estimate the waterlevel to stabilize deconvolution</span>
+    <span class="k">if</span> <span class="n">freq</span><span class="p">:</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="n">signal</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;sampling_rate&#39;</span><span class="p">]</span><span class="o">/</span><span class="mf">2.</span><span class="p">,</span> <span class="n">signal</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;sampling_rate&#39;</span><span class="p">]</span><span class="o">/</span><span class="mf">2.</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">fd</span><span class="p">))</span>
+        <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">([</span><span class="n">f</span><span class="o">&gt;</span><span class="n">freq</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">f</span><span class="o">&lt;</span><span class="n">freq</span><span class="p">[</span><span class="mi">1</span><span class="p">]],</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">))</span>
+        <span class="n">wl</span> <span class="o">=</span> <span class="n">eps</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">((</span><span class="n">fd</span><span class="o">*</span><span class="n">fd</span><span class="o">.</span><span class="n">conj</span><span class="p">())[</span><span class="n">ind</span><span class="p">])</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">wl</span> <span class="o">=</span> <span class="n">eps</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">((</span><span class="n">fd</span><span class="o">*</span><span class="n">fd</span><span class="o">.</span><span class="n">conj</span><span class="p">()))</span>
+    
+    <span class="c"># create the output stream</span>
+    <span class="n">dcst</span> <span class="o">=</span> <span class="n">Stream</span><span class="p">()</span>
+    <span class="n">rst</span> <span class="o">=</span> <span class="n">Stream</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">tr</span> <span class="ow">in</span> <span class="n">signal</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;sampling_rate&#39;</span><span class="p">]</span> <span class="o">!=</span> <span class="n">divisor</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;sampling_rate&#39;</span><span class="p">]:</span>
+            <span class="k">print</span> <span class="s">&quot;Sampling rates don&#39;t match for </span><span class="se">\n</span><span class="s"> </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">tr</span>
+            <span class="k">continue</span>
+        
+        <span class="c"># prepare nuerator</span>
+        <span class="n">tr</span><span class="o">.</span><span class="n">detrend</span><span class="p">(</span><span class="s">&#39;constant&#39;</span><span class="p">)</span>
+        <span class="n">taper</span> <span class="o">=</span> <span class="n">cosTaper</span><span class="p">(</span><span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;npts&#39;</span><span class="p">])</span>
+        <span class="n">tr</span><span class="o">.</span><span class="n">trim</span><span class="p">(</span><span class="n">starttime</span><span class="o">=</span><span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;starttime&#39;</span><span class="p">],</span> <span class="n">endtime</span><span class="o">=</span><span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;starttime&#39;</span><span class="p">]</span><span class="o">+</span>
+                <span class="p">(</span><span class="n">trlen</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">delta</span><span class="p">,</span><span class="n">pad</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span><span class="n">fill_value</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span><span class="n">nearest_sample</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+        <span class="n">tr</span><span class="o">.</span><span class="n">data</span> <span class="o">*=</span> <span class="n">taper</span>
+        <span class="c"># fft numerator</span>
+        <span class="n">sf</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fftpack</span><span class="o">.</span><span class="n">rfft</span><span class="p">(</span><span class="n">tr</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+        
+        <span class="c"># calculate deconvolution</span>
+        <span class="n">fdc</span> <span class="o">=</span> <span class="n">sf</span><span class="o">*</span><span class="n">fd</span><span class="o">/</span><span class="p">(</span><span class="n">fd</span><span class="o">**</span><span class="mi">2</span><span class="o">+</span><span class="n">wl</span><span class="p">)</span>
+        <span class="n">dc</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fftpack</span><span class="o">.</span><span class="n">irfft</span><span class="p">(</span><span class="n">fdc</span><span class="p">)</span>
+
+        <span class="c"># template to hold results</span>
+        <span class="n">dctr</span> <span class="o">=</span> <span class="n">tr</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="c"># propagate metadata</span>
+        <span class="n">dctr</span><span class="o">.</span><span class="n">stats</span> <span class="o">=</span> <span class="n">combine_stats</span><span class="p">(</span><span class="n">tr</span><span class="p">,</span><span class="n">divisor</span><span class="p">)</span>
+        <span class="n">dctr</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">dc</span>
+        <span class="n">dctr</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;npts&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">dc</span><span class="p">)</span>
+        <span class="n">dctr</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;starttime&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">zerotime</span> <span class="o">-</span> <span class="p">(</span><span class="n">divisor</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;starttime&#39;</span><span class="p">]</span><span class="o">-</span><span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;starttime&#39;</span><span class="p">])</span>
+        <span class="n">dctr</span><span class="o">.</span><span class="n">stats_tr1</span> <span class="o">=</span> <span class="n">tr</span><span class="o">.</span><span class="n">stats</span>
+        <span class="n">dctr</span><span class="o">.</span><span class="n">stats_tr2</span> <span class="o">=</span> <span class="n">divisor</span><span class="o">.</span><span class="n">stats</span>
+        
+        <span class="c"># append to output stream</span>
+        <span class="n">dcst</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dctr</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="n">residual</span><span class="p">:</span>
+            <span class="c"># residual</span>
+            <span class="n">rtr</span> <span class="o">=</span> <span class="n">dctr</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="n">rtr</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">tr</span><span class="o">.</span><span class="n">data</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fftpack</span><span class="o">.</span><span class="n">irfft</span><span class="p">(</span><span class="n">fdc</span> <span class="o">*</span> <span class="n">fd</span><span class="p">)</span>
+            <span class="c"># append to output stream</span>
+            <span class="n">rst</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">rtr</span><span class="p">)</span>
+            <span class="k">return</span> <span class="p">(</span><span class="n">dcst</span><span class="p">,</span> <span class="n">rst</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="n">dcst</span>
+
+
+<span class="k">def</span> <span class="nf">_centered</span><span class="p">(</span><span class="n">arr</span><span class="p">,</span> <span class="n">newsize</span><span class="p">):</span>
+    <span class="c"># Return the center newsize portion of the array.</span>
+    <span class="n">newsize</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">newsize</span><span class="p">)</span>
+    <span class="n">currsize</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">arr</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+    <span class="n">startind</span> <span class="o">=</span> <span class="p">(</span><span class="n">currsize</span> <span class="o">-</span> <span class="n">newsize</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+    <span class="n">endind</span> <span class="o">=</span> <span class="n">startind</span> <span class="o">+</span> <span class="n">newsize</span>
+    <span class="n">myslice</span> <span class="o">=</span> <span class="p">[</span><span class="nb">slice</span><span class="p">(</span><span class="n">startind</span><span class="p">[</span><span class="n">k</span><span class="p">],</span> <span class="n">endind</span><span class="p">[</span><span class="n">k</span><span class="p">])</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">endind</span><span class="p">))]</span>
+    <span class="k">return</span> <span class="n">arr</span><span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">myslice</span><span class="p">)]</span>
+
+
+<span class="k">def</span> <span class="nf">_fftconvolve</span><span class="p">(</span><span class="n">in1</span><span class="p">,</span> <span class="n">in2</span><span class="p">,</span> <span class="n">offset</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s">&quot;full&quot;</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Convolve two N-dimensional arrays using FFT. See convolve.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">s1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">in1</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+    <span class="n">s2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">in2</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+    <span class="n">complex_result</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">issubdtype</span><span class="p">(</span><span class="n">in1</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">complex</span><span class="p">)</span> <span class="ow">or</span>
+                      <span class="n">np</span><span class="o">.</span><span class="n">issubdtype</span><span class="p">(</span><span class="n">in2</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">complex</span><span class="p">))</span>
+    <span class="n">size</span> <span class="o">=</span> <span class="n">s1</span> <span class="o">+</span> <span class="n">s2</span> <span class="o">-</span> <span class="mi">1</span>
+
+    <span class="c"># Always use 2**n-sized FFT</span>
+    <span class="n">fsize</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">**</span> <span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="n">size</span><span class="p">))</span>
+    <span class="n">freq</span> <span class="o">=</span> <span class="n">fftfreq</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">fsize</span><span class="p">),</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">IN1</span> <span class="o">=</span> <span class="n">fftn</span><span class="p">(</span><span class="n">in1</span><span class="p">,</span> <span class="n">fsize</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mi">1j</span> <span class="o">*</span> <span class="n">freq</span> <span class="o">*</span> <span class="n">offset</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
+    <span class="n">IN1</span> <span class="o">*=</span> <span class="n">fftn</span><span class="p">(</span><span class="n">in2</span><span class="p">,</span> <span class="n">fsize</span><span class="p">)</span>
+    <span class="n">fslice</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">([</span><span class="nb">slice</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">sz</span><span class="p">))</span> <span class="k">for</span> <span class="n">sz</span> <span class="ow">in</span> <span class="n">size</span><span class="p">])</span>
+    <span class="n">ret</span> <span class="o">=</span> <span class="n">ifftn</span><span class="p">(</span><span class="n">IN1</span><span class="p">)[</span><span class="n">fslice</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="k">del</span> <span class="n">IN1</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">complex_result</span><span class="p">:</span>
+        <span class="n">ret</span> <span class="o">=</span> <span class="n">ret</span><span class="o">.</span><span class="n">real</span>
+    <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s">&quot;full&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">ret</span>
+    <span class="k">elif</span> <span class="n">mode</span> <span class="o">==</span> <span class="s">&quot;same&quot;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">product</span><span class="p">(</span><span class="n">s1</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">product</span><span class="p">(</span><span class="n">s2</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+            <span class="n">osize</span> <span class="o">=</span> <span class="n">s1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">osize</span> <span class="o">=</span> <span class="n">s2</span>
+        <span class="k">return</span> <span class="n">_centered</span><span class="p">(</span><span class="n">ret</span><span class="p">,</span> <span class="n">osize</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">mode</span> <span class="o">==</span> <span class="s">&quot;valid&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_centered</span><span class="p">(</span><span class="n">ret</span><span class="p">,</span> <span class="nb">abs</span><span class="p">(</span><span class="n">s2</span> <span class="o">-</span> <span class="n">s1</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">_doCorr</span><span class="p">:</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">st</span><span class="p">,</span> <span class="n">normal</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">st</span> <span class="o">=</span> <span class="n">st</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">normal</span> <span class="o">=</span> <span class="n">normal</span>
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scomb</span><span class="p">):</span>
+        <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span> <span class="o">=</span> <span class="n">scomb</span>
+        <span class="n">tr1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">st</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+        <span class="n">tr2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">st</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="n">conv_tr</span> <span class="o">=</span> <span class="n">conv_traces</span><span class="p">(</span><span class="n">tr1</span><span class="p">,</span> <span class="n">tr2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">normal</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">conv_tr</span>
+
+
+<div class="viewcode-block" id="corr_trace_fun"><a class="viewcode-back" href="../../../modules/autogen/miic.core.corr_fun.corr_trace_fun.html#miic.core.corr_fun.corr_trace_fun">[docs]</a><span class="k">def</span> <span class="nf">corr_trace_fun</span><span class="p">(</span><span class="n">signals</span><span class="p">,</span> <span class="n">comb</span><span class="o">=</span><span class="p">[],</span> <span class="n">normal</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+                   <span class="n">parallel</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">processes</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Correlate Traces according to the given combinations</span>
+
+<span class="sd">    The `corr_trace_fun` correlates the Traces contained in the passed</span>
+<span class="sd">    :class:`~obspy.core.trace.Stream` object according to the list of</span>
+<span class="sd">    combinations `tuple` given in input. It does the job asynchronously</span>
+<span class="sd">    instantiating as many process as cores available in the hosting machine.</span>
+<span class="sd">    If traces do not share the same starttime the correlation trace is shifted</span>
+<span class="sd">    by fractions of a sample such that time alignment is obtained precisely at</span>
+<span class="sd">    the sample 1971-01-01T00:00:00Z. If there is no overlap between the</span>
+<span class="sd">    traces this time might not be in the stream.</span>
+
+<span class="sd">    :type signals: :class:`~obspy.core.stream.Stream`</span>
+<span class="sd">    :param signals: The container for the Traces that we want to correlate</span>
+<span class="sd">    :type comb: list, optional</span>
+<span class="sd">    :param comb: List of combinations that must be calculated</span>
+<span class="sd">    :type normal: bool, otional</span>
+<span class="sd">    :param normal: Normalization flag (See</span>
+<span class="sd">        :func:`~miic.core.corr_fun.conv_traces` for details)</span>
+<span class="sd">    :type parallel: bool (Default: True)</span>
+<span class="sd">    :pram parallel: If the filtering will be run in parallel or not</span>
+<span class="sd">    :type processes: int</span>
+<span class="sd">    :pram processes: Number of processes to start (if None it will be equal</span>
+<span class="sd">        to the number of cores available in the hosting machine)</span>
+
+<span class="sd">    :rtype: :class:`~obspy.core.stream.Stream`</span>
+<span class="sd">    :return: **corrData**: The resulting object containing the correlation data</span>
+<span class="sd">        and their meta-informations obtained as described</span>
+<span class="sd">        in thr function :func:`~miic.core.corr_fun.conv_traces`</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">signals</span><span class="p">,</span> <span class="n">Stream</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s">&quot;signal must be an obspy Stream object.&quot;</span><span class="p">)</span>
+
+    <span class="n">corrData</span> <span class="o">=</span> <span class="n">Stream</span><span class="p">()</span>
+
+    <span class="n">nSignal</span> <span class="o">=</span> <span class="n">signals</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">nSignal</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">print</span> <span class="s">&quot;Empty stream!!&quot;</span>
+        <span class="k">return</span> <span class="n">corrData</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">nSignal</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="p">(</span><span class="n">comb</span> <span class="o">==</span> <span class="p">[(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)]):</span>
+        <span class="k">print</span> <span class="s">&quot;Single trace. No cross correlation&quot;</span>
+        <span class="k">return</span> <span class="n">corrData</span>
+
+    <span class="k">if</span> <span class="n">comb</span> <span class="o">==</span> <span class="p">[]:</span>
+        <span class="n">comb</span> <span class="o">=</span> <span class="p">[(</span><span class="n">k</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nSignal</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">k</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">nSignal</span><span class="p">)]</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">parallel</span><span class="p">:</span>
+        <span class="n">dc</span> <span class="o">=</span> <span class="n">_doCorr</span><span class="p">(</span><span class="n">signals</span><span class="p">,</span> <span class="n">normal</span><span class="p">)</span>
+        <span class="n">corrData</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="n">dc</span><span class="p">,</span> <span class="n">comb</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">processes</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">processes</span> <span class="o">=</span> <span class="bp">None</span>
+
+        <span class="n">p</span> <span class="o">=</span> <span class="n">Pool</span><span class="p">(</span><span class="n">processes</span><span class="o">=</span><span class="n">processes</span><span class="p">)</span>
+
+        <span class="n">p</span><span class="o">.</span><span class="n">map_async</span><span class="p">(</span><span class="n">_doCorr</span><span class="p">(</span><span class="n">signals</span><span class="p">,</span> <span class="n">normal</span><span class="p">),</span>
+                    <span class="n">comb</span><span class="p">,</span>
+                    <span class="n">callback</span><span class="o">=</span><span class="n">_AppendST</span><span class="p">(</span><span class="n">corrData</span><span class="p">))</span>
+
+        <span class="n">p</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="n">corrData</span>
+
+</div>
+<span class="k">if</span> <span class="n">BC_UI</span><span class="p">:</span>
+    <span class="k">class</span> <span class="nc">_corr_trace_fun_view</span><span class="p">(</span><span class="n">HasTraits</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; View Class for corr_trace_fun_parallel function</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">normal</span> <span class="o">=</span> <span class="n">Bool</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
+        <span class="n">parallel</span> <span class="o">=</span> <span class="n">Bool</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
+        <span class="n">processes</span> <span class="o">=</span> <span class="n">Int</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    
+        <span class="n">trait_view</span> <span class="o">=</span> <span class="n">View</span><span class="p">(</span><span class="n">Item</span><span class="p">(</span><span class="s">&#39;normal&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">&#39;normalized&#39;</span><span class="p">),</span>
+                          <span class="n">Item</span><span class="p">(</span><span class="s">&#39;parallel&#39;</span><span class="p">),</span>
+                          <span class="n">Item</span><span class="p">(</span><span class="s">&#39;processes&#39;</span><span class="p">,</span> <span class="n">enabled_when</span><span class="o">=</span><span class="s">&quot;parallel&quot;</span><span class="p">))</span>
+    
+
+<span class="k">def</span> <span class="nf">_norm_corr_trace</span><span class="p">(</span><span class="n">tr</span><span class="p">,</span> <span class="n">unit_measure</span><span class="o">=</span><span class="mi">3600</span><span class="p">):</span>
+
+    <span class="n">factor</span> <span class="o">=</span> <span class="p">(</span><span class="n">tr</span><span class="o">.</span><span class="n">stats_tr1</span><span class="o">.</span><span class="n">npts</span> <span class="o">/</span> <span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">sampling_rate</span><span class="p">)</span> <span class="o">/</span> <span class="n">unit_measure</span>
+
+    <span class="n">tr</span><span class="o">.</span><span class="n">data</span> <span class="o">/=</span> <span class="n">factor</span>
+
+    <span class="k">return</span> <span class="n">tr</span>
+
+
+<div class="viewcode-block" id="norm_corr_stream"><a class="viewcode-back" href="../../../modules/autogen/miic.core.corr_fun.norm_corr_stream.html#miic.core.corr_fun.norm_corr_stream">[docs]</a><span class="k">def</span> <span class="nf">norm_corr_stream</span><span class="p">(</span><span class="n">st</span><span class="p">,</span> <span class="n">unit_measure</span><span class="o">=</span><span class="mi">3600</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Normalization of the correlation traces to the selected unit_measure</span>
+
+<span class="sd">    This function normalizes the correlation traces in the input stream by a</span>
+<span class="sd">    factor that takes into account exactly how long was the noise record that</span>
+<span class="sd">    has been used to generate the correlation traces. The traces are dived by</span>
+<span class="sd">    this length and multiplied to correspond to a length unit_measure that is,</span>
+<span class="sd">    by default, equal to one hour.</span>
+
+<span class="sd">    :type st: :class: `~obspy.core.stream.Stream`</span>
+<span class="sd">    :param st: Stream that contains the traces that must be normalized</span>
+<span class="sd">    :type unit_measure: int</span>
+<span class="sd">    :param unit_measure: Unit measure respect which normalize the traces</span>
+<span class="sd">        (in sec)</span>
+
+<span class="sd">    :rtype: :class: `~obspy.core.stream.Stream`</span>
+<span class="sd">    :return: **st_norm** : Normalized stream</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">st</span><span class="p">,</span> <span class="n">Stream</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s">&quot;st must be an obspy Stream object.&quot;</span><span class="p">)</span>
+
+    <span class="n">st_norm</span> <span class="o">=</span> <span class="n">st</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+    <span class="k">for</span> <span class="n">tr</span> <span class="ow">in</span> <span class="n">st_norm</span><span class="p">:</span>
+        <span class="n">_norm_corr_trace</span><span class="p">(</span><span class="n">tr</span><span class="p">,</span> <span class="n">unit_measure</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">st_norm</span>
+
+</div>
+<span class="k">if</span> <span class="n">BC_UI</span><span class="p">:</span>
+    <span class="k">class</span> <span class="nc">_norm_corr_stream_view</span><span class="p">(</span><span class="n">HasTraits</span><span class="p">):</span>
+        <span class="n">unit_measure</span> <span class="o">=</span> <span class="n">Int</span><span class="p">(</span><span class="mi">3600</span><span class="p">)</span>
+        <span class="n">trait_view</span> <span class="o">=</span> <span class="n">View</span><span class="p">(</span><span class="n">Item</span><span class="p">(</span><span class="s">&#39;unit_measure&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">&#39;Unit measure (sec)&#39;</span><span class="p">))</span>
+    
+<span class="c"># EOF</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MIIC 1.0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2012, Eraldo Pomponi.
+      Last updated on 2016-03-07T14:54:14.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </div>
+  </body>
+</html>

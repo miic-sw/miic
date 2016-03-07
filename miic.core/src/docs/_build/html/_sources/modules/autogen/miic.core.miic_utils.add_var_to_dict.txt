@@ -1,0 +1,6 @@
+miic.core.miic_utils.add_var_to_dict
+====================================
+
+.. currentmodule:: miic.core.miic_utils
+
+.. autofunction:: add_var_to_dict

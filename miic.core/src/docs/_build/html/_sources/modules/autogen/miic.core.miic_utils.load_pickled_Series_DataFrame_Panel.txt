@@ -1,0 +1,6 @@
+miic.core.miic_utils.load_pickled_Series_DataFrame_Panel
+========================================================
+
+.. currentmodule:: miic.core.miic_utils
+
+.. autofunction:: load_pickled_Series_DataFrame_Panel

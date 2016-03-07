@@ -1,0 +1,6 @@
+miic.core.miic_utils.from_str_comb_to_list
+==========================================
+
+.. currentmodule:: miic.core.miic_utils
+
+.. autofunction:: from_str_comb_to_list

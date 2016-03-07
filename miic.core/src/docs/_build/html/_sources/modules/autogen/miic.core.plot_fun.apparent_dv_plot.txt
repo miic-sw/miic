@@ -1,0 +1,6 @@
+miic.core.plot_fun.apparent_dv_plot
+===================================
+
+.. currentmodule:: miic.core.plot_fun
+
+.. autofunction:: apparent_dv_plot

@@ -1,0 +1,6 @@
+miic.core.pxcorr_func.clip
+==========================
+
+.. currentmodule:: miic.core.pxcorr_func
+
+.. autofunction:: clip

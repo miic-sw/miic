@@ -1,0 +1,6 @@
+miic.core.miic_utils.load_matlab_file
+=====================================
+
+.. currentmodule:: miic.core.miic_utils
+
+.. autofunction:: load_matlab_file

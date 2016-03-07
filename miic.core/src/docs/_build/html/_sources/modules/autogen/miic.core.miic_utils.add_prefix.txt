@@ -1,0 +1,6 @@
+miic.core.miic_utils.add_prefix
+===============================
+
+.. currentmodule:: miic.core.miic_utils
+
+.. autofunction:: add_prefix

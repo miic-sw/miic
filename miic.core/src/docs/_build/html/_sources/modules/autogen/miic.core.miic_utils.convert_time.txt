@@ -1,0 +1,6 @@
+miic.core.miic_utils.convert_time
+=================================
+
+.. currentmodule:: miic.core.miic_utils
+
+.. autofunction:: convert_time

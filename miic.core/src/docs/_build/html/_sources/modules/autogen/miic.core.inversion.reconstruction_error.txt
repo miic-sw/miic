@@ -1,0 +1,6 @@
+miic.core.inversion.reconstruction_error
+========================================
+
+.. currentmodule:: miic.core.inversion
+
+.. autofunction:: reconstruction_error

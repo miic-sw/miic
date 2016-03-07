@@ -1,0 +1,991 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>miic.core.pxcorr_func &mdash; MIIC 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="top" title="MIIC 1.0 documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MIIC 1.0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for miic.core.pxcorr_func</h1><div class="highlight"><pre>
+<span class="c">#!/usr/bin/python</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">scipy.signal</span> <span class="kn">as</span> <span class="nn">signal</span>
+<span class="kn">from</span> <span class="nn">mpi4py</span> <span class="kn">import</span> <span class="n">MPI</span>
+<span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
+
+<span class="kn">from</span> <span class="nn">obspy.core</span> <span class="kn">import</span> <span class="n">UTCDateTime</span><span class="p">,</span> <span class="n">stream</span><span class="p">,</span> <span class="n">trace</span>
+<span class="kn">import</span> <span class="nn">obspy.signal</span> <span class="kn">as</span> <span class="nn">osignal</span>
+
+<span class="kn">from</span> <span class="nn">miic.core.corr_fun</span> <span class="kn">import</span> <span class="n">combine_stats</span>
+
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
+
+<span class="n">zerotime</span> <span class="o">=</span> <span class="n">UTCDateTime</span><span class="p">(</span><span class="mi">1971</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">pxcorr</span><span class="p">(</span><span class="n">comm</span><span class="p">,</span><span class="n">A</span><span class="p">,</span><span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; A is an array with time along going the first dimension.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">global</span> <span class="n">zerotime</span>    
+    
+    <span class="n">t0</span> <span class="o">=</span> <span class="n">MPI</span><span class="o">.</span><span class="n">Wtime</span><span class="p">()</span>
+    <span class="n">msize</span> <span class="o">=</span> <span class="n">A</span><span class="o">.</span><span class="n">shape</span>
+    <span class="n">ntrc</span> <span class="o">=</span> <span class="n">msize</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    
+    <span class="n">psize</span> <span class="o">=</span> <span class="n">comm</span><span class="o">.</span><span class="n">Get_size</span><span class="p">()</span>
+    <span class="n">rank</span> <span class="o">=</span> <span class="n">comm</span><span class="o">.</span><span class="n">Get_rank</span><span class="p">()</span>
+    <span class="c"># time domain processing</span>
+    <span class="c"># map of traces on precesses</span>
+    <span class="n">pmap</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">ntrc</span><span class="p">)</span><span class="o">*</span><span class="n">psize</span><span class="p">)</span><span class="o">/</span><span class="n">ntrc</span>
+    
+    <span class="c"># indecies for traces to be worked on by each process</span>
+    <span class="n">ind</span> <span class="o">=</span> <span class="n">pmap</span> <span class="o">==</span> <span class="n">rank</span>
+    
+    <span class="c">######################################</span>
+    <span class="c">## time domain pre-processing</span>
+    <span class="n">params</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="s">&#39;Processing&#39;</span> <span class="ow">in</span> <span class="n">key</span><span class="p">:</span>
+            <span class="n">params</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">key</span><span class="p">:</span><span class="n">kwargs</span><span class="p">[</span><span class="n">key</span><span class="p">]})</span>
+    <span class="k">for</span> <span class="n">proc</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;TDpreProcessing&#39;</span><span class="p">]:</span>
+        <span class="n">A</span><span class="p">[:,</span><span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="n">proc</span><span class="p">[</span><span class="s">&#39;function&#39;</span><span class="p">](</span><span class="n">A</span><span class="p">[:,</span><span class="n">ind</span><span class="p">],</span><span class="n">proc</span><span class="p">[</span><span class="s">&#39;args&#39;</span><span class="p">],</span><span class="n">params</span><span class="p">)</span>
+    <span class="c"># zero-padding</span>
+    <span class="n">A</span> <span class="o">=</span> <span class="n">zeroPadding</span><span class="p">(</span><span class="n">A</span><span class="p">,{</span><span class="s">&#39;type&#39;</span><span class="p">:</span><span class="s">&#39;avoidWrapPowerTwo&#39;</span><span class="p">},</span><span class="n">params</span><span class="p">)</span>
+
+    <span class="c">######################################</span>
+    <span class="c">## FFT        </span>
+    <span class="c"># Allocate space for rfft of data</span>
+    <span class="n">zmsize</span> <span class="o">=</span> <span class="n">A</span><span class="o">.</span><span class="n">shape</span>
+    <span class="n">fftsize</span> <span class="o">=</span> <span class="n">zmsize</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">//</span><span class="mi">2</span><span class="o">+</span><span class="mi">1</span>
+    <span class="n">B</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">fftsize</span><span class="p">,</span><span class="n">ntrc</span><span class="p">),</span><span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span>
+    
+    <span class="n">B</span><span class="p">[:,</span><span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">rfft</span><span class="p">(</span><span class="n">A</span><span class="p">[:,</span><span class="n">ind</span><span class="p">],</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">freqs</span> <span class="o">=</span> <span class="n">rfftfreq</span><span class="p">(</span><span class="n">zmsize</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="mf">1.</span><span class="o">/</span><span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;sampling_rate&#39;</span><span class="p">])</span>
+    
+    <span class="c">######################################</span>
+    <span class="c">## frequency domain pre-processing</span>
+    <span class="n">params</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s">&#39;freqs&#39;</span><span class="p">:</span><span class="n">freqs</span><span class="p">})</span>
+    <span class="k">for</span> <span class="n">proc</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;FDpreProcessing&#39;</span><span class="p">]:</span>
+        <span class="n">B</span><span class="p">[:,</span><span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="n">proc</span><span class="p">[</span><span class="s">&#39;function&#39;</span><span class="p">](</span><span class="n">B</span><span class="p">[:,</span><span class="n">ind</span><span class="p">],</span><span class="n">proc</span><span class="p">[</span><span class="s">&#39;args&#39;</span><span class="p">],</span><span class="n">params</span><span class="p">)</span>
+        
+    <span class="c">######################################</span>
+    <span class="c">## collect results</span>
+    <span class="n">comm</span><span class="o">.</span><span class="n">barrier</span><span class="p">()</span>
+    <span class="n">comm</span><span class="o">.</span><span class="n">Allreduce</span><span class="p">(</span><span class="n">MPI</span><span class="o">.</span><span class="n">IN_PLACE</span><span class="p">,[</span><span class="n">B</span><span class="p">,</span><span class="n">MPI</span><span class="o">.</span><span class="n">DOUBLE</span><span class="p">],</span><span class="n">op</span><span class="o">=</span><span class="n">MPI</span><span class="o">.</span><span class="n">SUM</span><span class="p">)</span>
+    
+    <span class="n">t1</span> <span class="o">=</span> <span class="n">MPI</span><span class="o">.</span><span class="n">Wtime</span><span class="p">()</span>
+
+    <span class="c">######################################</span>
+    <span class="c">## correlation        </span>
+    <span class="n">csize</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;combinations&#39;</span><span class="p">])</span>
+    <span class="n">irfftsize</span> <span class="o">=</span> <span class="p">(</span><span class="n">fftsize</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="mi">2</span>
+    <span class="n">sampleToSave</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;lengthToSave&#39;</span><span class="p">]</span> <span class="o">*</span>
+                               <span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;sampling_rate&#39;</span><span class="p">]))</span>
+    <span class="n">C</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">sampleToSave</span><span class="o">*</span><span class="mi">2</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span><span class="n">csize</span><span class="p">),</span><span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+
+    <span class="n">center</span> <span class="o">=</span> <span class="n">irfftsize</span> <span class="o">//</span> <span class="mi">2</span>
+
+    <span class="n">pmap</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">csize</span><span class="p">)</span><span class="o">*</span><span class="n">psize</span><span class="p">)</span><span class="o">/</span><span class="n">csize</span>
+    <span class="n">ind</span> <span class="o">=</span> <span class="n">pmap</span> <span class="o">==</span> <span class="n">rank</span>
+    <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">csize</span><span class="p">)[</span><span class="n">ind</span><span class="p">]</span>
+    <span class="n">starttimes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">csize</span><span class="p">,</span><span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="n">ind</span><span class="p">:</span>
+        <span class="c">#print rank, ii, kwargs[&#39;combinations&#39;][ii]</span>
+        <span class="c"># offset of starttimes in samples(just remove fractions of samples)</span>
+        <span class="n">offset</span> <span class="o">=</span> <span class="p">(</span><span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;starttime&#39;</span><span class="p">][</span><span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;combinations&#39;</span><span class="p">][</span><span class="n">ii</span><span class="p">][</span><span class="mi">0</span><span class="p">]]</span> <span class="o">-</span>
+                  <span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;starttime&#39;</span><span class="p">][</span><span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;combinations&#39;</span><span class="p">][</span><span class="n">ii</span><span class="p">][</span><span class="mi">1</span><span class="p">]])</span>
+        <span class="k">if</span> <span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;center_correlation&#39;</span><span class="p">]:</span>
+            <span class="n">roffset</span> <span class="o">=</span> <span class="mf">0.</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c"># offset exceeding a fraction of integer</span>
+            <span class="n">roffset</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="n">offset</span> <span class="o">*</span> <span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;sampling_rate&#39;</span><span class="p">])</span> <span class="o">/</span> <span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;sampling_rate&#39;</span><span class="p">]</span>
+        <span class="c"># faction of samples to be compenasated by shifting </span>
+        <span class="n">offset</span> <span class="o">-=</span> <span class="n">roffset</span>
+        <span class="c"># normalization factor of fft correlation</span>
+        <span class="k">if</span> <span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;normalize_correlation&#39;</span><span class="p">]:</span>
+            <span class="n">norm</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">2.</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">B</span><span class="p">[:,</span><span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;combinations&#39;</span><span class="p">][</span><span class="n">ii</span><span class="p">][</span><span class="mi">0</span><span class="p">]]</span> <span class="o">*</span> 
+                                      <span class="n">B</span><span class="p">[:,</span><span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;combinations&#39;</span><span class="p">][</span><span class="n">ii</span><span class="p">][</span><span class="mi">0</span><span class="p">]]</span><span class="o">.</span><span class="n">conj</span><span class="p">())</span> <span class="o">-</span>
+                                      <span class="n">B</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;combinations&#39;</span><span class="p">][</span><span class="n">ii</span><span class="p">][</span><span class="mi">0</span><span class="p">]]</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span>
+                    <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">2.</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">B</span><span class="p">[:,</span><span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;combinations&#39;</span><span class="p">][</span><span class="n">ii</span><span class="p">][</span><span class="mi">1</span><span class="p">]]</span> <span class="o">*</span> 
+                                      <span class="n">B</span><span class="p">[:,</span><span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;combinations&#39;</span><span class="p">][</span><span class="n">ii</span><span class="p">][</span><span class="mi">1</span><span class="p">]]</span><span class="o">.</span><span class="n">conj</span><span class="p">())</span> <span class="o">-</span>
+                                      <span class="n">B</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;combinations&#39;</span><span class="p">][</span><span class="n">ii</span><span class="p">][</span><span class="mi">1</span><span class="p">]]</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">/</span>
+                    <span class="n">irfftsize</span><span class="p">)</span><span class="o">.</span><span class="n">real</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">norm</span> <span class="o">=</span> <span class="mf">1.</span>
+        <span class="n">M</span> <span class="o">=</span> <span class="p">(</span><span class="n">B</span><span class="p">[:,</span><span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;combinations&#39;</span><span class="p">][</span><span class="n">ii</span><span class="p">][</span><span class="mi">0</span><span class="p">]]</span><span class="o">.</span><span class="n">conj</span><span class="p">()</span> <span class="o">*</span> 
+                               <span class="n">B</span><span class="p">[:,</span><span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;combinations&#39;</span><span class="p">][</span><span class="n">ii</span><span class="p">][</span><span class="mi">1</span><span class="p">]]</span> <span class="o">*</span> 
+                               <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mi">1j</span> <span class="o">*</span> <span class="n">freqs</span> <span class="o">*</span> <span class="n">offset</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">))</span>
+                               <span class="c">#np.exp(-1j * freqs/kwargs[&#39;sampling_rate&#39;] * offset/kwargs[&#39;sampling_rate&#39;] * 2 * np.pi))</span>
+        <span class="c">######################################</span>
+        <span class="c">## frequency domain postProcessing</span>
+        <span class="c">#</span>
+        
+        <span class="n">tmp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">irfft</span><span class="p">(</span><span class="n">M</span><span class="p">)</span><span class="o">.</span><span class="n">real</span>
+        <span class="c"># cut the center and do fftshift</span>
+        <span class="n">C</span><span class="p">[:,</span><span class="n">ii</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">tmp</span><span class="p">[</span><span class="o">-</span><span class="n">sampleToSave</span><span class="p">:],</span><span class="n">tmp</span><span class="p">[:</span><span class="n">sampleToSave</span><span class="o">+</span><span class="mi">1</span><span class="p">]))</span><span class="o">/</span><span class="n">norm</span>
+        <span class="n">starttimes</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span> <span class="o">=</span> <span class="n">zerotime</span> <span class="o">-</span><span class="n">sampleToSave</span><span class="o">/</span><span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;sampling_rate&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">roffset</span>
+
+    <span class="c">######################################</span>
+    <span class="c">## time domain postProcessing</span>
+
+    <span class="c">######################################</span>
+    <span class="c">## collect results </span>
+    <span class="n">comm</span><span class="o">.</span><span class="n">barrier</span><span class="p">()</span>
+    <span class="n">comm</span><span class="o">.</span><span class="n">Allreduce</span><span class="p">(</span><span class="n">MPI</span><span class="o">.</span><span class="n">IN_PLACE</span><span class="p">,[</span><span class="n">C</span><span class="p">,</span><span class="n">MPI</span><span class="o">.</span><span class="n">DOUBLE</span><span class="p">],</span><span class="n">op</span><span class="o">=</span><span class="n">MPI</span><span class="o">.</span><span class="n">SUM</span><span class="p">)</span>
+    <span class="n">comm</span><span class="o">.</span><span class="n">Allreduce</span><span class="p">(</span><span class="n">MPI</span><span class="o">.</span><span class="n">IN_PLACE</span><span class="p">,[</span><span class="n">starttimes</span><span class="p">,</span><span class="n">MPI</span><span class="o">.</span><span class="n">DOUBLE</span><span class="p">],</span><span class="n">op</span><span class="o">=</span><span class="n">MPI</span><span class="o">.</span><span class="n">SUM</span><span class="p">)</span>
+    <span class="c">#print &#39;werqwer&#39;</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">C</span><span class="p">,</span><span class="n">starttimes</span><span class="p">)</span>
+    
+    
+
+    
+    
+<div class="viewcode-block" id="detrend"><a class="viewcode-back" href="../../../modules/autogen/miic.core.pxcorr_func.detrend.html#miic.core.pxcorr_func.detrend">[docs]</a><span class="k">def</span> <span class="nf">detrend</span><span class="p">(</span><span class="n">A</span><span class="p">,</span><span class="n">args</span><span class="p">,</span><span class="n">params</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Remove trend from data</span>
+<span class="sd">    </span>
+<span class="sd">    Remove the trend from the time series data in `A`. Several methods are \\</span>
+<span class="sd">    possible. The method is specified as the value of the `type` keyword in</span>
+<span class="sd">    the argument dictionary `args`.</span>
+<span class="sd">    </span>
+<span class="sd">    Possible `types` of detrending:</span>
+<span class="sd">       -`constant` or `demean`: substract mean of traces</span>
+<span class="sd">       </span>
+<span class="sd">       -`linear`: substract a least squares fitted linear trend form the data</span>
+<span class="sd">    </span>
+<span class="sd">    :type A: numpy.ndarray</span>
+<span class="sd">    :param A: time series data with time oriented along the first \\</span>
+<span class="sd">        dimension (columns)</span>
+<span class="sd">    :type args: dictionary</span>
+<span class="sd">    :param args: the only used keyword is `type`</span>
+<span class="sd">    :type params: dictionary</span>
+<span class="sd">    :param params: not used here</span>
+<span class="sd">    </span>
+<span class="sd">    :rtype: numpy.ndarray</span>
+<span class="sd">    :return: detrended time series data</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c"># for compatibility with obspy</span>
+    <span class="k">if</span> <span class="n">args</span><span class="p">[</span><span class="s">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;demean&#39;</span><span class="p">:</span>
+        <span class="n">args</span><span class="p">[</span><span class="s">&#39;type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;constant&#39;</span>
+    <span class="k">if</span> <span class="n">args</span><span class="p">[</span><span class="s">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;detrend&#39;</span><span class="p">:</span>
+        <span class="n">args</span><span class="p">[</span><span class="s">&#39;type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;linear&#39;</span>
+    <span class="n">A</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">detrend</span><span class="p">(</span><span class="n">A</span><span class="p">,</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span><span class="nb">type</span><span class="o">=</span><span class="n">args</span><span class="p">[</span><span class="s">&#39;type&#39;</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">A</span>
+
+</div>
+<div class="viewcode-block" id="TDnormalization"><a class="viewcode-back" href="../../../modules/autogen/miic.core.pxcorr_func.TDnormalization.html#miic.core.pxcorr_func.TDnormalization">[docs]</a><span class="k">def</span> <span class="nf">TDnormalization</span><span class="p">(</span><span class="n">A</span><span class="p">,</span><span class="n">args</span><span class="p">,</span><span class="n">params</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Amplitude dependent time domain normalization</span>
+<span class="sd">    </span>
+<span class="sd">    Calculate the envelope of the filtered trace, smooth it in a window of</span>
+<span class="sd">    length `windowLength` and normalize the waveform by this trace. The two</span>
+<span class="sd">    used keywords in `args` are `filter and `windowLength` that describe the</span>
+<span class="sd">    filter and the length of the envelope smoothing window, respectively.</span>
+<span class="sd">    </span>
+<span class="sd">    `args` has the following structure:</span>
+<span class="sd">    </span>
+<span class="sd">        args = {&#39;windowLength&#39;:`length of the envelope smoothing window in \\</span>
+<span class="sd">        [s]`,&#39;filter&#39;:{&#39;type&#39;:`filterType`, fargs}}``</span>
+<span class="sd">            </span>
+<span class="sd">        `type` may be `bandpass` with the corresponding fargs `freqmin` and \\ </span>
+<span class="sd">        `freqmax` or `highpass`/`lowpass` with the `fargs` `freqmin`/`freqmax`</span>
+<span class="sd">            </span>
+<span class="sd">        :Example:  </span>
+<span class="sd">        ``args = {&#39;windowLength&#39;:5,&#39;filter&#39;:{&#39;type&#39;:&#39;bandpass&#39;,&#39;freqmin&#39;:0.5,</span>
+<span class="sd">        &#39;freqmax&#39;:2.}}``</span>
+<span class="sd">        </span>
+<span class="sd">    :type A: numpy.ndarray</span>
+<span class="sd">    :param A: time series data with time oriented along the first \\</span>
+<span class="sd">        dimension (columns)</span>
+<span class="sd">    :type args: dictionary</span>
+<span class="sd">    :param args: arguments dictionary as described above</span>
+<span class="sd">    :type params: dictionary</span>
+<span class="sd">    :param params: not used here</span>
+<span class="sd">    </span>
+<span class="sd">    :rtype: numpy.ndarray</span>
+<span class="sd">    :return: normalized time series data</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c"># filter if args[&#39;filter&#39;]</span>
+    <span class="n">B</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">A</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">args</span><span class="p">[</span><span class="s">&#39;filter&#39;</span><span class="p">]:</span>
+        <span class="n">func</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">osignal</span><span class="p">,</span><span class="n">args</span><span class="p">[</span><span class="s">&#39;filter&#39;</span><span class="p">][</span><span class="s">&#39;type&#39;</span><span class="p">])</span>
+        <span class="n">fargs</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="s">&#39;filter&#39;</span><span class="p">])</span>
+        <span class="n">fargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;type&#39;</span><span class="p">)</span>
+        <span class="n">B</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="n">A</span><span class="o">.</span><span class="n">T</span><span class="p">,</span><span class="n">df</span><span class="o">=</span><span class="n">params</span><span class="p">[</span><span class="s">&#39;sampling_rate&#39;</span><span class="p">],</span><span class="o">**</span><span class="n">fargs</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">B</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">A</span><span class="p">)</span>
+    <span class="c"># simple calculation of envelope</span>
+    <span class="n">B</span> <span class="o">=</span> <span class="n">B</span><span class="o">**</span><span class="mi">2</span>
+    <span class="c">#print &#39;shape B&#39;, B.shape</span>
+    <span class="c"># smoothing of envelepe in both directions to avoid a shift</span>
+    <span class="n">window</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="s">&#39;windowLength&#39;</span><span class="p">]</span><span class="o">*</span><span class="n">params</span><span class="p">[</span><span class="s">&#39;sampling_rate&#39;</span><span class="p">]))</span><span class="o">/</span>
+              <span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="s">&#39;windowLength&#39;</span><span class="p">]</span><span class="o">*</span><span class="n">params</span><span class="p">[</span><span class="s">&#39;sampling_rate&#39;</span><span class="p">]))</span>
+    <span class="c">#print &#39;shape window&#39;, window.shape</span>
+    <span class="k">for</span> <span class="n">ind</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">B</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
+        <span class="n">B</span><span class="p">[:,</span><span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">convolve</span><span class="p">(</span><span class="n">B</span><span class="p">[:,</span><span class="n">ind</span><span class="p">],</span><span class="n">window</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s">&#39;same&#39;</span><span class="p">)</span>        
+        <span class="n">B</span><span class="p">[:,</span><span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">convolve</span><span class="p">(</span><span class="n">B</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="n">ind</span><span class="p">],</span><span class="n">window</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s">&#39;same&#39;</span><span class="p">)[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">B</span><span class="p">[:,</span><span class="n">ind</span><span class="p">]</span> <span class="o">+=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">B</span><span class="p">[:,</span><span class="n">ind</span><span class="p">])</span><span class="o">*</span><span class="mf">1e-6</span>
+    <span class="c"># normalization</span>
+    <span class="n">A</span> <span class="o">/=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">B</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">A</span>
+
+</div>
+<div class="viewcode-block" id="taper"><a class="viewcode-back" href="../../../modules/autogen/miic.core.pxcorr_func.taper.html#miic.core.pxcorr_func.taper">[docs]</a><span class="k">def</span> <span class="nf">taper</span><span class="p">(</span><span class="n">A</span><span class="p">,</span><span class="n">args</span><span class="p">,</span><span class="n">params</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Taper to the time series data</span>
+<span class="sd">    </span>
+<span class="sd">    Apply a simple taper to the time series data.</span>
+<span class="sd">    </span>
+<span class="sd">    `args` has the following structure:</span>
+<span class="sd">    </span>
+<span class="sd">        args = {&#39;type&#39;:`type of taper`,taper_args}``</span>
+<span class="sd">            </span>
+<span class="sd">        `type` may be `cosTaper` with the corresponding taper_args `p` the </span>
+<span class="sd">        percentage of the traces to taper. Possibilities of `type` are \\</span>
+<span class="sd">        given by `obspy.signal`.</span>
+<span class="sd">            </span>
+<span class="sd">        :Example:  </span>
+<span class="sd">        ``args = {&#39;type&#39;:&#39;cosTaper&#39;,&#39;p&#39;:0.1}``</span>
+<span class="sd">    </span>
+<span class="sd">    :type A: numpy.ndarray</span>
+<span class="sd">    :param A: time series data with time oriented along the first \\</span>
+<span class="sd">        dimension (columns)</span>
+<span class="sd">    :type args: dictionary</span>
+<span class="sd">    :param args: arguments dictionary as described above</span>
+<span class="sd">    :type params: dictionary</span>
+<span class="sd">    :param params: not used here</span>
+<span class="sd">    </span>
+<span class="sd">    :rtype: numpy.ndarray</span>
+<span class="sd">    :return: tapered time series data</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">args</span><span class="p">[</span><span class="s">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;cosTaper&#39;</span><span class="p">:</span>
+        <span class="n">func</span> <span class="o">=</span> <span class="n">osignal</span><span class="o">.</span><span class="n">invsim</span><span class="o">.</span><span class="n">cosTaper</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">func</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">signal</span><span class="p">,</span><span class="n">args</span><span class="p">[</span><span class="s">&#39;type&#39;</span><span class="p">])</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+    <span class="n">args</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;type&#39;</span><span class="p">)</span>
+    <span class="n">tap</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="n">A</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="o">**</span><span class="n">args</span><span class="p">)</span>
+    <span class="n">A</span> <span class="o">*=</span> <span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span><span class="n">tap</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="p">,(</span><span class="mi">1</span><span class="p">,</span><span class="n">A</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+    <span class="k">return</span> <span class="n">A</span>
+
+</div>
+<div class="viewcode-block" id="clip"><a class="viewcode-back" href="../../../modules/autogen/miic.core.pxcorr_func.clip.html#miic.core.pxcorr_func.clip">[docs]</a><span class="k">def</span> <span class="nf">clip</span><span class="p">(</span><span class="n">A</span><span class="p">,</span><span class="n">args</span><span class="p">,</span><span class="n">params</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Clip time series data at a multiple of the standard deviation</span>
+<span class="sd">    </span>
+<span class="sd">    Set amplitudes exeeding a certatin threshold to this threshold.</span>
+<span class="sd">    The threshold for clipping is estimated as the standard deviation of each</span>
+<span class="sd">    trace times a factor specified in `args`.</span>
+<span class="sd">    </span>
+<span class="sd">    :Note: Traces should be demeaned before clipping.</span>
+<span class="sd">        </span>
+<span class="sd">    :type A: numpy.ndarray</span>
+<span class="sd">    :param A: time series data with time oriented along the first \\</span>
+<span class="sd">        dimension (columns)</span>
+<span class="sd">    :type args: dictionary</span>
+<span class="sd">    :param args: the only keyword allowed is `std_factor` describing the \\</span>
+<span class="sd">        scaling of the standard deviation for the clipping threshold</span>
+<span class="sd">    :type params: dictionary</span>
+<span class="sd">    :param params: not used here</span>
+<span class="sd">    </span>
+<span class="sd">    :rtype: numpy.ndarray</span>
+<span class="sd">    :return: clipped time series data</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">stds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">A</span><span class="p">,</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="k">print</span> <span class="n">stds</span>
+    <span class="k">for</span> <span class="n">ind</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">A</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
+        <span class="n">ts</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="s">&#39;std_factor&#39;</span><span class="p">]</span><span class="o">*</span><span class="n">stds</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span>
+        <span class="n">A</span><span class="p">[</span><span class="n">A</span><span class="p">[:,</span><span class="n">ind</span><span class="p">]</span><span class="o">&gt;</span><span class="n">ts</span><span class="p">,</span><span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="n">ts</span>
+        <span class="n">A</span><span class="p">[</span><span class="n">A</span><span class="p">[:,</span><span class="n">ind</span><span class="p">]</span><span class="o">&lt;-</span><span class="n">ts</span><span class="p">,</span><span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="n">ts</span>
+    <span class="k">return</span> <span class="n">A</span>
+
+</div>
+<div class="viewcode-block" id="TDfilter"><a class="viewcode-back" href="../../../modules/autogen/miic.core.pxcorr_func.TDfilter.html#miic.core.pxcorr_func.TDfilter">[docs]</a><span class="k">def</span> <span class="nf">TDfilter</span><span class="p">(</span><span class="n">A</span><span class="p">,</span><span class="n">args</span><span class="p">,</span><span class="n">params</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Filter time series data</span>
+<span class="sd">    </span>
+<span class="sd">    Filter in time domain. Types of filters are defined by `obspy.signal`.</span>
+<span class="sd">    </span>
+<span class="sd">    `args` has the following structure:</span>
+<span class="sd">    </span>
+<span class="sd">        args = {&#39;type&#39;:`filterType`, fargs}``</span>
+<span class="sd">            </span>
+<span class="sd">        `type` may be `bandpass` with the corresponding fargs `freqmin` and \\ </span>
+<span class="sd">        `freqmax` or `highpass`/`lowpass` with the `fargs` `freqmin`/`freqmax`</span>
+<span class="sd">            </span>
+<span class="sd">        :Example:  </span>
+<span class="sd">        ``args = {&#39;type&#39;:&#39;bandpass&#39;,&#39;freqmin&#39;:0.5,&#39;freqmax&#39;:2.}``</span>
+<span class="sd">        </span>
+<span class="sd">    :type A: numpy.ndarray</span>
+<span class="sd">    :param A: time series data with time oriented along the first \\</span>
+<span class="sd">        dimension (columns)</span>
+<span class="sd">    :type args: dictionary</span>
+<span class="sd">    :param args: arguments dictionary as described above</span>
+<span class="sd">    :type params: dictionary</span>
+<span class="sd">    :param params: not used here</span>
+<span class="sd">    </span>
+<span class="sd">    :rtype: numpy.ndarray</span>
+<span class="sd">    :return: filtered time series data</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">func</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">osignal</span><span class="p">,</span><span class="n">args</span><span class="p">[</span><span class="s">&#39;type&#39;</span><span class="p">])</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+    <span class="n">args</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;type&#39;</span><span class="p">)</span>
+    <span class="c"># filtering in obspy.signal is done along the last dimension that why .T</span>
+    <span class="n">A</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="n">A</span><span class="o">.</span><span class="n">T</span><span class="p">,</span><span class="n">df</span><span class="o">=</span><span class="n">params</span><span class="p">[</span><span class="s">&#39;sampling_rate&#39;</span><span class="p">],</span><span class="o">**</span><span class="n">args</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
+    <span class="k">return</span> <span class="n">A</span>
+
+</div>
+<div class="viewcode-block" id="normalizeStandardDeviation"><a class="viewcode-back" href="../../../modules/autogen/miic.core.pxcorr_func.normalizeStandardDeviation.html#miic.core.pxcorr_func.normalizeStandardDeviation">[docs]</a><span class="k">def</span> <span class="nf">normalizeStandardDeviation</span><span class="p">(</span><span class="n">A</span><span class="p">,</span><span class="n">args</span><span class="p">,</span><span class="n">params</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Divide the time series by their standard deviation</span>
+<span class="sd">    </span>
+<span class="sd">    Divide the amplitudes of each trace by its standard deviation.</span>
+<span class="sd">    </span>
+<span class="sd">    :type A: numpy.ndarray</span>
+<span class="sd">    :param A: time series data with time oriented along the first \\</span>
+<span class="sd">        dimension (columns)</span>
+<span class="sd">    :type args: dictionary</span>
+<span class="sd">    :param args: not used here</span>
+<span class="sd">    :type params: dictionary</span>
+<span class="sd">    :param params: not used here</span>
+<span class="sd">    </span>
+<span class="sd">    :rtype: numpy.ndarray</span>
+<span class="sd">    :return: normalized time series data</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">std</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">A</span><span class="p">,</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">A</span> <span class="o">/=</span> <span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">std</span><span class="p">,(</span><span class="n">A</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="mi">1</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">A</span>
+    
+    </div>
+<div class="viewcode-block" id="signBitNormalization"><a class="viewcode-back" href="../../../modules/autogen/miic.core.pxcorr_func.signBitNormalization.html#miic.core.pxcorr_func.signBitNormalization">[docs]</a><span class="k">def</span> <span class="nf">signBitNormalization</span><span class="p">(</span><span class="n">A</span><span class="p">,</span><span class="n">args</span><span class="p">,</span><span class="n">params</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    One bit normalization of time series data</span>
+<span class="sd">    </span>
+<span class="sd">    Return the sign of the samples (-1, 0, 1).</span>
+<span class="sd">    </span>
+<span class="sd">    :type A: numpy.ndarray</span>
+<span class="sd">    :param A: time series data with time oriented along the first \\</span>
+<span class="sd">        dimension (columns)</span>
+<span class="sd">    :type args: dictionary</span>
+<span class="sd">    :param args: not used here</span>
+<span class="sd">    :type params: dictionary</span>
+<span class="sd">    :param params: not used here</span>
+<span class="sd">    </span>
+<span class="sd">    :rtype: numpy.ndarray</span>
+<span class="sd">    :return: 1-bit normalized time series data</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sign</span><span class="p">(</span><span class="n">A</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="zeroPadding"><a class="viewcode-back" href="../../../modules/autogen/miic.core.pxcorr_func.zeroPadding.html#miic.core.pxcorr_func.zeroPadding">[docs]</a><span class="k">def</span> <span class="nf">zeroPadding</span><span class="p">(</span><span class="n">A</span><span class="p">,</span><span class="n">args</span><span class="p">,</span><span class="n">params</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Append zeros to the traces </span>
+<span class="sd">    </span>
+<span class="sd">    Pad traces with zeros to increase the speed of the Fourier transforms and</span>
+<span class="sd">    to avoid wrap around effects. Three possibilities for the length of the </span>
+<span class="sd">    padding can be set in `args[&#39;type&#39;]`</span>
+<span class="sd">    </span>
+<span class="sd">        -`nextPowerOfTwo`: traces are padded to a length that is the next power \\</span>
+<span class="sd">            of two from the original length</span>
+<span class="sd">        -`avoidWrapAround`: depending on length of the trace that is to be used \\</span>
+<span class="sd">            the padded part is just long enough to avoid wrap around</span>
+<span class="sd">        -`avoidWrapPowerTwo`: use the next power of two that avoids wrap around</span>
+<span class="sd">        </span>
+<span class="sd">        :Example: ``args = {&#39;type&#39;:&#39;avoidWrapPowerTwo&#39;}``</span>
+<span class="sd">    </span>
+<span class="sd">    :type A: numpy.ndarray</span>
+<span class="sd">    :param A: time series data with time oriented along the first \\</span>
+<span class="sd">        dimension (columns)</span>
+<span class="sd">    :type args: dictionary</span>
+<span class="sd">    :param args: arguments dictionary as described above</span>
+<span class="sd">    :type params: dictionary</span>
+<span class="sd">    :param params: not used here</span>
+<span class="sd">    </span>
+<span class="sd">    :rtype: numpy.ndarray</span>
+<span class="sd">    :return: zero padded time series data</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">npts</span><span class="p">,</span><span class="n">ntrc</span> <span class="o">=</span> <span class="n">A</span><span class="o">.</span><span class="n">shape</span>
+    <span class="k">if</span> <span class="n">args</span><span class="p">[</span><span class="s">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;nextPowerOfTwo&#39;</span><span class="p">:</span>
+        <span class="n">N</span> <span class="o">=</span> <span class="n">osignal</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="n">nextpow2</span><span class="p">(</span><span class="n">npts</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">args</span><span class="p">[</span><span class="s">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;avoidWrapAround&#39;</span><span class="p">:</span>
+        <span class="n">N</span> <span class="o">=</span> <span class="n">npts</span> <span class="o">+</span> <span class="n">params</span><span class="p">[</span><span class="s">&#39;sampling_rate&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="n">params</span><span class="p">[</span><span class="s">&#39;lengthToSave&#39;</span><span class="p">]</span>
+    <span class="k">elif</span> <span class="n">args</span><span class="p">[</span><span class="s">&#39;type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;avoidWrapPowerTwo&#39;</span><span class="p">:</span>
+        <span class="n">N</span> <span class="o">=</span> <span class="n">osignal</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="n">nextpow2</span><span class="p">(</span><span class="n">npts</span> <span class="o">+</span> <span class="n">params</span><span class="p">[</span><span class="s">&#39;sampling_rate&#39;</span><span class="p">]</span> <span class="o">*</span>
+                                  <span class="n">params</span><span class="p">[</span><span class="s">&#39;lengthToSave&#39;</span><span class="p">])</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;type &#39;</span><span class="si">%s</span><span class="s">&#39; of zero padding not implemented&quot;</span> <span class="o">%</span>
+                         <span class="n">args</span><span class="p">[</span><span class="s">&#39;type&#39;</span><span class="p">])</span>
+    <span class="n">A</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">A</span><span class="p">,</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">N</span><span class="o">-</span><span class="n">npts</span><span class="p">,</span><span class="n">ntrc</span><span class="p">),</span><span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)),</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">A</span>
+    
+</div>
+<div class="viewcode-block" id="spectralWhitening"><a class="viewcode-back" href="../../../modules/autogen/miic.core.pxcorr_func.spectralWhitening.html#miic.core.pxcorr_func.spectralWhitening">[docs]</a><span class="k">def</span> <span class="nf">spectralWhitening</span><span class="p">(</span><span class="n">B</span><span class="p">,</span><span class="n">args</span><span class="p">,</span><span class="n">params</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Spectal whitening of Fourier-transformed date</span>
+
+<span class="sd">    Normalize the amplitude spectrum of the complex spectra in `B`. The</span>
+<span class="sd">    `args` dictionary may contain the keyword `joint_norm`. If its value is</span>
+<span class="sd">    True the normalization of sets of three traces are normalized jointly by</span>
+<span class="sd">    the mean of their amplitude spectra. This is useful for later rotation of</span>
+<span class="sd">    correlated traces in the ZNE system into the ZRT system.</span>
+<span class="sd">    </span>
+<span class="sd">    :type B: numpy.ndarray</span>
+<span class="sd">    :param B: Fourier transformed time series data with frequency oriented\\</span>
+<span class="sd">        along the first dimension (columns)</span>
+<span class="sd">    :type args: dictionary</span>
+<span class="sd">    :param args: arguments dictionary as described above</span>
+<span class="sd">    :type params: dictionary</span>
+<span class="sd">    :param params: not used here</span>
+<span class="sd">    </span>
+<span class="sd">    :rtype: numpy.ndarray</span>
+<span class="sd">    :return: whitened spectal data</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">absB</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">absolute</span><span class="p">(</span><span class="n">B</span><span class="p">)</span>
+    <span class="k">print</span> <span class="s">&#39;args&#39;</span><span class="p">,</span> <span class="n">args</span>
+    <span class="k">if</span> <span class="s">&#39;joint_norm&#39;</span> <span class="ow">in</span> <span class="n">args</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="k">print</span> <span class="s">&#39;joint_norm in args&#39;</span>
+        <span class="k">if</span> <span class="n">args</span><span class="p">[</span><span class="s">&#39;joint_norm&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="bp">True</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="n">B</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">%</span> <span class="mi">3</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">,</span> <span class="s">&quot;for joint normalization the number</span><span class="se">\</span>
+<span class="s">                      of traces needs to the multiple of 3: </span><span class="si">%d</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">B</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="n">B</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="mi">3</span><span class="p">):</span>
+                <span class="k">print</span> <span class="s">&#39;ii&#39;</span><span class="p">,</span> <span class="n">ii</span>
+                <span class="n">absB</span><span class="p">[:,</span><span class="n">ii</span><span class="p">:</span><span class="n">ii</span><span class="o">+</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span>
+                                    <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">absB</span><span class="p">[:,</span><span class="n">ii</span><span class="p">:</span><span class="n">ii</span><span class="o">+</span><span class="mi">3</span><span class="p">],</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">T</span><span class="p">,[</span><span class="mi">1</span><span class="p">,</span><span class="mi">3</span><span class="p">])</span>
+            <span class="k">print</span> <span class="s">&#39;here&#39;</span><span class="p">,</span> <span class="n">absB</span>
+    <span class="n">B</span> <span class="o">/=</span> <span class="n">absB</span>
+    <span class="c"># remove zero freq component </span>
+    <span class="c">#B[0,:] = 0.j</span>
+    <span class="k">return</span> <span class="n">B</span>
+    
+    </div>
+<span class="k">def</span> <span class="nf">FDfilter</span><span class="p">(</span><span class="n">B</span><span class="p">,</span><span class="n">args</span><span class="p">,</span><span class="n">params</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Filter Fourier-transformed data</span>
+
+<span class="sd">    Filter Fourier tranformed data by tapering in frequency domain. The `args`</span>
+<span class="sd">    dictionary is supposed to contain the key `flimit` with a value that is a </span>
+<span class="sd">    four element list or tuple defines the corner frequencies (f1, f2, f3, f4)</span>
+<span class="sd">    in Hz of the cosine taper which is one between f2 and f3 and tapers to zero</span>
+<span class="sd">    for f1 &lt; f &lt; f2 and f3 &lt; f &lt; f4.</span>
+
+<span class="sd">    :type B: numpy.ndarray</span>
+<span class="sd">    :param B: Fourier transformed time series data with frequency oriented\\</span>
+<span class="sd">        along the first dimension (columns)</span>
+<span class="sd">    :type args: dictionary</span>
+<span class="sd">    :param args: arguments dictionary as described above</span>
+<span class="sd">    :type params: dictionary</span>
+<span class="sd">    :param params: params[&#39;freqs&#39;] contains an array with the freqency values</span>
+<span class="sd">        of the samples in `B`</span>
+<span class="sd">    </span>
+<span class="sd">    :rtype: numpy.ndarray</span>
+<span class="sd">    :return: filtered spectal data</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+    <span class="n">args</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s">&#39;freqs&#39;</span><span class="p">:</span><span class="n">params</span><span class="p">[</span><span class="s">&#39;freqs&#39;</span><span class="p">]})</span>
+    <span class="n">tap</span> <span class="o">=</span> <span class="n">osignal</span><span class="o">.</span><span class="n">invsim</span><span class="o">.</span><span class="n">cosTaper</span><span class="p">(</span><span class="n">B</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="o">**</span><span class="n">args</span><span class="p">)</span>
+    <span class="n">B</span> <span class="o">*=</span> <span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span><span class="n">tap</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="p">,(</span><span class="mi">1</span><span class="p">,</span><span class="n">B</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+    <span class="k">return</span> <span class="n">B</span>
+    
+
+<div class="viewcode-block" id="FDsignBitNormalization"><a class="viewcode-back" href="../../../modules/autogen/miic.core.pxcorr_func.FDsignBitNormalization.html#miic.core.pxcorr_func.FDsignBitNormalization">[docs]</a><span class="k">def</span> <span class="nf">FDsignBitNormalization</span><span class="p">(</span><span class="n">B</span><span class="p">,</span><span class="n">args</span><span class="p">,</span><span class="n">params</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Sign bit normalization of frequency transformed data</span>
+<span class="sd">    </span>
+<span class="sd">    Divides each sample by its amplitude resulting in trace with amplidues of</span>
+<span class="sd">    (-1, 0, 1). As this operation is done in frequency domain it requires two</span>
+<span class="sd">    Fourier transforms and is thus quite costly but alows to be performed </span>
+<span class="sd">    after other steps of frequency domain procesing e.g. whitening.</span>
+<span class="sd">    </span>
+
+<span class="sd">    :type B: numpy.ndarray</span>
+<span class="sd">    :param B: Fourier transformed time series data with frequency oriented\\</span>
+<span class="sd">        along the first dimension (columns)</span>
+<span class="sd">    :type args: dictionary</span>
+<span class="sd">    :param args: not used in this function</span>
+<span class="sd">    :type params: dictionary</span>
+<span class="sd">    :param params: not used in this function</span>
+<span class="sd">      </span>
+<span class="sd">    :rtype: numpy.ndarray</span>
+<span class="sd">    :return: frequency transform of the 1-bit normalized data</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">B</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">irfft</span><span class="p">(</span><span class="n">B</span><span class="p">,</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">C</span> <span class="o">=</span> <span class="n">B</span><span class="o">.</span><span class="n">real</span>
+    <span class="n">C</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sign</span><span class="p">(</span><span class="n">B</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">rfft</span><span class="p">(</span><span class="n">C</span><span class="p">,</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+     
+    </div>
+<div class="viewcode-block" id="rfftfreq"><a class="viewcode-back" href="../../../modules/autogen/miic.core.pxcorr_func.rfftfreq.html#miic.core.pxcorr_func.rfftfreq">[docs]</a><span class="k">def</span> <span class="nf">rfftfreq</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">d</span><span class="o">=</span><span class="mf">1.0</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return the Discrete Fourier Transform sample frequencies</span>
+<span class="sd">    (for usage with rfft, irfft).</span>
+
+<span class="sd">    The returned float array `f` contains the frequency bin centers in cycles</span>
+<span class="sd">    per unit of the sample spacing (with zero at the start).  For instance, if</span>
+<span class="sd">    the sample spacing is in seconds, then the frequency unit is cycles/second.</span>
+
+<span class="sd">    Given a window length `n` and a sample spacing `d`::</span>
+
+<span class="sd">      f = [0, 1, ...,     n/2-1,     n/2] / (d*n)   if n is even</span>
+<span class="sd">      f = [0, 1, ..., (n-1)/2-1, (n-1)/2] / (d*n)   if n is odd</span>
+
+<span class="sd">    Unlike `fftfreq` (but like `scipy.fftpack.rfftfreq`)</span>
+<span class="sd">    the Nyquist frequency component is considered to be positive.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    n : int</span>
+<span class="sd">        Window length.</span>
+<span class="sd">    d : scalar, optional</span>
+<span class="sd">        Sample spacing (inverse of the sampling rate). Defaults to 1.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    f : ndarray</span>
+<span class="sd">        Array of length ``n//2 + 1`` containing the sample frequencies.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; signal = np.array([-2, 8, 6, 4, 1, 0, 3, 5, -3, 4], dtype=float)</span>
+<span class="sd">    &gt;&gt;&gt; fourier = np.fft.rfft(signal)</span>
+<span class="sd">    &gt;&gt;&gt; n = signal.size</span>
+<span class="sd">    &gt;&gt;&gt; sample_rate = 100</span>
+<span class="sd">    &gt;&gt;&gt; freq = np.fft.fftfreq(n, d=1./sample_rate)</span>
+<span class="sd">    &gt;&gt;&gt; freq</span>
+<span class="sd">    array([  0.,  10.,  20.,  30.,  40., -50., -40., -30., -20., -10.])</span>
+<span class="sd">    &gt;&gt;&gt; freq = np.fft.rfftfreq(n, d=1./sample_rate)</span>
+<span class="sd">    &gt;&gt;&gt; freq</span>
+<span class="sd">    array([  0.,  10.,  20.,  30.,  40.,  50.])</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;n should be an integer&quot;</span><span class="p">)</span>
+    <span class="n">val</span> <span class="o">=</span> <span class="mf">1.0</span><span class="o">/</span><span class="p">(</span><span class="n">n</span><span class="o">*</span><span class="n">d</span><span class="p">)</span>
+    <span class="n">N</span> <span class="o">=</span> <span class="n">n</span><span class="o">//</span><span class="mi">2</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="n">results</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">N</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">results</span> <span class="o">*</span> <span class="n">val</span>
+    
+</div>
+<div class="viewcode-block" id="stream_pxcorr"><a class="viewcode-back" href="../../../modules/autogen/miic.core.pxcorr_func.stream_pxcorr.html#miic.core.pxcorr_func.stream_pxcorr">[docs]</a><span class="k">def</span> <span class="nf">stream_pxcorr</span><span class="p">(</span><span class="n">st</span><span class="p">,</span><span class="n">options</span><span class="p">,</span><span class="n">comm</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; </span>
+<span class="sd">    Preprocess and correlate traces in a stream</span>
+
+<span class="sd">    This is the central function of this module. It takes an obspy.stram input</span>
+<span class="sd">    stream applies and:</span>
+<span class="sd">        - applies time domain preprocesing</span>
+<span class="sd">        - Fourier transforms the data</span>
+<span class="sd">        - applies frequency domain preprocessing</span>
+<span class="sd">        - multiplies the conjugate spectra (correlation)</span>
+<span class="sd">        - transforms back into time domain</span>
+<span class="sd">        - returns a stream with the correlated data</span>
+
+<span class="sd">    All this can be done in parallel on different CPU communicating via</span>
+<span class="sd">    the `mpi4py` implementation of MPI. Control the different processing steps</span>
+<span class="sd">    are controlled with the dictionary `options`. The following keys are</span>
+<span class="sd">    required in `options`:</span>
+<span class="sd">        - combinations: list of tuples that identify the combinations of the\\</span>
+<span class="sd">            traces in `st` to be correlated</span>
+<span class="sd">        - lengthToSave: length of the correlated traces in s to return</span>
+<span class="sd">        - normalize_correlation: Boolean. If True the correaltion is\\</span>
+<span class="sd">            normalized. If False the pure product of the spectra is returned</span>
+<span class="sd">        - center_correlation: Boolean. If True th location of zero lag time\\</span>
+<span class="sd">            is in the center of the returned trace. If False the position of\\</span>
+<span class="sd">            zero lag time is determined by the start times of the traces. If\\</span>
+<span class="sd">            they are identical it is in the center anyway. If the difference \\</span>
+<span class="sd">            in start times is larger the zero lag time is offset.</span>
+<span class="sd">        - TDpreProcessing: list controlling the time domain preprocessing</span>
+<span class="sd">        - FDpreProcessing: list controlling the frequency domain preprocessing</span>
+
+<span class="sd">    The item in the list `TDpreProcessing` and `FDpreProcessing` are </span>
+<span class="sd">    dictionaries with two keys: `function` containing the function to apply and</span>
+<span class="sd">    `args` being a dictionary with the arguments for this function. The</span>
+<span class="sd">    functions in `TDpreProcessing` are applied in their order before the</span>
+<span class="sd">    Fourier transformation and those in FDpreProcessing` are applied in their</span>
+<span class="sd">    order Fourier domain.</span>
+
+<span class="sd">    :Example:</span>
+<span class="sd">        ``options = {&#39;TDpreProcessing&#39;:[{&#39;function&#39;:detrend,</span>
+<span class="sd">                                &#39;args&#39;:{&#39;type&#39;:&#39;linear&#39;}},</span>
+<span class="sd">                               {&#39;function&#39;:taper,</span>
+<span class="sd">                                &#39;args&#39;:{&#39;type&#39;:&#39;cosTaper&#39;,</span>
+<span class="sd">                                        &#39;p&#39;:0.01}},</span>
+<span class="sd">                               {&#39;function&#39;:TDfilter,</span>
+<span class="sd">                                &#39;args&#39;:{&#39;type&#39;:&#39;bandpass&#39;,</span>
+<span class="sd">                                        &#39;freqmin&#39;:1.,</span>
+<span class="sd">                                        &#39;freqmax&#39;:3.}},</span>
+<span class="sd">                               {&#39;function&#39;:TDnormalization,</span>
+<span class="sd">                                &#39;args&#39;:{&#39;filter&#39;:{&#39;type&#39;:&#39;bandpass&#39;,</span>
+<span class="sd">                                                 &#39;freqmin&#39;:0.5,</span>
+<span class="sd">                                                 &#39;freqmax&#39;:2.},</span>
+<span class="sd">                                        &#39;windowLength&#39;:1.}},</span>
+<span class="sd">                               {&#39;function&#39;:signBitNormalization,</span>
+<span class="sd">                                &#39;args&#39;:{}}</span>
+<span class="sd">                                 ],</span>
+<span class="sd">            &#39;FDpreProcessing&#39;:[{&#39;function&#39;:spectralWhitening,</span>
+<span class="sd">                                &#39;args&#39;:{}},</span>
+<span class="sd">                               {&#39;function&#39;:FDfilter,</span>
+<span class="sd">                                &#39;args&#39;:{&#39;flimit&#39;:[0.5, 1., 5., 7.]}}],</span>
+<span class="sd">            &#39;lengthToSave&#39;:20,</span>
+<span class="sd">            &#39;center_correlation&#39;:True,</span>
+<span class="sd">            &#39;normalize_correlation&#39;:True,</span>
+<span class="sd">            &#39;combinations&#39;:[(0,0),(0,1),(0,2),(1,2)]}``</span>
+<span class="sd">    </span>
+<span class="sd">    `comm` is a mpi4py communicator that can be passed if already initialized</span>
+<span class="sd">    otherwise it is created here.</span>
+
+<span class="sd">    :type st: obspy.stream</span>
+<span class="sd">    :param st: stream with traces to be correlated</span>
+<span class="sd">    :type options: dictionary</span>
+<span class="sd">    :param options: controll dictionary as described above</span>
+<span class="sd">    :type comm: mpi4py communicator</span>
+<span class="sd">    :param comm: communicator if initialized externally</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="c"># initialize MPI</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">comm</span><span class="p">:</span>
+        <span class="n">comm</span> <span class="o">=</span> <span class="n">MPI</span><span class="o">.</span><span class="n">COMM_WORLD</span>
+    <span class="n">rank</span> <span class="o">=</span> <span class="n">comm</span><span class="o">.</span><span class="n">Get_rank</span><span class="p">()</span>    
+
+    <span class="c"># get parameters of the data</span>
+    <span class="k">if</span> <span class="n">rank</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">starttime</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">npts</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">tr</span> <span class="ow">in</span> <span class="n">st</span><span class="p">:</span>
+            <span class="n">starttime</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;starttime&#39;</span><span class="p">])</span>
+            <span class="n">npts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;npts&#39;</span><span class="p">])</span>
+        <span class="n">npts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">npts</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">starttime</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="n">npts</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">starttime</span> <span class="o">=</span> <span class="n">comm</span><span class="o">.</span><span class="n">bcast</span><span class="p">(</span><span class="n">starttime</span><span class="p">,</span> <span class="n">root</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">npts</span> <span class="o">=</span> <span class="n">comm</span><span class="o">.</span><span class="n">bcast</span><span class="p">(</span><span class="n">npts</span><span class="p">,</span> <span class="n">root</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="c"># fill matrix with noise data</span>
+    <span class="n">A</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="n">npts</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">st</span><span class="p">)])</span>
+    <span class="k">if</span> <span class="n">rank</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>    
+        <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">st</span><span class="p">)):</span>
+            <span class="n">A</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">st</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;npts&#39;</span><span class="p">],</span><span class="n">ii</span><span class="p">]</span> <span class="o">=</span> <span class="n">st</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span><span class="o">.</span><span class="n">data</span>
+    <span class="n">comm</span><span class="o">.</span><span class="n">Bcast</span><span class="p">([</span><span class="n">A</span><span class="p">,</span><span class="n">MPI</span><span class="o">.</span><span class="n">DOUBLE</span><span class="p">],</span><span class="n">root</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">options</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s">&#39;starttime&#39;</span><span class="p">:</span><span class="n">starttime</span><span class="p">,</span>
+                    <span class="s">&#39;sampling_rate&#39;</span><span class="p">:</span><span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;sampling_rate&#39;</span><span class="p">]})</span>
+    
+    <span class="c"># call pxcorr_for correlation</span>
+    <span class="n">A</span><span class="p">,</span> <span class="n">starttime</span> <span class="o">=</span> <span class="n">pxcorr</span><span class="p">(</span><span class="n">comm</span><span class="p">,</span><span class="n">A</span><span class="p">,</span><span class="o">**</span><span class="n">options</span><span class="p">)</span>
+    <span class="n">npts</span> <span class="o">=</span> <span class="n">A</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    
+    <span class="c"># put trace into a stream</span>
+    <span class="n">cst</span> <span class="o">=</span> <span class="n">stream</span><span class="o">.</span><span class="n">Stream</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">options</span><span class="p">[</span><span class="s">&#39;combinations&#39;</span><span class="p">])):</span>
+        <span class="n">cstats</span> <span class="o">=</span> <span class="n">combine_stats</span><span class="p">(</span><span class="n">st</span><span class="p">[</span><span class="n">options</span><span class="p">[</span><span class="s">&#39;combinations&#39;</span><span class="p">][</span><span class="n">ii</span><span class="p">][</span><span class="mi">0</span><span class="p">]],</span>
+                               <span class="n">st</span><span class="p">[</span><span class="n">options</span><span class="p">[</span><span class="s">&#39;combinations&#39;</span><span class="p">][</span><span class="n">ii</span><span class="p">][</span><span class="mi">1</span><span class="p">]])</span>
+        <span class="n">cstats</span><span class="p">[</span><span class="s">&#39;starttime&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">starttime</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span>
+        <span class="n">cstats</span><span class="p">[</span><span class="s">&#39;npts&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">npts</span>
+        <span class="n">cst</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">trace</span><span class="o">.</span><span class="n">Trace</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">A</span><span class="p">[:,</span><span class="n">ii</span><span class="p">],</span> <span class="n">header</span><span class="o">=</span><span class="n">cstats</span><span class="p">))</span>
+        <span class="n">cst</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">stats_tr1</span> <span class="o">=</span> <span class="n">st</span><span class="p">[</span><span class="n">options</span><span class="p">[</span><span class="s">&#39;combinations&#39;</span><span class="p">][</span><span class="n">ii</span><span class="p">][</span><span class="mi">0</span><span class="p">]]</span><span class="o">.</span><span class="n">stats</span>
+        <span class="n">cst</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">stats_tr2</span> <span class="o">=</span> <span class="n">st</span><span class="p">[</span><span class="n">options</span><span class="p">[</span><span class="s">&#39;combinations&#39;</span><span class="p">][</span><span class="n">ii</span><span class="p">][</span><span class="mi">1</span><span class="p">]]</span><span class="o">.</span><span class="n">stats</span>
+        
+    <span class="k">return</span> <span class="n">cst</span>                     
+     
+
+
+</div>
+<div class="viewcode-block" id="calc_cross_combis"><a class="viewcode-back" href="../../../modules/autogen/miic.core.pxcorr_func.calc_cross_combis.html#miic.core.pxcorr_func.calc_cross_combis">[docs]</a><span class="k">def</span> <span class="nf">calc_cross_combis</span><span class="p">(</span><span class="n">st</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s">&#39;betweenStations&#39;</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calculate a list of all cross correlation combination</span>
+<span class="sd">    of traces in the stream: i.e. all combination with two different</span>
+<span class="sd">    stations involved.</span>
+
+<span class="sd">    :type method: string</span>
+<span class="sd">    :param method: Determines which traces of the strem are combined.</span>
+<span class="sd">        ``&#39;betweenStations&#39;``: Traces are combined if either their station or</span>
+<span class="sd">            their network names are different.</span>
+<span class="sd">        ``&#39;betweenComponents&#39;``: Traces are combined if their components (last</span>
+<span class="sd">            letter of channel name) names are different and their station and</span>
+<span class="sd">            network names are identical (single station cross-correlation).</span>
+<span class="sd">        ``&#39;autoComponents&#39;```: Traces are combined only with themselves.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">combis</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s">&#39;betweenStations&#39;</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">st</span><span class="p">)):</span>
+            <span class="k">for</span> <span class="n">jj</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ii</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">st</span><span class="p">)):</span>
+                <span class="k">if</span> <span class="p">((</span><span class="n">st</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;network&#39;</span><span class="p">]</span> <span class="o">!=</span> <span class="n">st</span><span class="p">[</span><span class="n">jj</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;network&#39;</span><span class="p">])</span> <span class="ow">or</span> 
+                    <span class="p">(</span><span class="n">st</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;station&#39;</span><span class="p">]</span> <span class="o">!=</span> <span class="n">st</span><span class="p">[</span><span class="n">jj</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;station&#39;</span><span class="p">])):</span>
+                    <span class="n">combis</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">ii</span><span class="p">,</span><span class="n">jj</span><span class="p">))</span>
+    <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s">&#39;betweenComponents&#39;</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">st</span><span class="p">)):</span>
+            <span class="k">for</span> <span class="n">jj</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ii</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">st</span><span class="p">)):</span>
+                <span class="k">if</span> <span class="p">((</span><span class="n">st</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;network&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">st</span><span class="p">[</span><span class="n">jj</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;network&#39;</span><span class="p">])</span> <span class="ow">and</span> 
+                    <span class="p">(</span><span class="n">st</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;station&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">st</span><span class="p">[</span><span class="n">jj</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;station&#39;</span><span class="p">])</span> <span class="ow">and</span>
+                    <span class="p">(</span><span class="n">st</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;channel&#39;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="n">st</span><span class="p">[</span><span class="n">jj</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;channel&#39;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">])):</span>
+                    <span class="n">combis</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">ii</span><span class="p">,</span><span class="n">jj</span><span class="p">))</span>
+    <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s">&#39;autoComponents&#39;</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">st</span><span class="p">)):</span>
+            <span class="n">combis</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">ii</span><span class="p">,</span><span class="n">ii</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;Method has to be one of (&#39;betweenStations&#39;, &quot;</span> 
+                         <span class="s">&quot;&#39;betweenComponents&#39; or &#39;autoComponents&#39;).&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">combis</span>
+
+
+</div>
+<span class="k">def</span> <span class="nf">rotate_multi_corr_stream</span><span class="p">(</span><span class="n">st</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Take a stream with numerous correlation traces and rotate the </span>
+<span class="sd">    combinations of ENZ components into combinations of RTZ components in case all</span>
+<span class="sd">    nine components of the Green&#39;s tensor are present. If not all nine components</span>
+<span class="sd">    are present no trace for this station combination is returned.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="n">out_st</span> <span class="o">=</span> <span class="n">stream</span><span class="o">.</span><span class="n">Stream</span><span class="p">()</span>
+    <span class="k">while</span> <span class="n">st</span><span class="p">:</span>
+        <span class="n">tl</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="mi">9</span><span class="p">)</span>
+        <span class="n">tst</span> <span class="o">=</span> <span class="n">st</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">network</span><span class="o">=</span><span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;network&#39;</span><span class="p">],</span><span class="n">station</span><span class="o">=</span><span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;station&#39;</span><span class="p">])</span>
+        <span class="n">cnt</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">ttr</span> <span class="ow">in</span> <span class="n">tst</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">ttr</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;channel&#39;</span><span class="p">][</span><span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;E&#39;</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">ttr</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;channel&#39;</span><span class="p">][</span><span class="mi">6</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;E&#39;</span><span class="p">:</span>
+                    <span class="n">tl</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">ttr</span>
+                    <span class="n">cnt</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">elif</span> <span class="n">ttr</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;channel&#39;</span><span class="p">][</span><span class="mi">6</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;N&#39;</span><span class="p">:</span>
+                    <span class="n">tl</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">ttr</span>
+                    <span class="n">cnt</span> <span class="o">+=</span> <span class="mi">2</span>
+                <span class="k">elif</span> <span class="n">ttr</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;channel&#39;</span><span class="p">][</span><span class="mi">6</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;Z&#39;</span><span class="p">:</span>
+                    <span class="n">tl</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">ttr</span>
+                    <span class="n">cnt</span> <span class="o">+=</span> <span class="mi">4</span>
+            <span class="k">elif</span> <span class="n">ttr</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;channel&#39;</span><span class="p">][</span><span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;N&#39;</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">ttr</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;channel&#39;</span><span class="p">][</span><span class="mi">6</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;E&#39;</span><span class="p">:</span>
+                    <span class="n">tl</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">ttr</span>
+                    <span class="n">cnt</span> <span class="o">+=</span> <span class="mi">8</span>
+                <span class="k">elif</span> <span class="n">ttr</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;channel&#39;</span><span class="p">][</span><span class="mi">6</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;N&#39;</span><span class="p">:</span>
+                    <span class="n">tl</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span> <span class="o">=</span> <span class="n">ttr</span>
+                    <span class="n">cnt</span> <span class="o">+=</span> <span class="mi">16</span>
+                <span class="k">elif</span> <span class="n">ttr</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;channel&#39;</span><span class="p">][</span><span class="mi">6</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;Z&#39;</span><span class="p">:</span>
+                    <span class="n">tl</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span> <span class="o">=</span> <span class="n">ttr</span>
+                    <span class="n">cnt</span> <span class="o">+=</span> <span class="mi">32</span>
+            <span class="k">elif</span> <span class="n">ttr</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;channel&#39;</span><span class="p">][</span><span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;Z&#39;</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">ttr</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;channel&#39;</span><span class="p">][</span><span class="mi">6</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;E&#39;</span><span class="p">:</span>
+                    <span class="n">tl</span><span class="p">[</span><span class="mi">6</span><span class="p">]</span> <span class="o">=</span> <span class="n">ttr</span>
+                    <span class="n">cnt</span> <span class="o">+=</span> <span class="mi">64</span>
+                <span class="k">elif</span> <span class="n">ttr</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;channel&#39;</span><span class="p">][</span><span class="mi">6</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;N&#39;</span><span class="p">:</span>
+                    <span class="n">tl</span><span class="p">[</span><span class="mi">7</span><span class="p">]</span> <span class="o">=</span> <span class="n">ttr</span>
+                    <span class="n">cnt</span> <span class="o">+=</span> <span class="mi">128</span>
+                <span class="k">elif</span> <span class="n">ttr</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;channel&#39;</span><span class="p">][</span><span class="mi">6</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;Z&#39;</span><span class="p">:</span>
+                    <span class="n">tl</span><span class="p">[</span><span class="mi">8</span><span class="p">]</span> <span class="o">=</span> <span class="n">ttr</span>                   
+                    <span class="n">cnt</span> <span class="o">+=</span> <span class="mi">256</span>
+
+        <span class="k">if</span> <span class="n">cnt</span> <span class="o">==</span> <span class="mi">2</span><span class="o">**</span><span class="mi">9</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+            <span class="n">st0</span> <span class="o">=</span> <span class="n">stream</span><span class="o">.</span><span class="n">Stream</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">tl</span><span class="p">:</span>
+                <span class="n">st0</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+            <span class="n">st1</span> <span class="o">=</span> <span class="n">_rotate_corr_stream</span><span class="p">(</span><span class="n">st0</span><span class="p">)</span>
+            <span class="n">out_st</span> <span class="o">+=</span> <span class="n">st1</span>
+        <span class="k">for</span> <span class="n">ttr</span> <span class="ow">in</span> <span class="n">tst</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">ind</span><span class="p">,</span><span class="n">tr</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">st</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">ttr</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="n">tr</span><span class="o">.</span><span class="n">id</span><span class="p">:</span>
+                    <span class="n">st</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">ind</span><span class="p">)</span>
+    
+    <span class="k">return</span> <span class="n">out_st</span>
+
+
+
+<span class="k">def</span> <span class="nf">_rotate_corr_stream</span><span class="p">(</span><span class="n">st</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Rotate traces in stream from the EE-EN-EZ-NE-NN-NZ-ZE-ZN-ZZ system to</span>
+<span class="sd">    the RR-RT-RZ-TR-TT-TZ-ZR-ZT-ZZ system. The letters give the component order</span>
+<span class="sd">    in the input and output streams. Input traces are assumed to be of same length</span>
+<span class="sd">    and simultaneously sampled.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="c"># rotation angles</span>
+    <span class="c"># phi1 : counter clockwise angle between E and R(towards second station)</span>
+    <span class="c"># the leading -1 accounts fact that we rotate the coordinate system, not a vector</span>
+    <span class="n">phi1</span> <span class="o">=</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">180</span><span class="o">*</span><span class="p">(</span><span class="mi">90</span><span class="o">-</span><span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;sac&#39;</span><span class="p">][</span><span class="s">&#39;az&#39;</span><span class="p">])</span>
+    <span class="c"># phi2 : counter clockwise angle between E and R(away from first station)</span>
+    <span class="n">phi2</span> <span class="o">=</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">180</span><span class="o">*</span><span class="p">(</span><span class="mi">90</span><span class="o">-</span><span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;sac&#39;</span><span class="p">][</span><span class="s">&#39;baz&#39;</span><span class="p">]</span><span class="o">+</span><span class="mi">180</span><span class="p">)</span>
+    
+    <span class="n">c1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">phi1</span><span class="p">)</span>
+    <span class="n">s1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">phi1</span><span class="p">)</span>
+    <span class="n">c2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">phi2</span><span class="p">)</span>
+    <span class="n">s2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">phi2</span><span class="p">)</span>
+    
+    <span class="n">rtz</span> <span class="o">=</span> <span class="n">stream</span><span class="o">.</span><span class="n">Stream</span><span class="p">()</span>
+    <span class="n">RR</span> <span class="o">=</span> <span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">RR</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">c1</span><span class="o">*</span><span class="n">c2</span><span class="o">*</span><span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span> <span class="o">-</span> <span class="n">c1</span><span class="o">*</span><span class="n">s2</span><span class="o">*</span><span class="n">st</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">data</span> <span class="o">-</span> <span class="n">s1</span><span class="o">*</span><span class="n">c2</span><span class="o">*</span><span class="n">st</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">data</span> <span class="o">+</span> <span class="n">s1</span><span class="o">*</span><span class="n">s2</span><span class="o">*</span><span class="n">st</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="o">.</span><span class="n">data</span>
+    <span class="n">tcha</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">RR</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;channel&#39;</span><span class="p">])</span>
+    <span class="n">tcha</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;R&#39;</span>
+    <span class="n">tcha</span><span class="p">[</span><span class="mi">6</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;R&#39;</span>
+    <span class="n">RR</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;channel&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">tcha</span><span class="p">)</span>
+    <span class="n">rtz</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">RR</span><span class="p">)</span>
+    
+    <span class="n">RT</span> <span class="o">=</span> <span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">RT</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">c1</span><span class="o">*</span><span class="n">s2</span><span class="o">*</span><span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span> <span class="o">+</span> <span class="n">c1</span><span class="o">*</span><span class="n">c2</span><span class="o">*</span><span class="n">st</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">data</span> <span class="o">-</span> <span class="n">s1</span><span class="o">*</span><span class="n">s2</span><span class="o">*</span><span class="n">st</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">data</span> <span class="o">-</span> <span class="n">s1</span><span class="o">*</span><span class="n">c2</span><span class="o">*</span><span class="n">st</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="o">.</span><span class="n">data</span>
+    <span class="n">tcha</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">RT</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;channel&#39;</span><span class="p">])</span>
+    <span class="n">tcha</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;R&#39;</span>
+    <span class="n">tcha</span><span class="p">[</span><span class="mi">6</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;T&#39;</span>
+    <span class="n">RT</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;channel&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">tcha</span><span class="p">)</span>
+    <span class="n">rtz</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">RT</span><span class="p">)</span>
+    
+    <span class="n">RZ</span> <span class="o">=</span> <span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">RZ</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">c1</span><span class="o">*</span><span class="n">st</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">data</span> <span class="o">-</span> <span class="n">s1</span><span class="o">*</span><span class="n">st</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span><span class="o">.</span><span class="n">data</span>
+    <span class="n">tcha</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">RZ</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;channel&#39;</span><span class="p">])</span>
+    <span class="n">tcha</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;R&#39;</span>
+    <span class="n">tcha</span><span class="p">[</span><span class="mi">6</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;Z&#39;</span>
+    <span class="n">RZ</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;channel&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">tcha</span><span class="p">)</span>
+    <span class="n">rtz</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">RZ</span><span class="p">)</span>
+    
+    <span class="n">TR</span> <span class="o">=</span> <span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">TR</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">s1</span><span class="o">*</span><span class="n">c2</span><span class="o">*</span><span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span> <span class="o">-</span> <span class="n">s1</span><span class="o">*</span><span class="n">s2</span><span class="o">*</span><span class="n">st</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">data</span> <span class="o">+</span> <span class="n">c1</span><span class="o">*</span><span class="n">c2</span><span class="o">*</span><span class="n">st</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">data</span> <span class="o">-</span> <span class="n">c1</span><span class="o">*</span><span class="n">s2</span><span class="o">*</span><span class="n">st</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="o">.</span><span class="n">data</span>
+    <span class="n">tcha</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">TR</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;channel&#39;</span><span class="p">])</span>
+    <span class="n">tcha</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;T&#39;</span>
+    <span class="n">tcha</span><span class="p">[</span><span class="mi">6</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;R&#39;</span>
+    <span class="n">TR</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;channel&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">tcha</span><span class="p">)</span>
+    <span class="n">rtz</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">TR</span><span class="p">)</span>
+    
+    <span class="n">TT</span> <span class="o">=</span> <span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">TT</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">s1</span><span class="o">*</span><span class="n">s2</span><span class="o">*</span><span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span> <span class="o">+</span> <span class="n">s1</span><span class="o">*</span><span class="n">c2</span><span class="o">*</span><span class="n">st</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">data</span> <span class="o">+</span> <span class="n">c1</span><span class="o">*</span><span class="n">s2</span><span class="o">*</span><span class="n">st</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">data</span> <span class="o">+</span> <span class="n">c1</span><span class="o">*</span><span class="n">c2</span><span class="o">*</span><span class="n">st</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="o">.</span><span class="n">data</span>
+    <span class="n">tcha</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">TT</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;channel&#39;</span><span class="p">])</span>
+    <span class="n">tcha</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;T&#39;</span>
+    <span class="n">tcha</span><span class="p">[</span><span class="mi">6</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;T&#39;</span>
+    <span class="n">TT</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;channel&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">tcha</span><span class="p">)</span>
+    <span class="n">rtz</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">TT</span><span class="p">)</span>
+    
+    <span class="n">TZ</span> <span class="o">=</span> <span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">TZ</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">s1</span><span class="o">*</span><span class="n">st</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">data</span> <span class="o">+</span> <span class="n">c1</span><span class="o">*</span><span class="n">st</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span><span class="o">.</span><span class="n">data</span>
+    <span class="n">tcha</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">TZ</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;channel&#39;</span><span class="p">])</span>
+    <span class="n">tcha</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;T&#39;</span>
+    <span class="n">tcha</span><span class="p">[</span><span class="mi">6</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;Z&#39;</span>
+    <span class="n">TZ</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;channel&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">tcha</span><span class="p">)</span>
+    <span class="n">rtz</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">TZ</span><span class="p">)</span>
+    
+    <span class="n">ZR</span> <span class="o">=</span> <span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">ZR</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">c2</span><span class="o">*</span><span class="n">st</span><span class="p">[</span><span class="mi">6</span><span class="p">]</span><span class="o">.</span><span class="n">data</span> <span class="o">-</span> <span class="n">s2</span><span class="o">*</span><span class="n">st</span><span class="p">[</span><span class="mi">7</span><span class="p">]</span><span class="o">.</span><span class="n">data</span>
+    <span class="n">tcha</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">ZR</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;channel&#39;</span><span class="p">])</span>
+    <span class="n">tcha</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;Z&#39;</span>
+    <span class="n">tcha</span><span class="p">[</span><span class="mi">6</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;R&#39;</span>
+    <span class="n">ZR</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;channel&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">tcha</span><span class="p">)</span>
+    <span class="n">rtz</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ZR</span><span class="p">)</span>
+    
+    <span class="n">ZT</span> <span class="o">=</span> <span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">ZT</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">s2</span><span class="o">*</span><span class="n">st</span><span class="p">[</span><span class="mi">6</span><span class="p">]</span><span class="o">.</span><span class="n">data</span> <span class="o">+</span> <span class="n">c2</span><span class="o">*</span><span class="n">st</span><span class="p">[</span><span class="mi">7</span><span class="p">]</span><span class="o">.</span><span class="n">data</span>
+    <span class="n">tcha</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">ZT</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;channel&#39;</span><span class="p">])</span>
+    <span class="n">tcha</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;Z&#39;</span>
+    <span class="n">tcha</span><span class="p">[</span><span class="mi">6</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;T&#39;</span>
+    <span class="n">ZT</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;channel&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">tcha</span><span class="p">)</span>
+    <span class="n">rtz</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ZT</span><span class="p">)</span>
+    
+    <span class="n">rtz</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">st</span><span class="p">[</span><span class="mi">8</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">())</span>
+    
+    <span class="k">return</span> <span class="n">rtz</span>
+
+
+
+<span class="k">def</span> <span class="nf">set_sample_options</span><span class="p">():</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;TDpreProcessing&#39;</span><span class="p">:[{</span><span class="s">&#39;function&#39;</span><span class="p">:</span><span class="n">detrend</span><span class="p">,</span>
+                                <span class="s">&#39;args&#39;</span><span class="p">:{</span><span class="s">&#39;type&#39;</span><span class="p">:</span><span class="s">&#39;linear&#39;</span><span class="p">}},</span>
+                               <span class="p">{</span><span class="s">&#39;function&#39;</span><span class="p">:</span><span class="n">taper</span><span class="p">,</span>
+                                <span class="s">&#39;args&#39;</span><span class="p">:{</span><span class="s">&#39;type&#39;</span><span class="p">:</span><span class="s">&#39;cosTaper&#39;</span><span class="p">,</span>
+                                        <span class="s">&#39;p&#39;</span><span class="p">:</span><span class="mf">0.01</span><span class="p">}},</span>
+                               <span class="p">{</span><span class="s">&#39;function&#39;</span><span class="p">:</span><span class="n">TDfilter</span><span class="p">,</span>
+                                <span class="s">&#39;args&#39;</span><span class="p">:{</span><span class="s">&#39;type&#39;</span><span class="p">:</span><span class="s">&#39;bandpass&#39;</span><span class="p">,</span>
+                                        <span class="s">&#39;freqmin&#39;</span><span class="p">:</span><span class="mf">1.</span><span class="p">,</span>
+                                        <span class="s">&#39;freqmax&#39;</span><span class="p">:</span><span class="mf">3.</span><span class="p">}},</span>
+                               <span class="p">{</span><span class="s">&#39;function&#39;</span><span class="p">:</span><span class="n">TDnormalization</span><span class="p">,</span>
+                                <span class="s">&#39;args&#39;</span><span class="p">:{</span><span class="s">&#39;filter&#39;</span><span class="p">:{</span><span class="s">&#39;type&#39;</span><span class="p">:</span><span class="s">&#39;bandpass&#39;</span><span class="p">,</span>
+                                                 <span class="s">&#39;freqmin&#39;</span><span class="p">:</span><span class="mf">0.5</span><span class="p">,</span>
+                                                 <span class="s">&#39;freqmax&#39;</span><span class="p">:</span><span class="mf">2.</span><span class="p">},</span>
+                                        <span class="s">&#39;windowLength&#39;</span><span class="p">:</span><span class="mf">1.</span><span class="p">}},</span>
+                               <span class="p">{</span><span class="s">&#39;function&#39;</span><span class="p">:</span><span class="n">signBitNormalization</span><span class="p">,</span>
+                                <span class="s">&#39;args&#39;</span><span class="p">:{}}</span>
+                                 <span class="p">],</span>
+            <span class="s">&#39;FDpreProcessing&#39;</span><span class="p">:[{</span><span class="s">&#39;function&#39;</span><span class="p">:</span><span class="n">spectralWhitening</span><span class="p">,</span>
+                                <span class="s">&#39;args&#39;</span><span class="p">:{}},</span>
+                               <span class="p">{</span><span class="s">&#39;function&#39;</span><span class="p">:</span><span class="n">FDfilter</span><span class="p">,</span>
+                                <span class="s">&#39;args&#39;</span><span class="p">:{</span><span class="s">&#39;flimit&#39;</span><span class="p">:[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">1.</span><span class="p">,</span> <span class="mf">5.</span><span class="p">,</span> <span class="mf">7.</span><span class="p">]}}],</span>
+            <span class="s">&#39;lengthToSave&#39;</span><span class="p">:</span><span class="mi">20</span><span class="p">,</span>
+            <span class="s">&#39;center_correlation&#39;</span><span class="p">:</span><span class="bp">True</span><span class="p">,</span>      <span class="c"># make sure zero correlation time is in the center</span>
+            <span class="s">&#39;normalize_correlation&#39;</span><span class="p">:</span><span class="bp">True</span><span class="p">,</span>
+            <span class="s">&#39;combinations&#39;</span><span class="p">:[(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">),(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">),(</span><span class="mi">0</span><span class="p">,</span><span class="mi">2</span><span class="p">),(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">)]}</span>
+              
+    <span class="k">return</span> <span class="n">args</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MIIC 1.0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2012, Eraldo Pomponi.
+      Last updated on 2016-03-07T14:54:14.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </div>
+  </body>
+</html>

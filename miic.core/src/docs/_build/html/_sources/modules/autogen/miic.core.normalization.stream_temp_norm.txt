@@ -1,0 +1,6 @@
+miic.core.normalization.stream_temp_norm
+========================================
+
+.. currentmodule:: miic.core.normalization
+
+.. autofunction:: stream_temp_norm

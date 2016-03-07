@@ -1,0 +1,6 @@
+miic.core.stretch_mod.time_shift_estimate
+=========================================
+
+.. currentmodule:: miic.core.stretch_mod
+
+.. autofunction:: time_shift_estimate

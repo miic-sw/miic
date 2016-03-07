@@ -1,0 +1,6 @@
+miic.core.miic_utils.create_range_array
+=======================================
+
+.. currentmodule:: miic.core.miic_utils
+
+.. autofunction:: create_range_array

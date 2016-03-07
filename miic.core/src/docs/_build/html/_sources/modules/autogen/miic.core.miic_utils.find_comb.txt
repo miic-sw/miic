@@ -1,0 +1,6 @@
+miic.core.miic_utils.find_comb
+==============================
+
+.. currentmodule:: miic.core.miic_utils
+
+.. autofunction:: find_comb

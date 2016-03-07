@@ -1,0 +1,185 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>miic.core.stretch_mod.velocity_change_estimete &mdash; MIIC 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="MIIC 1.0 documentation" href="../../index.html" />
+    <link rel="up" title="Signal stretching" href="../stretch_mod.html" />
+    <link rel="next" title="miic.core.stretch_mod.time_windows_creation" href="miic.core.stretch_mod.time_windows_creation.html" />
+    <link rel="prev" title="miic.core.stretch_mod.dv_panel_creation" href="miic.core.stretch_mod.dv_panel_creation.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="miic.core.stretch_mod.time_windows_creation.html" title="miic.core.stretch_mod.time_windows_creation"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="miic.core.stretch_mod.dv_panel_creation.html" title="miic.core.stretch_mod.dv_panel_creation"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">MIIC 1.0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../core.html" >MIIC Library Reference</a> &raquo;</li>
+          <li class="nav-item nav-item-2"><a href="../stretch_mod.html" accesskey="U">Signal stretching</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/modules/autogen/miic.core.stretch_mod.velocity_change_estimete.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="miic-core-stretch-mod-velocity-change-estimete">
+<h1>miic.core.stretch_mod.velocity_change_estimete<a class="headerlink" href="#miic-core-stretch-mod-velocity-change-estimete" title="Permalink to this headline">¶</a></h1>
+<dl class="function">
+<dt id="miic.core.stretch_mod.velocity_change_estimete">
+<code class="descname">velocity_change_estimete</code><span class="sig-paren">(</span><em>mat</em>, <em>tw</em>, <em>strrefmat</em>, <em>strvec</em>, <em>sides='both'</em>, <em>return_sim_mat=False</em>, <em>remove_nans=True</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/miic/core/stretch_mod.html#velocity_change_estimete"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#miic.core.stretch_mod.velocity_change_estimete" title="Permalink to this definition">¶</a></dt>
+<dd><p>Velocity change estimate through stretching and comparison.</p>
+<p>Velocity changes are estimated comparing each correlation function stored
+in the <code class="docutils literal"><span class="pre">mat</span></code> matrix (one for each row) with <code class="docutils literal"><span class="pre">strrefmat.shape[0]</span></code>
+stretched versions  of a reference trace stored in <code class="docutils literal"><span class="pre">strrefmat</span></code>.
+The stretch amount for each row of <code class="docutils literal"><span class="pre">strrefmat</span></code> must be passed in the
+<code class="docutils literal"><span class="pre">strvec</span></code> vector.
+The best match (stretch amount and corresponding correlation value) is
+calculated on different time windows (each row of <code class="docutils literal"><span class="pre">tw</span></code> is a different
+one) instead of on the whole trace.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>mat</strong> (<code class="xref py py-class docutils literal"><span class="pre">ndarray</span></code>) &#8211; 2d ndarray containing the correlation functions.
+One for each row.</li>
+<li><strong>tw</strong> (<code class="xref py py-class docutils literal"><span class="pre">ndarray</span></code> of int) &#8211; 2d ndarray of time windows to be use in the velocity change
+estimate.</li>
+<li><strong>strrefmat</strong> (<code class="xref py py-class docutils literal"><span class="pre">ndarray</span></code>) &#8211; 2D array containing stretched version of the reference
+matrix</li>
+<li><strong>strvec</strong> (<code class="xref py py-class docutils literal"><span class="pre">ndarray</span></code> or list) &#8211; Stretch amount for each row of <code class="docutils literal"><span class="pre">strrefmat</span></code></li>
+<li><strong>sides</strong> (<em>string</em>) &#8211; Side of the reference matrix to be used for the velocity
+change estimate (&#8216;both&#8217; | &#8216;left&#8217; | &#8216;right&#8217; | &#8216;single&#8217;)</li>
+<li><strong>remove_nans</strong> (<em>bool</em>) &#8211; If <cite>True</cite> applay <code class="xref py py-func docutils literal"><span class="pre">nan_to_num()</span></code> to the
+given correlation matrix before any other operation.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first">Dictionary</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><p><strong>dv</strong>: Dictionary with the following keys</p>
+<dl class="docutils">
+<dt><em>corr</em>: 2d ndarray containing the correlation value for the best</dt>
+<dd><p class="first last">match for each row of <code class="docutils literal"><span class="pre">mat</span></code> and for each time window.
+Its dimension is: :func:(len(tw),mat.shape[1])</p>
+</dd>
+<dt><em>value</em>: 2d ndarray containing the stretch amount corresponding to</dt>
+<dd><p class="first last">the best match for each row of <code class="docutils literal"><span class="pre">mat</span></code> and for each time window.
+Its dimension is: :func:(len(tw),mat.shape[1])</p>
+</dd>
+<dt><em>sim_mat</em>: 3d ndarray containing the similarity matricies that</dt>
+<dd><p class="first last">indicate the correlation coefficient with the reference for the
+different time windows, different times and different amount of
+stretching.
+Its dimension is: <code class="xref py py-func docutils literal"><span class="pre">(len(tw),mat.shape[1],len(strvec))()</span></code></p>
+</dd>
+<dt><em>second_axis</em>: It contains the stretch vector used for the velocity</dt>
+<dd><p class="first last">change estimate.</p>
+</dd>
+<dt><em>vale_type</em>: It is equal to &#8216;stretch&#8217; and specify the content of</dt>
+<dd><p class="first last">the returned &#8216;value&#8217;.</p>
+</dd>
+<dt><em>method</em>: It is equal to &#8216;single_ref&#8217; and specify in which &#8220;way&#8221; the</dt>
+<dd><p class="first last">values have been obtained.</p>
+</dd>
+</dl>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="miic.core.stretch_mod.time_windows_creation.html" title="miic.core.stretch_mod.time_windows_creation"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="miic.core.stretch_mod.dv_panel_creation.html" title="miic.core.stretch_mod.dv_panel_creation"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">MIIC 1.0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../core.html" >MIIC Library Reference</a> &raquo;</li>
+          <li class="nav-item nav-item-2"><a href="../stretch_mod.html" >Signal stretching</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2012, Eraldo Pomponi.
+      Last updated on 2016-03-02T16:12:50.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,6 @@
+miic.core.pxcorr_func.signBitNormalization
+==========================================
+
+.. currentmodule:: miic.core.pxcorr_func
+
+.. autofunction:: signBitNormalization

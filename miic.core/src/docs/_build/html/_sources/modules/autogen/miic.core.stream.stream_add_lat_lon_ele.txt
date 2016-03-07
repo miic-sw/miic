@@ -1,0 +1,6 @@
+miic.core.stream.stream_add_lat_lon_ele
+=======================================
+
+.. currentmodule:: miic.core.stream
+
+.. autofunction:: stream_add_lat_lon_ele

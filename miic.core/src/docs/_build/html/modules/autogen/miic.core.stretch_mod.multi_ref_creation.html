@@ -1,0 +1,148 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>miic.core.stretch_mod.multi_ref_creation &mdash; MIIC 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="MIIC 1.0 documentation" href="../../index.html" />
+    <link rel="up" title="Signal stretching" href="../stretch_mod.html" />
+    <link rel="next" title="miic.core.stretch_mod.multi_ref_vchange_and_align" href="miic.core.stretch_mod.multi_ref_vchange_and_align.html" />
+    <link rel="prev" title="miic.core.stretch_mod.time_stretch_apply" href="miic.core.stretch_mod.time_stretch_apply.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="miic.core.stretch_mod.multi_ref_vchange_and_align.html" title="miic.core.stretch_mod.multi_ref_vchange_and_align"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="miic.core.stretch_mod.time_stretch_apply.html" title="miic.core.stretch_mod.time_stretch_apply"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">MIIC 1.0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../core.html" >MIIC Library Reference</a> &raquo;</li>
+          <li class="nav-item nav-item-2"><a href="../stretch_mod.html" accesskey="U">Signal stretching</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/modules/autogen/miic.core.stretch_mod.multi_ref_creation.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="miic-core-stretch-mod-multi-ref-creation">
+<h1>miic.core.stretch_mod.multi_ref_creation<a class="headerlink" href="#miic-core-stretch-mod-multi-ref-creation" title="Permalink to this headline">¶</a></h1>
+<dl class="function">
+<dt id="miic.core.stretch_mod.multi_ref_creation">
+<code class="descname">multi_ref_creation</code><span class="sig-paren">(</span><em>corr_mat</em>, <em>rtime</em>, <em>freq=30</em>, <em>use_break_point=False</em>, <em>break_point=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/miic/core/stretch_mod.html#multi_ref_creation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#miic.core.stretch_mod.multi_ref_creation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create the multi-reference traces</p>
+<p>This function creates multi-reference traces according with the given
+frequency.
+In case of a break-point is passed, the intervals to consider for the
+reference traces creation are symmetric respect to it.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>corr_mat</strong> (<code class="xref py py-class docutils literal"><span class="pre">ndarray</span></code>) &#8211; Correlation matrix with one correlation function on each
+row</li>
+<li><strong>rtime</strong> (<code class="xref py py-class docutils literal"><span class="pre">array</span></code> of <code class="xref py py-class docutils literal"><span class="pre">datetime</span></code> objects) &#8211; Time vector associated to the given correlation matrix. Its
+lenght must be equal to the numer of columns of the <cite>corr_mat</cite>
+parameter</li>
+<li><strong>freq</strong> (<em>int</em>) &#8211; One reference trace every <cite>freq</cite> days</li>
+<li><strong>use_break_point</strong> (<em>bool</em>) &#8211; If <cite>True</cite> the reference traces are calculated in
+different intervals of <cite>freq</cite> days symmetric respect to the
+<cite>break_point</cite></li>
+<li><strong>break_point</strong> (<em>string</em>) &#8211; Brake point expressed as &#8220;YYYY-MM-DD&#8221;</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="miic.core.stretch_mod.multi_ref_vchange_and_align.html" title="miic.core.stretch_mod.multi_ref_vchange_and_align"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="miic.core.stretch_mod.time_stretch_apply.html" title="miic.core.stretch_mod.time_stretch_apply"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">MIIC 1.0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../core.html" >MIIC Library Reference</a> &raquo;</li>
+          <li class="nav-item nav-item-2"><a href="../stretch_mod.html" >Signal stretching</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2012, Eraldo Pomponi.
+      Last updated on 2016-03-02T16:12:50.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </div>
+  </body>
+</html>

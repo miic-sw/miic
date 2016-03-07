@@ -1,0 +1,6 @@
+miic.core.stretch_mod.estimate_reftr_shifts_from_dt_corr
+========================================================
+
+.. currentmodule:: miic.core.stretch_mod
+
+.. autofunction:: estimate_reftr_shifts_from_dt_corr

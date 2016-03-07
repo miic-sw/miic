@@ -1,0 +1,6 @@
+miic.core.miic_utils.submat_x
+=============================
+
+.. currentmodule:: miic.core.miic_utils
+
+.. autofunction:: submat_x

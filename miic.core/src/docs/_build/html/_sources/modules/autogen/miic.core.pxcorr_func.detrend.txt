@@ -1,0 +1,6 @@
+miic.core.pxcorr_func.detrend
+=============================
+
+.. currentmodule:: miic.core.pxcorr_func
+
+.. autofunction:: detrend
