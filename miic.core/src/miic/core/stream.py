@@ -703,6 +703,9 @@ def read_from_filesystem(ID,starttime,endtime,fs,trim=True):
     :param trim: switch for trimming of the stream
     :type trim: bool
 
+    :rtype: `obspy.stream`
+    :return: data stream of requested data
+
     If the switch for trimming is False the whole stream in the files is
     returned.
 
@@ -733,11 +736,10 @@ def read_from_filesystem(ID,starttime,endtime,fs,trim=True):
     :Exapmple:
 
     Example for a station 'GJE' in network 'HEJSL' with channel 'BHZ' and
-    location '00' with the start time 2010-12-24_11:36:30 and
-    fs = ['base_dir','%Y','%b','%NET,['%j','_','%STA'','_T_',"%CHA('BH','')",
-                                  '.mseed']]
+    location '00' with the start time 2010-12-24_11:36:30 and \\
+    ``fs = ['base_dir','%Y','%b','%NET,['%j','_','%STA'','_T_',"%CHA('BH','')",'.mseed']]``
     will be translated in a linux filename
-    'base_dir/2010/Nov/HEJSL/317_GJE_T_Z.mseed'
+    ``base_dir/2010/Nov/HEJSL/317_GJE_T_Z.mseed``
 
     :Note:
 

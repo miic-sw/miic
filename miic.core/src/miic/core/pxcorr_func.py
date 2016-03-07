@@ -133,9 +133,28 @@ def pxcorr(comm,A,**kwargs):
     
     
 def detrend(A,args,params):
-    """ Remove trend from data. Two methods are possible.
-    demean or constant: substract mean of traces
-    linear: substract a least squares fittet linear trend form the data
+    """
+    Remove trend from data
+    
+    Remove the trend from the time series data in `A`. Several methods are \\
+    possible. The method is specified as the value of the `type` keyword in
+    the argument dictionary `args`.
+    
+    Possible `types` of detrending:
+       -`constant` or `demean`: substract mean of traces
+       
+       -`linear`: substract a least squares fitted linear trend form the data
+    
+    :type A: numpy.ndarray
+    :param A: time series data with time oriented along the first \\
+        dimension (columns)
+    :type args: dictionary
+    :param args: the only used keyword is `type`
+    :type params: dictionary
+    :param params: not used here
+    
+    :rtype: numpy.ndarray
+    :return: detrended time series data
     """
     # for compatibility with obspy
     if args['type'] == 'demean':
@@ -147,9 +166,36 @@ def detrend(A,args,params):
 
 
 def TDnormalization(A,args,params):
-    """ Time domain normalization.
-    Calculate the envelope of the filtered trace, smoth it in a window of
-    length windowlength and normalize the waveform by this value.
+    """
+    Amplitude dependent time domain normalization
+    
+    Calculate the envelope of the filtered trace, smooth it in a window of
+    length `windowLength` and normalize the waveform by this trace. The two
+    used keywords in `args` are `filter and `windowLength` that describe the
+    filter and the length of the envelope smoothing window, respectively.
+    
+    `args` has the following structure:
+    
+        args = {'windowLength':`length of the envelope smoothing window in \\
+        [s]`,'filter':{'type':`filterType`, fargs}}``
+            
+        `type` may be `bandpass` with the corresponding fargs `freqmin` and \\ 
+        `freqmax` or `highpass`/`lowpass` with the `fargs` `freqmin`/`freqmax`
+            
+        :Example:  
+        ``args = {'windowLength':5,'filter':{'type':'bandpass','freqmin':0.5,
+        'freqmax':2.}}``
+        
+    :type A: numpy.ndarray
+    :param A: time series data with time oriented along the first \\
+        dimension (columns)
+    :type args: dictionary
+    :param args: arguments dictionary as described above
+    :type params: dictionary
+    :param params: not used here
+    
+    :rtype: numpy.ndarray
+    :return: normalized time series data
     """
     # filter if args['filter']
     B = deepcopy(A)
@@ -177,7 +223,32 @@ def TDnormalization(A,args,params):
 
 
 def taper(A,args,params):
-    """ Apply a taper to the time series.
+    """
+    Taper to the time series data
+    
+    Apply a simple taper to the time series data.
+    
+    `args` has the following structure:
+    
+        args = {'type':`type of taper`,taper_args}``
+            
+        `type` may be `cosTaper` with the corresponding taper_args `p` the 
+        percentage of the traces to taper. Possibilities of `type` are \\
+        given by `obspy.signal`.
+            
+        :Example:  
+        ``args = {'type':'cosTaper','p':0.1}``
+    
+    :type A: numpy.ndarray
+    :param A: time series data with time oriented along the first \\
+        dimension (columns)
+    :type args: dictionary
+    :param args: arguments dictionary as described above
+    :type params: dictionary
+    :param params: not used here
+    
+    :rtype: numpy.ndarray
+    :return: tapered time series data
     """
     if args['type'] == 'cosTaper':
         func = osignal.invsim.cosTaper
@@ -191,9 +262,26 @@ def taper(A,args,params):
 
 
 def clip(A,args,params):
-    """ Clip traces at a certain factor time the standard deviation.
-    args['std_factor']: scaling factor for the standard deviation.
-    Make sure traces are demeaned befor clipping.
+    """
+    Clip time series data at a multiple of the standard deviation
+    
+    Set amplitudes exeeding a certatin threshold to this threshold.
+    The threshold for clipping is estimated as the standard deviation of each
+    trace times a factor specified in `args`.
+    
+    :Note: Traces should be demeaned before clipping.
+        
+    :type A: numpy.ndarray
+    :param A: time series data with time oriented along the first \\
+        dimension (columns)
+    :type args: dictionary
+    :param args: the only keyword allowed is `std_factor` describing the \\
+        scaling of the standard deviation for the clipping threshold
+    :type params: dictionary
+    :param params: not used here
+    
+    :rtype: numpy.ndarray
+    :return: clipped time series data
     """
     stds = np.std(A,axis=0)
     print stds
@@ -205,7 +293,31 @@ def clip(A,args,params):
 
 
 def TDfilter(A,args,params):
-    """ Filter data in A according to the arguments in args
+    """
+    Filter time series data
+    
+    Filter in time domain. Types of filters are defined by `obspy.signal`.
+    
+    `args` has the following structure:
+    
+        args = {'type':`filterType`, fargs}``
+            
+        `type` may be `bandpass` with the corresponding fargs `freqmin` and \\ 
+        `freqmax` or `highpass`/`lowpass` with the `fargs` `freqmin`/`freqmax`
+            
+        :Example:  
+        ``args = {'type':'bandpass','freqmin':0.5,'freqmax':2.}``
+        
+    :type A: numpy.ndarray
+    :param A: time series data with time oriented along the first \\
+        dimension (columns)
+    :type args: dictionary
+    :param args: arguments dictionary as described above
+    :type params: dictionary
+    :param params: not used here
+    
+    :rtype: numpy.ndarray
+    :return: filtered time series data
     """
     func = getattr(osignal,args['type'])
     args = deepcopy(args)
@@ -216,7 +328,21 @@ def TDfilter(A,args,params):
 
 
 def normalizeStandardDeviation(A,args,params):
-    """ Divide the traces by their standard deviation
+    """
+    Divide the time series by their standard deviation
+    
+    Divide the amplitudes of each trace by its standard deviation.
+    
+    :type A: numpy.ndarray
+    :param A: time series data with time oriented along the first \\
+        dimension (columns)
+    :type args: dictionary
+    :param args: not used here
+    :type params: dictionary
+    :param params: not used here
+    
+    :rtype: numpy.ndarray
+    :return: normalized time series data
     """
     std = np.std(A,axis=0)
     A /= np.tile(std,(A.shape[0],1))
@@ -224,20 +350,57 @@ def normalizeStandardDeviation(A,args,params):
     
     
 def signBitNormalization(A,args,params):
-    """ One bit normalization
+    """
+    One bit normalization of time series data
+    
+    Return the sign of the samples (-1, 0, 1).
+    
+    :type A: numpy.ndarray
+    :param A: time series data with time oriented along the first \\
+        dimension (columns)
+    :type args: dictionary
+    :param args: not used here
+    :type params: dictionary
+    :param params: not used here
+    
+    :rtype: numpy.ndarray
+    :return: 1-bit normalized time series data
     """
     return np.sign(A)
 
 
 def zeroPadding(A,args,params):
-    """ Append zeros to the traces to a length of a power of two for fast
-    FFT and to avoid wrap around effects.
+    """
+    Append zeros to the traces 
+    
+    Pad traces with zeros to increase the speed of the Fourier transforms and
+    to avoid wrap around effects. Three possibilities for the length of the 
+    padding can be set in `args['type']`
+    
+        -`nextPowerOfTwo`: traces are padded to a length that is the next power \\
+            of two from the original length
+        -`avoidWrapAround`: depending on length of the trace that is to be used \\
+            the padded part is just long enough to avoid wrap around
+        -`avoidWrapPowerTwo`: use the next power of two that avoids wrap around
+        
+        :Example: ``args = {'type':'avoidWrapPowerTwo'}``
+    
+    :type A: numpy.ndarray
+    :param A: time series data with time oriented along the first \\
+        dimension (columns)
+    :type args: dictionary
+    :param args: arguments dictionary as described above
+    :type params: dictionary
+    :param params: not used here
+    
+    :rtype: numpy.ndarray
+    :return: zero padded time series data
     """
     npts,ntrc = A.shape
     if args['type'] == 'nextPowerOfTwo':
         N = osignal.util.nextpow2(npts)
     elif args['type'] == 'avoidWrapAround':
-        N = npts + args['sampling_rate'] * args['lengthToSave']
+        N = npts + params['sampling_rate'] * params['lengthToSave']
     elif args['type'] == 'avoidWrapPowerTwo':
         N = osignal.util.nextpow2(npts + params['sampling_rate'] *
                                   params['lengthToSave'])
@@ -249,11 +412,25 @@ def zeroPadding(A,args,params):
     
 
 def spectralWhitening(B,args,params):
-    """ Spectal whitening of a matrix containing the Fourier-transformed time
-    series in the columns. If the args dictionary contains a key joint_norm
-    that is True the normalization assumes that three component traces are
-    present and normlized sets of three trace by their mean amplitude spectrum.
-    This is useful when ZNE componets should be rotated in ZRT later on.
+    """
+    Spectal whitening of Fourier-transformed date
+
+    Normalize the amplitude spectrum of the complex spectra in `B`. The
+    `args` dictionary may contain the keyword `joint_norm`. If its value is
+    True the normalization of sets of three traces are normalized jointly by
+    the mean of their amplitude spectra. This is useful for later rotation of
+    correlated traces in the ZNE system into the ZRT system.
+    
+    :type B: numpy.ndarray
+    :param B: Fourier transformed time series data with frequency oriented\\
+        along the first dimension (columns)
+    :type args: dictionary
+    :param args: arguments dictionary as described above
+    :type params: dictionary
+    :param params: not used here
+    
+    :rtype: numpy.ndarray
+    :return: whitened spectal data
     """
     absB = np.absolute(B)
     print 'args', args
@@ -264,7 +441,8 @@ def spectralWhitening(B,args,params):
                       of traces needs to the multiple of 3: %d" % B.shape[0]
             for ii in np.arange(0,B.shape[1],3):
                 print 'ii', ii
-                absB[:,ii:ii+3] = np.tile(np.atleast_2d(np.mean(absB[:,ii:ii+3],axis=1)).T,[1,3])
+                absB[:,ii:ii+3] = np.tile(np.atleast_2d(
+                                    np.mean(absB[:,ii:ii+3],axis=1)).T,[1,3])
             print 'here', absB
     B /= absB
     # remove zero freq component 
@@ -273,7 +451,26 @@ def spectralWhitening(B,args,params):
     
     
 def FDfilter(B,args,params):
-    """ Filter Fourier-transformed data by tapering in frequency domain.
+    """
+    Filter Fourier-transformed data
+
+    Filter Fourier tranformed data by tapering in frequency domain. The `args`
+    dictionary is supposed to contain the key `flimit` with a value that is a 
+    four element list or tuple defines the corner frequencies (f1, f2, f3, f4)
+    in Hz of the cosine taper which is one between f2 and f3 and tapers to zero
+    for f1 < f < f2 and f3 < f < f4.
+
+    :type B: numpy.ndarray
+    :param B: Fourier transformed time series data with frequency oriented\\
+        along the first dimension (columns)
+    :type args: dictionary
+    :param args: arguments dictionary as described above
+    :type params: dictionary
+    :param params: params['freqs'] contains an array with the freqency values
+        of the samples in `B`
+    
+    :rtype: numpy.ndarray
+    :return: filtered spectal data
     """
     args = deepcopy(args)
     args.update({'freqs':params['freqs']})
@@ -283,18 +480,31 @@ def FDfilter(B,args,params):
     
 
 def FDsignBitNormalization(B,args,params):
-    """ Perform a sign bit normalization of frequency transformed data.
-    This operation requires two Fourier transforms and is thus quite costly
-    here but alows to be performed after other steps of frequency domain
-    procesing.
+    """
+    Sign bit normalization of frequency transformed data
+    
+    Divides each sample by its amplitude resulting in trace with amplidues of
+    (-1, 0, 1). As this operation is done in frequency domain it requires two
+    Fourier transforms and is thus quite costly but alows to be performed 
+    after other steps of frequency domain procesing e.g. whitening.
+    
+
+    :type B: numpy.ndarray
+    :param B: Fourier transformed time series data with frequency oriented\\
+        along the first dimension (columns)
+    :type args: dictionary
+    :param args: not used in this function
+    :type params: dictionary
+    :param params: not used in this function
+      
+    :rtype: numpy.ndarray
+    :return: frequency transform of the 1-bit normalized data
     """
     B = np.fft.irfft(B,axis=0)
     C = B.real
     C = np.sign(B)
     return np.fft.rfft(C,axis=0)
-    
-    
-    
+     
     
 def rfftfreq(n, d=1.0):
     """
@@ -348,8 +558,78 @@ def rfftfreq(n, d=1.0):
     
 
 def stream_pxcorr(st,options,comm=None):
-    """ accepts an obspy stream feeds it into pxcorr and creates a
-    correlation stream from its output.
+    """ 
+    Preprocess and correlate traces in a stream
+
+    This is the central function of this module. It takes an obspy.stram input
+    stream applies and:
+        - applies time domain preprocesing
+        - Fourier transforms the data
+        - applies frequency domain preprocessing
+        - multiplies the conjugate spectra (correlation)
+        - transforms back into time domain
+        - returns a stream with the correlated data
+
+    All this can be done in parallel on different CPU communicating via
+    the `mpi4py` implementation of MPI. Control the different processing steps
+    are controlled with the dictionary `options`. The following keys are
+    required in `options`:
+        - combinations: list of tuples that identify the combinations of the\\
+            traces in `st` to be correlated
+        - lengthToSave: length of the correlated traces in s to return
+        - normalize_correlation: Boolean. If True the correaltion is\\
+            normalized. If False the pure product of the spectra is returned
+        - center_correlation: Boolean. If True th location of zero lag time\\
+            is in the center of the returned trace. If False the position of\\
+            zero lag time is determined by the start times of the traces. If\\
+            they are identical it is in the center anyway. If the difference \\
+            in start times is larger the zero lag time is offset.
+        - TDpreProcessing: list controlling the time domain preprocessing
+        - FDpreProcessing: list controlling the frequency domain preprocessing
+
+    The item in the list `TDpreProcessing` and `FDpreProcessing` are 
+    dictionaries with two keys: `function` containing the function to apply and
+    `args` being a dictionary with the arguments for this function. The
+    functions in `TDpreProcessing` are applied in their order before the
+    Fourier transformation and those in FDpreProcessing` are applied in their
+    order Fourier domain.
+
+    :Example:
+        ``options = {'TDpreProcessing':[{'function':detrend,
+                                'args':{'type':'linear'}},
+                               {'function':taper,
+                                'args':{'type':'cosTaper',
+                                        'p':0.01}},
+                               {'function':TDfilter,
+                                'args':{'type':'bandpass',
+                                        'freqmin':1.,
+                                        'freqmax':3.}},
+                               {'function':TDnormalization,
+                                'args':{'filter':{'type':'bandpass',
+                                                 'freqmin':0.5,
+                                                 'freqmax':2.},
+                                        'windowLength':1.}},
+                               {'function':signBitNormalization,
+                                'args':{}}
+                                 ],
+            'FDpreProcessing':[{'function':spectralWhitening,
+                                'args':{}},
+                               {'function':FDfilter,
+                                'args':{'flimit':[0.5, 1., 5., 7.]}}],
+            'lengthToSave':20,
+            'center_correlation':True,
+            'normalize_correlation':True,
+            'combinations':[(0,0),(0,1),(0,2),(1,2)]}``
+    
+    `comm` is a mpi4py communicator that can be passed if already initialized
+    otherwise it is created here.
+
+    :type st: obspy.stream
+    :param st: stream with traces to be correlated
+    :type options: dictionary
+    :param options: controll dictionary as described above
+    :type comm: mpi4py communicator
+    :param comm: communicator if initialized externally
     """
     
     # initialize MPI
@@ -400,7 +680,8 @@ def stream_pxcorr(st,options,comm=None):
 
 
 def calc_cross_combis(st, method='betweenStations'):
-    """ Calculate a list of all cross correlation combination
+    """
+    Calculate a list of all cross correlation combination
     of traces in the stream: i.e. all combination with two different
     stations involved.
 
