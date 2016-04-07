@@ -32,7 +32,6 @@ This module implements a suite of functions that allow
         
         ~spectralWhitening
         ~stream_pxcorr
-        ~calc_cross_combis
         ~FDsignBitNormalization
         
         
@@ -42,4 +41,5 @@ This module implements a suite of functions that allow
         :toctree: autogen
         :nosignatures:
 
+        ~calc_cross_combis
         ~stream_pxcorr

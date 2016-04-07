@@ -21,4 +21,5 @@ Objects.
        ~stream_downsample
        ~stream_filter
        ~trace_sym_pad_shrink_to_npts
+       ~corr_trace_to_obspy
   

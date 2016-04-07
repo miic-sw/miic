@@ -1,0 +1,6 @@
+miic.core.stream.corr_trace_to_obspy
+====================================
+
+.. currentmodule:: miic.core.stream
+
+.. autofunction:: corr_trace_to_obspy
