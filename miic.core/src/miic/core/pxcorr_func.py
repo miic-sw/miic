@@ -687,12 +687,13 @@ def calc_cross_combis(st, method='betweenStations'):
 
     :type method: string
     :param method: Determines which traces of the strem are combined.
+    
         ``'betweenStations'``: Traces are combined if either their station or
             their network names are different.
         ``'betweenComponents'``: Traces are combined if their components (last
             letter of channel name) names are different and their station and
             network names are identical (single station cross-correlation).
-        ``'autoComponents'```: Traces are combined only with themselves.
+        ``'autoComponents'``: Traces are combined only with themselves.
     """
 
     combis = []
