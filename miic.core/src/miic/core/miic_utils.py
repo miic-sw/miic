@@ -271,6 +271,22 @@ if BC_UI:
             self._num_files = len(self._file_list_preview)
 
 
+zerotime = UTCDateTime(1971,1,1)
+
+def create_path(subpath):
+    """Create a given path with all preceeding parts.
+
+    Provided there is write access the function will creates
+    all levels of the given path.
+    """
+
+    if not os.path.exists(subpath):
+        os.makedirs(subpath)
+    else:
+        assert os.path.isdir(subpath), "%s exists but is not a directory" % subpath
+    return 0
+
+
 def ndarray_to_mat(nd_array, base_dir=None, filename="canvas_mat.mat", \
                    mat_var_name='corr_data'):
     """ Save an ndarray to a Matlab file.

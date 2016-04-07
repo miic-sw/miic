@@ -105,15 +105,15 @@ def _smooth(x, window_len=10, window='hanning'):
     return y[window_len - 1:-window_len + 1]
 
 
-def corr_mat_smooth(corr_mat, wsize, wtype, axis=1):
-    """ Moving average filter using a window with requested size.
+def corr_mat_smooth(corr_mat, wsize, wtype='flat', axis=1):
+    """ Smoothing of a correlation matrix.
 
-    This method is based on the convolution of a scaled window with the
-    signal. It is applied along the specified ``axis``.
-    Each row/col (i.e. depending on the selected ``axis``) is "prepared" by
-    introducing reflected copies of it (with the window size) in both ends so
-    that transient parts are minimized in the beginning and end part of the
-    resulting array.
+    Smoothes the correlation matrix with a given window function of the given
+    width along the given axis. This method is based on the convolution of a
+    scaled window with the signal. Each row/col (i.e. depending on the selected
+    ``axis``) is "prepared" by introducing reflected copies of it (with the
+    window size) in both ends so that transient parts are minimized in the
+    beginning and end part of the resulting array.
 
     :type corr_mat: dictionary of the type correlation matrix
     :param corr_mat: correlation matrix to be smoothed
@@ -121,10 +121,11 @@ def corr_mat_smooth(corr_mat, wsize, wtype, axis=1):
     :param wsize: Window size
     :type wtype: string
     :param wtype: Window type. It can be one of:
-            ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']
+            ['flat', 'hanning', 'hamming', 'bartlett', 'blackman'] defaults to
+            'flat'
     :type axis: int
-    :param axis: Axis along with apply the filter. O: row by row
-                                                   1: col by col
+    :param axis: Axis along with apply the filter. O: smooth along correlation
+              lag time axis 1: smooth along time axis
 
     :rtype: :class:`~numpy.ndarray`
     :return: **X**: Filtered matrix
@@ -138,7 +139,8 @@ def corr_mat_smooth(corr_mat, wsize, wtype, axis=1):
         raise ValueError("Error: corr_mat is not a valid correlation_matix \
             dictionary.")
 
-    mat = corr_mat['corr_data']
+    rcorr_mat = deepcopy(corr_mat)
+    mat = rcorr_mat['corr_data']
 
     # Degenerated corr_mat: single vector
     try:
@@ -160,9 +162,7 @@ def corr_mat_smooth(corr_mat, wsize, wtype, axis=1):
             scsig = _smooth(csig, window_len=wsize, window=wtype)
             mat[:, i] = scsig
 
-    corr_mat['corr_data'] = mat
-
-    return corr_mat
+    return rcorr_mat
 
 
 if BC_UI:
