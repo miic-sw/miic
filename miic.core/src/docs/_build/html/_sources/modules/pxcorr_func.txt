@@ -43,3 +43,5 @@ This module implements a suite of functions that allow
 
         ~calc_cross_combis
         ~stream_pxcorr
+        ~rotate_multi_corr_stream
+

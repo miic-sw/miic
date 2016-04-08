@@ -111,6 +111,21 @@ GNU Lesser General Public License, Version 3
 <tr class="row-even"><td><a class="reference internal" href="autogen/miic.core.miic_utils.archive_code.html#miic.core.miic_utils.archive_code" title="miic.core.miic_utils.archive_code"><code class="xref py py-obj docutils literal"><span class="pre">archive_code</span></code></a></td>
 <td>Read parameters and archive code</td>
 </tr>
+<tr class="row-odd"><td><a class="reference internal" href="autogen/miic.core.miic_utils.create_path.html#miic.core.miic_utils.create_path" title="miic.core.miic_utils.create_path"><code class="xref py py-obj docutils literal"><span class="pre">create_path</span></code></a></td>
+<td>Create a given path with all preceeding parts.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="autogen/miic.core.miic_utils.mat_to_ndarray.html#miic.core.miic_utils.mat_to_ndarray" title="miic.core.miic_utils.mat_to_ndarray"><code class="xref py py-obj docutils literal"><span class="pre">mat_to_ndarray</span></code></a></td>
+<td>Load a Matlab file into a dictionary.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="autogen/miic.core.miic_utils.lat_lon_ele_load.html#miic.core.miic_utils.lat_lon_ele_load" title="miic.core.miic_utils.lat_lon_ele_load"><code class="xref py py-obj docutils literal"><span class="pre">lat_lon_ele_load</span></code></a></td>
+<td>Load lat lon and ele from a tab delimited file.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="autogen/miic.core.miic_utils.convert_time.html#miic.core.miic_utils.convert_time" title="miic.core.miic_utils.convert_time"><code class="xref py py-obj docutils literal"><span class="pre">convert_time</span></code></a></td>
+<td>Convert a list/array of timestaps in a array of datetime.datetime obj</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="autogen/miic.core.miic_utils.convert_time_to_string.html#miic.core.miic_utils.convert_time_to_string" title="miic.core.miic_utils.convert_time_to_string"><code class="xref py py-obj docutils literal"><span class="pre">convert_time_to_string</span></code></a></td>
+<td>Convert a list/array of datetime.datetime obj to an array of strings</td>
+</tr>
 </tbody>
 </table>
 </div>
@@ -140,98 +155,92 @@ GNU Lesser General Public License, Version 3
 <tr class="row-even"><td><a class="reference internal" href="autogen/miic.core.miic_utils.ndarray_to_mat.html#miic.core.miic_utils.ndarray_to_mat" title="miic.core.miic_utils.ndarray_to_mat"><code class="xref py py-obj docutils literal"><span class="pre">ndarray_to_mat</span></code></a></td>
 <td>Save an ndarray to a Matlab file.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="autogen/miic.core.miic_utils.mat_to_ndarray.html#miic.core.miic_utils.mat_to_ndarray" title="miic.core.miic_utils.mat_to_ndarray"><code class="xref py py-obj docutils literal"><span class="pre">mat_to_ndarray</span></code></a></td>
-<td>Load a Matlab file into a dictionary.</td>
-</tr>
-<tr class="row-even"><td><a class="reference internal" href="autogen/miic.core.miic_utils.convert_to_matlab.html#miic.core.miic_utils.convert_to_matlab" title="miic.core.miic_utils.convert_to_matlab"><code class="xref py py-obj docutils literal"><span class="pre">convert_to_matlab</span></code></a></td>
+<tr class="row-odd"><td><a class="reference internal" href="autogen/miic.core.miic_utils.convert_to_matlab.html#miic.core.miic_utils.convert_to_matlab" title="miic.core.miic_utils.convert_to_matlab"><code class="xref py py-obj docutils literal"><span class="pre">convert_to_matlab</span></code></a></td>
 <td>Save an ObsPy Stream to a series of Matlab files.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="autogen/miic.core.miic_utils.stack.html#miic.core.miic_utils.stack" title="miic.core.miic_utils.stack"><code class="xref py py-obj docutils literal"><span class="pre">stack</span></code></a></td>
+<tr class="row-even"><td><a class="reference internal" href="autogen/miic.core.miic_utils.stack.html#miic.core.miic_utils.stack" title="miic.core.miic_utils.stack"><code class="xref py py-obj docutils literal"><span class="pre">stack</span></code></a></td>
 <td>Stacks together arrays of compatible size.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="autogen/miic.core.miic_utils.clear_global_X.html#miic.core.miic_utils.clear_global_X" title="miic.core.miic_utils.clear_global_X"><code class="xref py py-obj docutils literal"><span class="pre">clear_global_X</span></code></a></td>
+<tr class="row-odd"><td><a class="reference internal" href="autogen/miic.core.miic_utils.clear_global_X.html#miic.core.miic_utils.clear_global_X" title="miic.core.miic_utils.clear_global_X"><code class="xref py py-obj docutils literal"><span class="pre">clear_global_X</span></code></a></td>
 <td>Reset the global variable <code class="docutils literal"><span class="pre">X</span></code> to None</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="autogen/miic.core.miic_utils.submat_x.html#miic.core.miic_utils.submat_x" title="miic.core.miic_utils.submat_x"><code class="xref py py-obj docutils literal"><span class="pre">submat_x</span></code></a></td>
+<tr class="row-even"><td><a class="reference internal" href="autogen/miic.core.miic_utils.submat_x.html#miic.core.miic_utils.submat_x" title="miic.core.miic_utils.submat_x"><code class="xref py py-obj docutils literal"><span class="pre">submat_x</span></code></a></td>
 <td>Extract a sub-matrix from a matrix <code class="docutils literal"><span class="pre">X</span></code> along the x-axis (columns)</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="autogen/miic.core.miic_utils.submat_y.html#miic.core.miic_utils.submat_y" title="miic.core.miic_utils.submat_y"><code class="xref py py-obj docutils literal"><span class="pre">submat_y</span></code></a></td>
+<tr class="row-odd"><td><a class="reference internal" href="autogen/miic.core.miic_utils.submat_y.html#miic.core.miic_utils.submat_y" title="miic.core.miic_utils.submat_y"><code class="xref py py-obj docutils literal"><span class="pre">submat_y</span></code></a></td>
 <td>Extract a sub-matrix from a matrix <code class="docutils literal"><span class="pre">X</span></code> along the y-axis (rows).</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="autogen/miic.core.miic_utils.nd_mat_center_part.html#miic.core.miic_utils.nd_mat_center_part" title="miic.core.miic_utils.nd_mat_center_part"><code class="xref py py-obj docutils literal"><span class="pre">nd_mat_center_part</span></code></a></td>
+<tr class="row-even"><td><a class="reference internal" href="autogen/miic.core.miic_utils.nd_mat_center_part.html#miic.core.miic_utils.nd_mat_center_part" title="miic.core.miic_utils.nd_mat_center_part"><code class="xref py py-obj docutils literal"><span class="pre">nd_mat_center_part</span></code></a></td>
 <td>Extract the &#8220;central&#8221; part of a matrix.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="autogen/miic.core.miic_utils.matrix_product.html#miic.core.miic_utils.matrix_product" title="miic.core.miic_utils.matrix_product"><code class="xref py py-obj docutils literal"><span class="pre">matrix_product</span></code></a></td>
+<tr class="row-odd"><td><a class="reference internal" href="autogen/miic.core.miic_utils.matrix_product.html#miic.core.miic_utils.matrix_product" title="miic.core.miic_utils.matrix_product"><code class="xref py py-obj docutils literal"><span class="pre">matrix_product</span></code></a></td>
 <td>Simple matrix product using np.dot</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="autogen/miic.core.miic_utils.collapse_to_single_vect.html#miic.core.miic_utils.collapse_to_single_vect" title="miic.core.miic_utils.collapse_to_single_vect"><code class="xref py py-obj docutils literal"><span class="pre">collapse_to_single_vect</span></code></a></td>
+<tr class="row-even"><td><a class="reference internal" href="autogen/miic.core.miic_utils.collapse_to_single_vect.html#miic.core.miic_utils.collapse_to_single_vect" title="miic.core.miic_utils.collapse_to_single_vect"><code class="xref py py-obj docutils literal"><span class="pre">collapse_to_single_vect</span></code></a></td>
 <td>Collapse a matrix to a single normalized vector along a defined axis.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="autogen/miic.core.miic_utils.find_comb.html#miic.core.miic_utils.find_comb" title="miic.core.miic_utils.find_comb"><code class="xref py py-obj docutils literal"><span class="pre">find_comb</span></code></a></td>
+<tr class="row-odd"><td><a class="reference internal" href="autogen/miic.core.miic_utils.find_comb.html#miic.core.miic_utils.find_comb" title="miic.core.miic_utils.find_comb"><code class="xref py py-obj docutils literal"><span class="pre">find_comb</span></code></a></td>
 <td>Find all possible combinations written in the filenames</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="autogen/miic.core.miic_utils.from_str_to_datetime.html#miic.core.miic_utils.from_str_to_datetime" title="miic.core.miic_utils.from_str_to_datetime"><code class="xref py py-obj docutils literal"><span class="pre">from_str_to_datetime</span></code></a></td>
+<tr class="row-even"><td><a class="reference internal" href="autogen/miic.core.miic_utils.from_str_to_datetime.html#miic.core.miic_utils.from_str_to_datetime" title="miic.core.miic_utils.from_str_to_datetime"><code class="xref py py-obj docutils literal"><span class="pre">from_str_to_datetime</span></code></a></td>
 <td>Convert a dash separated string date in a datetime object.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="autogen/miic.core.miic_utils.extract_time_vect.html#miic.core.miic_utils.extract_time_vect" title="miic.core.miic_utils.extract_time_vect"><code class="xref py py-obj docutils literal"><span class="pre">extract_time_vect</span></code></a></td>
+<tr class="row-odd"><td><a class="reference internal" href="autogen/miic.core.miic_utils.extract_time_vect.html#miic.core.miic_utils.extract_time_vect" title="miic.core.miic_utils.extract_time_vect"><code class="xref py py-obj docutils literal"><span class="pre">extract_time_vect</span></code></a></td>
 <td>Extract time vector from filenames.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="autogen/miic.core.miic_utils.norm1.html#miic.core.miic_utils.norm1" title="miic.core.miic_utils.norm1"><code class="xref py py-obj docutils literal"><span class="pre">norm1</span></code></a></td>
+<tr class="row-even"><td><a class="reference internal" href="autogen/miic.core.miic_utils.norm1.html#miic.core.miic_utils.norm1" title="miic.core.miic_utils.norm1"><code class="xref py py-obj docutils literal"><span class="pre">norm1</span></code></a></td>
 <td>Matrix normalization.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="autogen/miic.core.miic_utils.transpose.html#miic.core.miic_utils.transpose" title="miic.core.miic_utils.transpose"><code class="xref py py-obj docutils literal"><span class="pre">transpose</span></code></a></td>
+<tr class="row-odd"><td><a class="reference internal" href="autogen/miic.core.miic_utils.transpose.html#miic.core.miic_utils.transpose" title="miic.core.miic_utils.transpose"><code class="xref py py-obj docutils literal"><span class="pre">transpose</span></code></a></td>
 <td>Transpose the matrix <code class="docutils literal"><span class="pre">X</span></code></td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="autogen/miic.core.miic_utils.reshape_mat_to_vect.html#miic.core.miic_utils.reshape_mat_to_vect" title="miic.core.miic_utils.reshape_mat_to_vect"><code class="xref py py-obj docutils literal"><span class="pre">reshape_mat_to_vect</span></code></a></td>
+<tr class="row-even"><td><a class="reference internal" href="autogen/miic.core.miic_utils.reshape_mat_to_vect.html#miic.core.miic_utils.reshape_mat_to_vect" title="miic.core.miic_utils.reshape_mat_to_vect"><code class="xref py py-obj docutils literal"><span class="pre">reshape_mat_to_vect</span></code></a></td>
 <td>Reshape the matrix elements to obtain a 1D array.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="autogen/miic.core.miic_utils.nd_nan_to_num.html#miic.core.miic_utils.nd_nan_to_num" title="miic.core.miic_utils.nd_nan_to_num"><code class="xref py py-obj docutils literal"><span class="pre">nd_nan_to_num</span></code></a></td>
+<tr class="row-odd"><td><a class="reference internal" href="autogen/miic.core.miic_utils.nd_nan_to_num.html#miic.core.miic_utils.nd_nan_to_num" title="miic.core.miic_utils.nd_nan_to_num"><code class="xref py py-obj docutils literal"><span class="pre">nd_nan_to_num</span></code></a></td>
 <td>Replace NaNs with 0 and +-Inf with +-large number.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="autogen/miic.core.miic_utils.combinations.html#miic.core.miic_utils.combinations" title="miic.core.miic_utils.combinations"><code class="xref py py-obj docutils literal"><span class="pre">combinations</span></code></a></td>
+<tr class="row-even"><td><a class="reference internal" href="autogen/miic.core.miic_utils.combinations.html#miic.core.miic_utils.combinations" title="miic.core.miic_utils.combinations"><code class="xref py py-obj docutils literal"><span class="pre">combinations</span></code></a></td>
 <td>Create the list of combinations.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="autogen/miic.core.miic_utils.comb_with_missed_stations.html#miic.core.miic_utils.comb_with_missed_stations" title="miic.core.miic_utils.comb_with_missed_stations"><code class="xref py py-obj docutils literal"><span class="pre">comb_with_missed_stations</span></code></a></td>
+<tr class="row-odd"><td><a class="reference internal" href="autogen/miic.core.miic_utils.comb_with_missed_stations.html#miic.core.miic_utils.comb_with_missed_stations" title="miic.core.miic_utils.comb_with_missed_stations"><code class="xref py py-obj docutils literal"><span class="pre">comb_with_missed_stations</span></code></a></td>
 <td>Create the list of combinations.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="autogen/miic.core.miic_utils.nd_save.html#miic.core.miic_utils.nd_save" title="miic.core.miic_utils.nd_save"><code class="xref py py-obj docutils literal"><span class="pre">nd_save</span></code></a></td>
+<tr class="row-even"><td><a class="reference internal" href="autogen/miic.core.miic_utils.nd_save.html#miic.core.miic_utils.nd_save" title="miic.core.miic_utils.nd_save"><code class="xref py py-obj docutils literal"><span class="pre">nd_save</span></code></a></td>
 <td>Save an ndarray in the original NumPy format.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="autogen/miic.core.miic_utils.nd_load.html#miic.core.miic_utils.nd_load" title="miic.core.miic_utils.nd_load"><code class="xref py py-obj docutils literal"><span class="pre">nd_load</span></code></a></td>
+<tr class="row-odd"><td><a class="reference internal" href="autogen/miic.core.miic_utils.nd_load.html#miic.core.miic_utils.nd_load" title="miic.core.miic_utils.nd_load"><code class="xref py py-obj docutils literal"><span class="pre">nd_load</span></code></a></td>
 <td>Load an ndarray from a file in NumPy format (.npy)</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="autogen/miic.core.miic_utils.nd_toList.html#miic.core.miic_utils.nd_toList" title="miic.core.miic_utils.nd_toList"><code class="xref py py-obj docutils literal"><span class="pre">nd_toList</span></code></a></td>
+<tr class="row-even"><td><a class="reference internal" href="autogen/miic.core.miic_utils.nd_toList.html#miic.core.miic_utils.nd_toList" title="miic.core.miic_utils.nd_toList"><code class="xref py py-obj docutils literal"><span class="pre">nd_toList</span></code></a></td>
 <td>Convert a numpz arraz to a list</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="autogen/miic.core.miic_utils.load_matlab_file.html#miic.core.miic_utils.load_matlab_file" title="miic.core.miic_utils.load_matlab_file"><code class="xref py py-obj docutils literal"><span class="pre">load_matlab_file</span></code></a></td>
+<tr class="row-odd"><td><a class="reference internal" href="autogen/miic.core.miic_utils.load_matlab_file.html#miic.core.miic_utils.load_matlab_file" title="miic.core.miic_utils.load_matlab_file"><code class="xref py py-obj docutils literal"><span class="pre">load_matlab_file</span></code></a></td>
 <td>Load variables from MatLab file.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="autogen/miic.core.miic_utils.enum_list.html#miic.core.miic_utils.enum_list" title="miic.core.miic_utils.enum_list"><code class="xref py py-obj docutils literal"><span class="pre">enum_list</span></code></a></td>
+<tr class="row-even"><td><a class="reference internal" href="autogen/miic.core.miic_utils.enum_list.html#miic.core.miic_utils.enum_list" title="miic.core.miic_utils.enum_list"><code class="xref py py-obj docutils literal"><span class="pre">enum_list</span></code></a></td>
 <td>Enumerate a list</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="autogen/miic.core.miic_utils.to_str.html#miic.core.miic_utils.to_str" title="miic.core.miic_utils.to_str"><code class="xref py py-obj docutils literal"><span class="pre">to_str</span></code></a></td>
+<tr class="row-odd"><td><a class="reference internal" href="autogen/miic.core.miic_utils.to_str.html#miic.core.miic_utils.to_str" title="miic.core.miic_utils.to_str"><code class="xref py py-obj docutils literal"><span class="pre">to_str</span></code></a></td>
 <td>Convert a variable to string</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="autogen/miic.core.miic_utils.nd_size.html#miic.core.miic_utils.nd_size" title="miic.core.miic_utils.nd_size"><code class="xref py py-obj docutils literal"><span class="pre">nd_size</span></code></a></td>
+<tr class="row-even"><td><a class="reference internal" href="autogen/miic.core.miic_utils.nd_size.html#miic.core.miic_utils.nd_size" title="miic.core.miic_utils.nd_size"><code class="xref py py-obj docutils literal"><span class="pre">nd_size</span></code></a></td>
 <td>Return and print the shape of an ndarray</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="autogen/miic.core.miic_utils.fold_acausal.html#miic.core.miic_utils.fold_acausal" title="miic.core.miic_utils.fold_acausal"><code class="xref py py-obj docutils literal"><span class="pre">fold_acausal</span></code></a></td>
+<tr class="row-odd"><td><a class="reference internal" href="autogen/miic.core.miic_utils.fold_acausal.html#miic.core.miic_utils.fold_acausal" title="miic.core.miic_utils.fold_acausal"><code class="xref py py-obj docutils literal"><span class="pre">fold_acausal</span></code></a></td>
 <td>Fold the acausal part of an Auto/Cross corr.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="autogen/miic.core.miic_utils.demean.html#miic.core.miic_utils.demean" title="miic.core.miic_utils.demean"><code class="xref py py-obj docutils literal"><span class="pre">demean</span></code></a></td>
+<tr class="row-even"><td><a class="reference internal" href="autogen/miic.core.miic_utils.demean.html#miic.core.miic_utils.demean" title="miic.core.miic_utils.demean"><code class="xref py py-obj docutils literal"><span class="pre">demean</span></code></a></td>
 <td>Return x minus the mean(x)</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="autogen/miic.core.miic_utils.stream_demean.html#miic.core.miic_utils.stream_demean" title="miic.core.miic_utils.stream_demean"><code class="xref py py-obj docutils literal"><span class="pre">stream_demean</span></code></a></td>
+<tr class="row-odd"><td><a class="reference internal" href="autogen/miic.core.miic_utils.stream_demean.html#miic.core.miic_utils.stream_demean" title="miic.core.miic_utils.stream_demean"><code class="xref py py-obj docutils literal"><span class="pre">stream_demean</span></code></a></td>
 <td>Removes the mean from all Traces in signals</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="autogen/miic.core.miic_utils.detrend.html#miic.core.miic_utils.detrend" title="miic.core.miic_utils.detrend"><code class="xref py py-obj docutils literal"><span class="pre">detrend</span></code></a></td>
+<tr class="row-even"><td><a class="reference internal" href="autogen/miic.core.miic_utils.detrend.html#miic.core.miic_utils.detrend" title="miic.core.miic_utils.detrend"><code class="xref py py-obj docutils literal"><span class="pre">detrend</span></code></a></td>
 <td>Return x minus best fit line; &#8220;linear&#8221; detrending</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="autogen/miic.core.miic_utils.stream_detrend.html#miic.core.miic_utils.stream_detrend" title="miic.core.miic_utils.stream_detrend"><code class="xref py py-obj docutils literal"><span class="pre">stream_detrend</span></code></a></td>
+<tr class="row-odd"><td><a class="reference internal" href="autogen/miic.core.miic_utils.stream_detrend.html#miic.core.miic_utils.stream_detrend" title="miic.core.miic_utils.stream_detrend"><code class="xref py py-obj docutils literal"><span class="pre">stream_detrend</span></code></a></td>
 <td>Removes the trend from all Traces in signals</td>
-</tr>
-<tr class="row-odd"><td><a class="reference internal" href="autogen/miic.core.miic_utils.lat_lon_ele_load.html#miic.core.miic_utils.lat_lon_ele_load" title="miic.core.miic_utils.lat_lon_ele_load"><code class="xref py py-obj docutils literal"><span class="pre">lat_lon_ele_load</span></code></a></td>
-<td>Load lat lon and ele from a tab delimited file.</td>
 </tr>
 <tr class="row-even"><td><a class="reference internal" href="autogen/miic.core.miic_utils.trace_calc_az_baz_dist.html#miic.core.miic_utils.trace_calc_az_baz_dist" title="miic.core.miic_utils.trace_calc_az_baz_dist"><code class="xref py py-obj docutils literal"><span class="pre">trace_calc_az_baz_dist</span></code></a></td>
 <td>Return azimut, back azimut and distance between tr1 and tr2 This funtions calculates the azimut, back azimut and distance between tr1 and tr2 if both have geo information in their stats dictonary.</td>
@@ -250,12 +259,6 @@ GNU Lesser General Public License, Version 3
 </tr>
 <tr class="row-odd"><td><a class="reference internal" href="autogen/miic.core.miic_utils.save_dict_to_matlab_file.html#miic.core.miic_utils.save_dict_to_matlab_file" title="miic.core.miic_utils.save_dict_to_matlab_file"><code class="xref py py-obj docutils literal"><span class="pre">save_dict_to_matlab_file</span></code></a></td>
 <td>Save a dictionary to a matlab file.</td>
-</tr>
-<tr class="row-even"><td><a class="reference internal" href="autogen/miic.core.miic_utils.convert_time.html#miic.core.miic_utils.convert_time" title="miic.core.miic_utils.convert_time"><code class="xref py py-obj docutils literal"><span class="pre">convert_time</span></code></a></td>
-<td>Convert a list/array of timestaps in a array of datetime.datetime obj</td>
-</tr>
-<tr class="row-odd"><td><a class="reference internal" href="autogen/miic.core.miic_utils.convert_time_to_string.html#miic.core.miic_utils.convert_time_to_string" title="miic.core.miic_utils.convert_time_to_string"><code class="xref py py-obj docutils literal"><span class="pre">convert_time_to_string</span></code></a></td>
-<td>Convert a list/array of datetime.datetime obj to an array of strings</td>
 </tr>
 <tr class="row-even"><td><a class="reference internal" href="autogen/miic.core.miic_utils.flatten.html#miic.core.miic_utils.flatten" title="miic.core.miic_utils.flatten"><code class="xref py py-obj docutils literal"><span class="pre">flatten</span></code></a></td>
 <td>Return the flattened version of the input array x</td>
@@ -346,7 +349,7 @@ GNU Lesser General Public License, Version 3
     </div>
     <div class="footer" role="contentinfo">
         &copy; Copyright 2012, Eraldo Pomponi.
-      Last updated on 2016-04-08T09:27:32.
+      Last updated on 2016-04-08T09:40:57.
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
     </div>
   </body>

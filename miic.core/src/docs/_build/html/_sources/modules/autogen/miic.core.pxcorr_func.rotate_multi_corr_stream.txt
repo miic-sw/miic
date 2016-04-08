@@ -1,0 +1,6 @@
+miic.core.pxcorr_func.rotate_multi_corr_stream
+==============================================
+
+.. currentmodule:: miic.core.pxcorr_func
+
+.. autofunction:: rotate_multi_corr_stream
