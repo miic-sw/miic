@@ -1,0 +1,6 @@
+miic.core.miic_utils.archive_code
+=================================
+
+.. currentmodule:: miic.core.miic_utils
+
+.. autofunction:: archive_code

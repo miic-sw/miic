@@ -16,7 +16,17 @@ GNU Lesser General Public License, Version 3
 .. automodule:: miic.core.miic_utils
         
     .. comment to end block
-        
+    
+    General Use
+    -----------
+    .. autosummary::
+       :toctree: autogen
+       :nosignatures:
+       
+       ~dir_read
+       ~archive_code
+    
+    
     BlockCanvas oriented
     --------------------
     .. autosummary::
@@ -28,7 +38,6 @@ GNU Lesser General Public License, Version 3
        ~dict_sel
        ~add_prefix
        ~merge_str
-       ~dir_read
        ~ndarray_to_mat
        ~mat_to_ndarray
        ~convert_to_matlab

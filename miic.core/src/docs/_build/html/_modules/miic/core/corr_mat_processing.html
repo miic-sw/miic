@@ -105,10 +105,11 @@
 
 <span class="c"># Local imports</span>
 <span class="kn">from</span> <span class="nn">miic.core.miic_utils</span> <span class="kn">import</span> <span class="n">convert_time</span><span class="p">,</span> <span class="n">convert_time_to_string</span><span class="p">,</span> \
-    <span class="n">corr_mat_check</span><span class="p">,</span> <span class="n">flatten_recarray</span><span class="p">,</span> <span class="n">nd_mat_center_part</span><span class="p">,</span> <span class="n">mat_to_ndarray</span><span class="p">,</span> \
+    <span class="n">corr_mat_check</span><span class="p">,</span> <span class="n">dv_check</span><span class="p">,</span> <span class="n">flatten_recarray</span><span class="p">,</span> <span class="n">nd_mat_center_part</span><span class="p">,</span> <span class="n">mat_to_ndarray</span><span class="p">,</span> \
     <span class="n">select_var_from_dict</span><span class="p">,</span> <span class="n">_check_stats</span><span class="p">,</span> <span class="n">_stats_dict_from_obj</span>
 
-<span class="kn">from</span> <span class="nn">miic.core.stretch_mod</span> <span class="kn">import</span> <span class="n">multi_ref_vchange_and_align</span><span class="p">,</span> <span class="n">time_shift_estimate</span>
+<span class="kn">from</span> <span class="nn">miic.core.stretch_mod</span> <span class="kn">import</span> <span class="n">multi_ref_vchange_and_align</span><span class="p">,</span> <span class="n">time_shift_estimate</span><span class="p">,</span> \
+    <span class="n">time_stretch_apply</span>
 <span class="kn">from</span> <span class="nn">miic.core.stream</span> <span class="kn">import</span> <span class="n">_Selector</span>
 
 
@@ -204,7 +205,7 @@
     <span class="k">if</span> <span class="n">corr_mat_check</span><span class="p">(</span><span class="n">corr_mat</span><span class="p">)[</span><span class="s">&#39;is_incomplete&#39;</span><span class="p">]:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;Error: corr_mat is not a valid correlation_matix </span><span class="se">\</span>
 <span class="s">            dictionary.&quot;</span><span class="p">)</span>
-    
+
     <span class="n">rcorr_mat</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">corr_mat</span><span class="p">)</span>
     <span class="n">mat</span> <span class="o">=</span> <span class="n">rcorr_mat</span><span class="p">[</span><span class="s">&#39;corr_data&#39;</span><span class="p">]</span>
 
@@ -1082,7 +1083,7 @@
                           <span class="n">Item</span><span class="p">(</span><span class="s">&#39;slope_frac&#39;</span><span class="p">))</span>
     
 
-<span class="k">def</span> <span class="nf">corr_mat_import_US_stream</span><span class="p">(</span><span class="n">st</span><span class="p">,</span> <span class="n">pretrigger</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+<div class="viewcode-block" id="corr_mat_import_US_stream"><a class="viewcode-back" href="../../../modules/autogen/miic.core.corr_mat_processing.corr_mat_import_US_stream.html#miic.core.corr_mat_processing.corr_mat_import_US_stream">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_import_US_stream</span><span class="p">(</span><span class="n">st</span><span class="p">,</span> <span class="n">pretrigger</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Convert a stream with multiple traces from an active measurement</span>
 <span class="sd">    in a correlation matrix structure.</span>
 
@@ -1160,8 +1161,8 @@
 
     <span class="k">return</span> <span class="n">corr_mat</span>
 
-
-<span class="k">def</span> <span class="nf">corr_mat_from_corr_stream</span><span class="p">(</span><span class="n">st</span><span class="p">):</span>
+</div>
+<div class="viewcode-block" id="corr_mat_from_corr_stream"><a class="viewcode-back" href="../../../modules/autogen/miic.core.corr_mat_processing.corr_mat_from_corr_stream.html#miic.core.corr_mat_processing.corr_mat_from_corr_stream">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_from_corr_stream</span><span class="p">(</span><span class="n">st</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Create a correlation matrix from an obspy stream.</span>
 
 <span class="sd">    Given an obspy stream that contains traces with the same geometrical</span>
@@ -1205,7 +1206,7 @@
     
     <span class="k">return</span> <span class="n">corr_mat</span>
 
-
+</div>
 <div class="viewcode-block" id="corr_mat_extract_trace"><a class="viewcode-back" href="../../../modules/autogen/miic.core.corr_mat_processing.corr_mat_extract_trace.html#miic.core.corr_mat_processing.corr_mat_extract_trace">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_extract_trace</span><span class="p">(</span><span class="n">corr_mat</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s">&#39;mean&#39;</span><span class="p">,</span> <span class="n">percentile</span><span class="o">=</span><span class="mf">50.</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Extract a representative trace from a correlation matrix.</span>
 
@@ -1565,6 +1566,41 @@
     <span class="k">return</span> <span class="n">dv</span>
 
 </div>
+<span class="k">def</span> <span class="nf">corr_mat_correct_stretch</span><span class="p">(</span><span class="n">corr_mat</span><span class="p">,</span> <span class="n">dv</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Correct stretching of correlation matrix</span>
+<span class="sd">    </span>
+<span class="sd">    In the case of a homogeneous subsurface velocity change the correlation</span>
+<span class="sd">    traces are stretched or compressed. This stretching can be measured</span>
+<span class="sd">    with `corr_mat_stretch`. The resulting `dv` dictionary can be passed to</span>
+<span class="sd">    this function to remove the stretching from the correlation matrix.</span>
+<span class="sd">    </span>
+<span class="sd">    :type corr_mat: dictionary</span>
+<span class="sd">    :param corr_mat: correlation matrix dictionary as produced by</span>
+<span class="sd">        :class:`~miic.core.macro.recombine_corr_data`</span>
+<span class="sd">    :type dv: Dictionary</span>
+<span class="sd">    :param dv: velocity change dictionary</span>
+<span class="sd">    </span>
+<span class="sd">    :rtype: Dictionary</span>
+<span class="sd">    :return: corrected correlation matrix dictionary</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">import</span> <span class="nn">pdb</span>
+    <span class="n">pdb</span><span class="o">.</span><span class="n">set_trace</span><span class="p">()</span>
+    
+    <span class="c"># check input</span>
+    <span class="k">if</span> <span class="n">corr_mat_check</span><span class="p">(</span><span class="n">corr_mat</span><span class="p">)[</span><span class="s">&#39;is_incomplete&#39;</span><span class="p">]:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;Error: corr_mat is not a valid correlation_matix </span><span class="se">\</span>
+<span class="s">            dictionary.&quot;</span><span class="p">)</span>
+    
+    <span class="k">if</span> <span class="n">dv_check</span><span class="p">(</span><span class="n">dv</span><span class="p">)[</span><span class="s">&#39;is_incomplete&#39;</span><span class="p">]:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;Error: dv is not a valid Velocity change</span><span class="se">\</span>
+<span class="s">            dictionary.&quot;</span><span class="p">)</span>
+            
+    <span class="n">ccorr_mat</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">corr_mat</span><span class="p">)</span>
+    <span class="n">ccorr_mat</span><span class="p">[</span><span class="s">&#39;corr_data&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">time_stretch_apply</span><span class="p">(</span><span class="n">ccorr_mat</span><span class="p">[</span><span class="s">&#39;corr_data&#39;</span><span class="p">],</span><span class="n">dv</span><span class="p">[</span><span class="s">&#39;value&#39;</span><span class="p">])</span>
+    
+    <span class="k">return</span> <span class="n">ccorr_mat</span>
+    
+
 <span class="k">def</span> <span class="nf">corr_mat_shift</span><span class="p">(</span><span class="n">corr_mat</span><span class="p">,</span> <span class="n">ref_trc</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">tw</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">shift_range</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
                           <span class="n">shift_steps</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">sides</span><span class="o">=</span><span class="s">&#39;both&#39;</span><span class="p">,</span>
                           <span class="n">return_sim_mat</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
@@ -2082,7 +2118,7 @@
     </div>
     <div class="footer" role="contentinfo">
         &copy; Copyright 2012, Eraldo Pomponi.
-      Last updated on 2016-04-07T14:12:12.
+      Last updated on 2016-04-08T09:27:32.
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
     </div>
   </body>

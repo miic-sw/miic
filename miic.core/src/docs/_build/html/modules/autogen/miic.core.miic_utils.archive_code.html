@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>miic.core.miic_utils.convert_time &mdash; MIIC 1.0 documentation</title>
+    <title>miic.core.miic_utils.archive_code &mdash; MIIC 1.0 documentation</title>
     
     <link rel="stylesheet" href="../../_static/sphinxdoc.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -25,8 +25,8 @@
     <script type="text/javascript" src="../../_static/doctools.js"></script>
     <link rel="top" title="MIIC 1.0 documentation" href="../../index.html" />
     <link rel="up" title="Utilities" href="../miic_utils.html" />
-    <link rel="next" title="miic.core.miic_utils.convert_time_to_string" href="miic.core.miic_utils.convert_time_to_string.html" />
-    <link rel="prev" title="miic.core.miic_utils.save_dict_to_matlab_file" href="miic.core.miic_utils.save_dict_to_matlab_file.html" /> 
+    <link rel="next" title="miic.core.miic_utils.create_rnd_array" href="miic.core.miic_utils.create_rnd_array.html" />
+    <link rel="prev" title="miic.core.miic_utils.dir_read" href="miic.core.miic_utils.dir_read.html" /> 
   </head>
   <body role="document">
     <div class="related" role="navigation" aria-label="related navigation">
@@ -39,10 +39,10 @@
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="miic.core.miic_utils.convert_time_to_string.html" title="miic.core.miic_utils.convert_time_to_string"
+          <a href="miic.core.miic_utils.create_rnd_array.html" title="miic.core.miic_utils.create_rnd_array"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="miic.core.miic_utils.save_dict_to_matlab_file.html" title="miic.core.miic_utils.save_dict_to_matlab_file"
+          <a href="miic.core.miic_utils.dir_read.html" title="miic.core.miic_utils.dir_read"
              accesskey="P">previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="../../index.html">MIIC 1.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../core.html" >MIIC Library Reference</a> &raquo;</li>
@@ -54,7 +54,7 @@
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
-      <li><a href="../../_sources/modules/autogen/miic.core.miic_utils.convert_time.txt"
+      <li><a href="../../_sources/modules/autogen/miic.core.miic_utils.archive_code.txt"
             rel="nofollow">Show Source</a></li>
     </ul>
    </div>
@@ -79,28 +79,32 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="miic-core-miic-utils-convert-time">
-<h1>miic.core.miic_utils.convert_time<a class="headerlink" href="#miic-core-miic-utils-convert-time" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="miic-core-miic-utils-archive-code">
+<h1>miic.core.miic_utils.archive_code<a class="headerlink" href="#miic-core-miic-utils-archive-code" title="Permalink to this headline">¶</a></h1>
 <dl class="function">
-<dt id="miic.core.miic_utils.convert_time">
-<code class="descname">convert_time</code><span class="sig-paren">(</span><em>time_vect</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/miic/core/miic_utils.html#convert_time"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#miic.core.miic_utils.convert_time" title="Permalink to this definition">¶</a></dt>
-<dd><p>Convert a list/array of timestaps in a array of datetime.datetime obj</p>
-<p>This fucntion does the conversion of a list/array of string in a list/array
-of <code class="xref py py-class docutils literal"><span class="pre">datetime</span></code> objects. The time format allowed for the
-string representation is one of:
-- %Y-%m-%dT%H:%M:%S.%fZ
-- %Y-%m-%d %H:%M:%S.%f
-- %Y-%m-%d %H:%M:%S
-- %Y-%m-%d</p>
+<dt id="miic.core.miic_utils.archive_code">
+<code class="descname">archive_code</code><span class="sig-paren">(</span><em>scriptname</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/miic/core/miic_utils.html#archive_code"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#miic.core.miic_utils.archive_code" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read parameters and archive code</p>
+<p>This is a convenience function that helps to track processing routines and
+parameter setting. Tracking is not done by propagating meta information.
+It just archives parameter files and processing scripts. The functions
+assumes that parameters are stored in a pythen file of the
+same name as the script that calls this function extended with <cite>_par</cite>.
+These parameters are read and returned as a module (e.g. <cite>par</cite>). This
+means that a parameter <cite>parameter</cite> set in the parameter file is accessible
+<cite>par.parameter</cite>. One parameter is required to be present in the parameter
+file: <cite>res_dir</cite>. This directory is created and within it a folder
+<cite>code_dir</cite> to which the script and the paremater files are copied and extended
+by a time string.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>time_vect</strong> (list or <code class="xref py py-class docutils literal"><span class="pre">ndarray</span></code> of String) &#8211; List/array of timestamp in string format.</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>scriptname</strong> (<em>string</em>) &#8211; name of the executed script that is to be archived</td>
 </tr>
-<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><code class="xref py py-class docutils literal"><span class="pre">ndarray</span></code> of <code class="xref py py-class docutils literal"><span class="pre">datetime</span></code> objs</td>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">module</td>
 </tr>
-<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">Array of <code class="xref py py-class docutils literal"><span class="pre">datetime</span></code> objects</td>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">module with the parameters for the script</td>
 </tr>
 </tbody>
 </table>
@@ -124,10 +128,10 @@ string representation is one of:
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="miic.core.miic_utils.convert_time_to_string.html" title="miic.core.miic_utils.convert_time_to_string"
+          <a href="miic.core.miic_utils.create_rnd_array.html" title="miic.core.miic_utils.create_rnd_array"
              >next</a> |</li>
         <li class="right" >
-          <a href="miic.core.miic_utils.save_dict_to_matlab_file.html" title="miic.core.miic_utils.save_dict_to_matlab_file"
+          <a href="miic.core.miic_utils.dir_read.html" title="miic.core.miic_utils.dir_read"
              >previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="../../index.html">MIIC 1.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../core.html" >MIIC Library Reference</a> &raquo;</li>

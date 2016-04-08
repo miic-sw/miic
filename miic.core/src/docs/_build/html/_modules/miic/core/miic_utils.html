@@ -94,6 +94,8 @@
 <span class="kn">from</span> <span class="nn">matplotlib.mlab</span> <span class="kn">import</span> <span class="n">detrend_mean</span><span class="p">,</span> <span class="n">detrend_linear</span>
 <span class="kn">import</span> <span class="nn">time</span>
 <span class="kn">from</span> <span class="nn">cPickle</span> <span class="kn">import</span> <span class="n">Pickler</span>
+<span class="kn">import</span> <span class="nn">shutil</span>
+
 
 <span class="c"># Pandas import</span>
 <span class="kn">from</span> <span class="nn">pandas</span> <span class="kn">import</span> <span class="n">DataFrame</span><span class="p">,</span> <span class="n">Panel</span><span class="p">,</span> <span class="n">Series</span>
@@ -353,6 +355,43 @@
     <span class="k">return</span> <span class="mi">0</span>
 
 
+<div class="viewcode-block" id="archive_code"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.archive_code.html#miic.core.alpha_mod.archive_code">[docs]</a><span class="k">def</span> <span class="nf">archive_code</span><span class="p">(</span><span class="n">scriptname</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Read parameters and archive code</span>
+
+<span class="sd">    This is a convenience function that helps to track processing routines and</span>
+<span class="sd">    parameter setting. Tracking is not done by propagating meta information.</span>
+<span class="sd">    It just archives parameter files and processing scripts. The functions</span>
+<span class="sd">    assumes that parameters are stored in a pythen file of the</span>
+<span class="sd">    same name as the script that calls this function extended with `_par`.</span>
+<span class="sd">    These parameters are read and returned as a module (e.g. `par`). This</span>
+<span class="sd">    means that a parameter `parameter` set in the parameter file is accessible</span>
+<span class="sd">    `par.parameter`. One parameter is required to be present in the parameter</span>
+<span class="sd">    file: `res_dir`. This directory is created and within it a folder</span>
+<span class="sd">    `code_dir` to which the script and the paremater files are copied and extended</span>
+<span class="sd">    by a time string.</span>
+<span class="sd">    </span>
+<span class="sd">    :type scriptname: string</span>
+<span class="sd">    :param scriptname: name of the executed script that is to be archived</span>
+<span class="sd">    </span>
+<span class="sd">    :rtype: module</span>
+<span class="sd">    :return: module with the parameters for the script</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c"># time string</span>
+    <span class="n">tim</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s">&#39;%Y%m</span><span class="si">%d</span><span class="s">_%H%M%S&#39;</span><span class="p">)</span>
+    <span class="c"># name of paramter file according to above convention</span>
+    <span class="n">parname</span> <span class="o">=</span> <span class="n">scriptname</span><span class="p">[:</span><span class="o">-</span><span class="mi">3</span><span class="p">]</span><span class="o">+</span><span class="s">&#39;_par&#39;</span>
+    <span class="c"># import parameters</span>
+    <span class="n">par</span> <span class="o">=</span> <span class="nb">__import__</span><span class="p">(</span><span class="n">parname</span><span class="p">)</span>
+    <span class="c"># create directory to archive scripts</span>
+    <span class="n">code_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">par</span><span class="o">.</span><span class="n">res_dir</span><span class="p">,</span><span class="s">&#39;code_dir&#39;</span><span class="p">)</span>
+    <span class="n">create_path</span><span class="p">(</span><span class="n">code_dir</span><span class="p">)</span>
+    <span class="c"># copy files</span>
+    <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="n">scriptname</span><span class="p">,</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">code_dir</span><span class="p">,</span><span class="n">scriptname</span><span class="p">[:</span><span class="o">-</span><span class="mi">3</span><span class="p">]</span><span class="o">+</span><span class="s">&#39;_&#39;</span><span class="o">+</span><span class="n">tim</span><span class="o">+</span><span class="s">&#39;.py&#39;</span><span class="p">))</span>
+    <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="n">parname</span><span class="o">+</span><span class="s">&#39;.py&#39;</span><span class="p">,</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">code_dir</span><span class="p">,</span><span class="n">parname</span><span class="o">+</span><span class="s">&#39;_&#39;</span><span class="o">+</span><span class="n">tim</span><span class="o">+</span><span class="s">&#39;.py&#39;</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">par</span>
+
+</div>
 <div class="viewcode-block" id="ndarray_to_mat"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.ndarray_to_mat.html#miic.core.alpha_mod.ndarray_to_mat">[docs]</a><span class="k">def</span> <span class="nf">ndarray_to_mat</span><span class="p">(</span><span class="n">nd_array</span><span class="p">,</span> <span class="n">base_dir</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="s">&quot;canvas_mat.mat&quot;</span><span class="p">,</span> \
                    <span class="n">mat_var_name</span><span class="o">=</span><span class="s">&#39;corr_data&#39;</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Save an ndarray to a Matlab file.</span>
@@ -2692,7 +2731,7 @@
     </div>
     <div class="footer" role="contentinfo">
         &copy; Copyright 2012, Eraldo Pomponi.
-      Last updated on 2016-04-07T14:12:12.
+      Last updated on 2016-04-08T09:27:32.
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
     </div>
   </body>

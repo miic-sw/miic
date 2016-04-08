@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>miic.core.miic_utils.convert_time &mdash; MIIC 1.0 documentation</title>
+    <title>miic.core.corr_mat_processing.corr_mat_from_corr_stream &mdash; MIIC 1.0 documentation</title>
     
     <link rel="stylesheet" href="../../_static/sphinxdoc.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -24,9 +24,9 @@
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
     <link rel="top" title="MIIC 1.0 documentation" href="../../index.html" />
-    <link rel="up" title="Utilities" href="../miic_utils.html" />
-    <link rel="next" title="miic.core.miic_utils.convert_time_to_string" href="miic.core.miic_utils.convert_time_to_string.html" />
-    <link rel="prev" title="miic.core.miic_utils.save_dict_to_matlab_file" href="miic.core.miic_utils.save_dict_to_matlab_file.html" /> 
+    <link rel="up" title="Correlation matrix dictionary processing" href="../corr_mat_processing.html" />
+    <link rel="next" title="Macros" href="../macro.html" />
+    <link rel="prev" title="miic.core.corr_mat_processing.corr_mat_create_from_traces" href="miic.core.corr_mat_processing.corr_mat_create_from_traces.html" /> 
   </head>
   <body role="document">
     <div class="related" role="navigation" aria-label="related navigation">
@@ -39,14 +39,14 @@
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="miic.core.miic_utils.convert_time_to_string.html" title="miic.core.miic_utils.convert_time_to_string"
+          <a href="../macro.html" title="Macros"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="miic.core.miic_utils.save_dict_to_matlab_file.html" title="miic.core.miic_utils.save_dict_to_matlab_file"
+          <a href="miic.core.corr_mat_processing.corr_mat_create_from_traces.html" title="miic.core.corr_mat_processing.corr_mat_create_from_traces"
              accesskey="P">previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="../../index.html">MIIC 1.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../core.html" >MIIC Library Reference</a> &raquo;</li>
-          <li class="nav-item nav-item-2"><a href="../miic_utils.html" accesskey="U">Utilities</a> &raquo;</li> 
+          <li class="nav-item nav-item-2"><a href="../corr_mat_processing.html" accesskey="U">Correlation matrix dictionary processing</a> &raquo;</li> 
       </ul>
     </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
@@ -54,7 +54,7 @@
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
-      <li><a href="../../_sources/modules/autogen/miic.core.miic_utils.convert_time.txt"
+      <li><a href="../../_sources/modules/autogen/miic.core.corr_mat_processing.corr_mat_from_corr_stream.txt"
             rel="nofollow">Show Source</a></li>
     </ul>
    </div>
@@ -79,28 +79,25 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="miic-core-miic-utils-convert-time">
-<h1>miic.core.miic_utils.convert_time<a class="headerlink" href="#miic-core-miic-utils-convert-time" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="miic-core-corr-mat-processing-corr-mat-from-corr-stream">
+<h1>miic.core.corr_mat_processing.corr_mat_from_corr_stream<a class="headerlink" href="#miic-core-corr-mat-processing-corr-mat-from-corr-stream" title="Permalink to this headline">¶</a></h1>
 <dl class="function">
-<dt id="miic.core.miic_utils.convert_time">
-<code class="descname">convert_time</code><span class="sig-paren">(</span><em>time_vect</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/miic/core/miic_utils.html#convert_time"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#miic.core.miic_utils.convert_time" title="Permalink to this definition">¶</a></dt>
-<dd><p>Convert a list/array of timestaps in a array of datetime.datetime obj</p>
-<p>This fucntion does the conversion of a list/array of string in a list/array
-of <code class="xref py py-class docutils literal"><span class="pre">datetime</span></code> objects. The time format allowed for the
-string representation is one of:
-- %Y-%m-%dT%H:%M:%S.%fZ
-- %Y-%m-%d %H:%M:%S.%f
-- %Y-%m-%d %H:%M:%S
-- %Y-%m-%d</p>
+<dt id="miic.core.corr_mat_processing.corr_mat_from_corr_stream">
+<code class="descname">corr_mat_from_corr_stream</code><span class="sig-paren">(</span><em>st</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/miic/core/corr_mat_processing.html#corr_mat_from_corr_stream"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#miic.core.corr_mat_processing.corr_mat_from_corr_stream" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a correlation matrix from an obspy stream.</p>
+<p>Given an obspy stream that contains traces with the same geometrical
+properties (i.e. location of source and receiver) usually obtained from
+repeated measurements or seismic noise it combines the traces in a 
+corr_mat dictionary.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>time_vect</strong> (list or <code class="xref py py-class docutils literal"><span class="pre">ndarray</span></code> of String) &#8211; List/array of timestamp in string format.</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>st</strong> (<em>obspy.core.stream</em>) &#8211; stream that contains the data</td>
 </tr>
-<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><code class="xref py py-class docutils literal"><span class="pre">ndarray</span></code> of <code class="xref py py-class docutils literal"><span class="pre">datetime</span></code> objs</td>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">dictionary of type correlation matrix</td>
 </tr>
-<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">Array of <code class="xref py py-class docutils literal"><span class="pre">datetime</span></code> objects</td>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><strong>corr_mat</strong></td>
 </tr>
 </tbody>
 </table>
@@ -124,19 +121,19 @@ string representation is one of:
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="miic.core.miic_utils.convert_time_to_string.html" title="miic.core.miic_utils.convert_time_to_string"
+          <a href="../macro.html" title="Macros"
              >next</a> |</li>
         <li class="right" >
-          <a href="miic.core.miic_utils.save_dict_to_matlab_file.html" title="miic.core.miic_utils.save_dict_to_matlab_file"
+          <a href="miic.core.corr_mat_processing.corr_mat_create_from_traces.html" title="miic.core.corr_mat_processing.corr_mat_create_from_traces"
              >previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="../../index.html">MIIC 1.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../core.html" >MIIC Library Reference</a> &raquo;</li>
-          <li class="nav-item nav-item-2"><a href="../miic_utils.html" >Utilities</a> &raquo;</li> 
+          <li class="nav-item nav-item-2"><a href="../corr_mat_processing.html" >Correlation matrix dictionary processing</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &copy; Copyright 2012, Eraldo Pomponi.
-      Last updated on 2016-04-08T09:27:32.
+      Last updated on 2016-04-08T09:08:45.
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
     </div>
   </body>
