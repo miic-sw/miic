@@ -721,10 +721,17 @@ def calc_cross_combis(st, method='betweenStations'):
 
 
 def rotate_multi_corr_stream(st):
-    """ Take a stream with numerous correlation traces and rotate the 
+    """Rotate a stream with full Greens tensor from ENZ to RTZ
+
+    Take a stream with numerous correlation traces and rotate the 
     combinations of ENZ components into combinations of RTZ components in case all
     nine components of the Green's tensor are present. If not all nine components
     are present no trace for this station combination is returned.
+    
+    :type st: obspy.stream
+    :param st: stream with data in ENZ system
+    :rtype: obspy.stream
+    :return: stream in the RTZ system
     """
     
     out_st = stream.Stream()

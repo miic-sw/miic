@@ -16,7 +16,22 @@ GNU Lesser General Public License, Version 3
 .. automodule:: miic.core.miic_utils
         
     .. comment to end block
-        
+    
+    General Use
+    -----------
+    .. autosummary::
+       :toctree: autogen
+       :nosignatures:
+       
+       ~dir_read
+       ~archive_code
+       ~create_path
+       ~mat_to_ndarray
+       ~lat_lon_ele_load
+       ~convert_time
+       ~convert_time_to_string
+           
+    
     BlockCanvas oriented
     --------------------
     .. autosummary::
@@ -28,9 +43,7 @@ GNU Lesser General Public License, Version 3
        ~dict_sel
        ~add_prefix
        ~merge_str
-       ~dir_read
        ~ndarray_to_mat
-       ~mat_to_ndarray
        ~convert_to_matlab
        ~stack
        ~clear_global_X
@@ -60,15 +73,12 @@ GNU Lesser General Public License, Version 3
        ~stream_demean
        ~detrend
        ~stream_detrend
-       ~lat_lon_ele_load
        ~trace_calc_az_baz_dist
        ~nextpow2
        ~select_var_from_dict
        ~add_var_to_dict
        ~print_keys_from_dict
        ~save_dict_to_matlab_file
-       ~convert_time
-       ~convert_time_to_string
        ~flatten
        ~flatten_recarray
        ~save_dv

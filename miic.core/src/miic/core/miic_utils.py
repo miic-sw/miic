@@ -275,17 +275,23 @@ if BC_UI:
 
 zerotime = UTCDateTime(1971,1,1)
 
-def create_path(subpath):
+def create_path(directory):
     """Create a given path with all preceeding parts.
 
     Provided there is write access the function will creates
     all levels of the given path.
+
+    :type directory: string
+    :param directory: path of the directory to be created
+
+    :rtype: int
+    :return: 0
     """
 
-    if not os.path.exists(subpath):
-        os.makedirs(subpath)
+    if not os.path.exists(directory):
+        os.makedirs(directory)
     else:
-        assert os.path.isdir(subpath), "%s exists but is not a directory" % subpath
+        assert os.path.isdir(directory), "%s exists but is not a directory" % subpath
     return 0
 
 
