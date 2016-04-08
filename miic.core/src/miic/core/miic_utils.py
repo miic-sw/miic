@@ -28,6 +28,8 @@ import collections
 from matplotlib.mlab import detrend_mean, detrend_linear
 import time
 from cPickle import Pickler
+import shutil
+
 
 # Pandas import
 from pandas import DataFrame, Panel, Series
@@ -285,6 +287,43 @@ def create_path(subpath):
     else:
         assert os.path.isdir(subpath), "%s exists but is not a directory" % subpath
     return 0
+
+
+def archive_code(scriptname):
+    """Read parameters and archive code
+
+    This is a convenience function that helps to track processing routines and
+    parameter setting. Tracking is not done by propagating meta information.
+    It just archives parameter files and processing scripts. The functions
+    assumes that parameters are stored in a pythen file of the
+    same name as the script that calls this function extended with `_par`.
+    These parameters are read and returned as a module (e.g. `par`). This
+    means that a parameter `parameter` set in the parameter file is accessible
+    `par.parameter`. One parameter is required to be present in the parameter
+    file: `res_dir`. This directory is created and within it a folder
+    `code_dir` to which the script and the paremater files are copied and extended
+    by a time string.
+
+    :type scriptname: string
+    :param scriptname: name of the executed script that is to be archived
+
+    :rtype: module
+    :return: module with the parameters for the script
+    """
+
+    # time string
+    tim = time.strftime('%Y%m%d_%H%M%S')
+    # name of paramter file according to above convention
+    parname = scriptname[:-3]+'_par'
+    # import parameters
+    par = __import__(parname)
+    # create directory to archive scripts
+    code_dir = os.path.join(par.res_dir,'code_dir')
+    create_path(code_dir)
+    # copy files
+    shutil.copyfile(scriptname,os.path.join(code_dir,scriptname[:-3]+'_'+tim+'.py'))
+    shutil.copyfile(parname+'.py',os.path.join(code_dir,parname+'_'+tim+'.py'))
+    return par
 
 
 def ndarray_to_mat(nd_array, base_dir=None, filename="canvas_mat.mat", \
