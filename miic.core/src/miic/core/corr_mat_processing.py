@@ -39,10 +39,11 @@ from obspy.core import trace, stream
 
 # Local imports
 from miic.core.miic_utils import convert_time, convert_time_to_string, \
-    corr_mat_check, flatten_recarray, nd_mat_center_part, mat_to_ndarray, \
+    corr_mat_check, dv_check, flatten_recarray, nd_mat_center_part, mat_to_ndarray, \
     select_var_from_dict, _check_stats, _stats_dict_from_obj
 
-from miic.core.stretch_mod import multi_ref_vchange_and_align, time_shift_estimate
+from miic.core.stretch_mod import multi_ref_vchange_and_align, time_shift_estimate, \
+    time_stretch_apply
 from miic.core.stream import _Selector
 
 
@@ -1497,6 +1498,39 @@ def corr_mat_stretch(corr_mat, ref_trc=None, tw=None, stretch_range=0.1,
     dv['stats'] = corr_mat['stats']
 
     return dv
+
+
+def corr_mat_correct_stretch(corr_mat, dv):
+    """Correct stretching of correlation matrix
+
+    In the case of a homogeneous subsurface velocity change the correlation
+    traces are stretched or compressed. This stretching can be measured
+    with `corr_mat_stretch`. The resulting `dv` dictionary can be passed to
+    this function to remove the stretching from the correlation matrix.
+
+    :type corr_mat: dictionary
+    :param corr_mat: correlation matrix dictionary as produced by
+        :class:`~miic.core.macro.recombine_corr_data`
+    :type dv: Dictionary
+    :param dv: velocity change dictionary
+
+    :rtype: Dictionary
+    :return: corrected correlation matrix dictionary
+    """
+
+    # check input
+    if corr_mat_check(corr_mat)['is_incomplete']:
+        raise ValueError("Error: corr_mat is not a valid correlation_matix \
+            dictionary.")
+
+    if dv_check(dv)['is_incomplete']:
+        raise ValueError("Error: dv is not a valid Velocity change\
+            dictionary.")
+
+    ccorr_mat = deepcopy(corr_mat)
+    ccorr_mat['corr_data'] = time_stretch_apply(ccorr_mat['corr_data'],-1.*dv['value'])
+
+    return ccorr_mat
 
 
 def corr_mat_shift(corr_mat, ref_trc=None, tw=None, shift_range=10,
