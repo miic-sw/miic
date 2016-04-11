@@ -83,7 +83,7 @@
 <h1>miic.core.plot_fun.plot_dv<a class="headerlink" href="#miic-core-plot-fun-plot-dv" title="Permalink to this headline">¶</a></h1>
 <dl class="function">
 <dt id="miic.core.plot_fun.plot_dv">
-<code class="descname">plot_dv</code><span class="sig-paren">(</span><em>dv</em>, <em>save_dir='.'</em>, <em>figure_file_name=None</em>, <em>mark_time=None</em>, <em>figsize=(9</em>, <em>11)</em>, <em>dpi=72</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/miic/core/plot_fun.html#plot_dv"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#miic.core.plot_fun.plot_dv" title="Permalink to this definition">¶</a></dt>
+<code class="descname">plot_dv</code><span class="sig-paren">(</span><em>dv</em>, <em>save_dir='.'</em>, <em>figure_file_name=None</em>, <em>mark_time=None</em>, <em>normalize_simmat=False</em>, <em>sim_mat_Clim=[]</em>, <em>figsize=(9</em>, <em>11)</em>, <em>dpi=72</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/miic/core/plot_fun.html#plot_dv"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#miic.core.plot_fun.plot_dv" title="Permalink to this definition">¶</a></dt>
 <dd><p>Plot the &#8220;extended&#8221; dv dictionary</p>
 <p>This function is thought to plot the result of the velocity change estimate
 as output by <a class="reference internal" href="miic.core.stretch_mod.multi_ref_vchange_and_align.html#miic.core.stretch_mod.multi_ref_vchange_and_align" title="miic.core.stretch_mod.multi_ref_vchange_and_align"><code class="xref py py-class docutils literal"><span class="pre">multi_ref_vchange_and_align</span></code></a>
@@ -120,6 +120,10 @@ if it doesn&#8217;t exist.</li>
 the figure is displayed in interactive mode.</li>
 <li><strong>mark_time</strong> (string or <code class="xref py py-class docutils literal"><span class="pre">datetime</span></code> object) &#8211; It is a &#8220;special&#8221; time location that will be represented
 in the <cite>dv/v</cite> and <cite>corr</cite> plot as a vertical line.</li>
+<li><strong>normalize_simmat</strong> (<em>Bool</em>) &#8211; if True the simmat will be normalized to a maximum
+of 1. Defaults to False</li>
+<li><strong>sim_mat_Clim</strong> (<em>2 element array_like</em>) &#8211; if non-empty it set the color scale limits of the
+similarity matrix image</li>
 </ul>
 </td>
 </tr>
@@ -157,7 +161,7 @@ in the <cite>dv/v</cite> and <cite>corr</cite> plot as a vertical line.</li>
     </div>
     <div class="footer" role="contentinfo">
         &copy; Copyright 2012, Eraldo Pomponi.
-      Last updated on 2016-03-02T16:12:50.
+      Last updated on 2016-04-11T11:04:13.
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
     </div>
   </body>

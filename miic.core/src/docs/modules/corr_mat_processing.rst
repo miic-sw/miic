@@ -38,11 +38,13 @@ Created on Nov 25, 2012
        ~corr_mat_normalize
        ~corr_mat_mirrow
        ~corr_mat_taper_center
-       ~corr_mat_import_stream
+       ~corr_mat_import_US_stream
        ~corr_mat_extract_trace
        ~corr_mat_stretch
+       ~corr_mat_correct_stretch
        ~corr_mat_add_lat_lon_ele
        ~corr_mat_create_from_traces
+       ~corr_mat_from_corr_stream
 	
     .. comment to end block
        

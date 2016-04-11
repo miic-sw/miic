@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>miic.core.miic_utils.print_tuples &mdash; MIIC 1.0 documentation</title>
+    <title>miic.core.corr_mat_processing.corr_mat_correct_stretch &mdash; MIIC 1.0 documentation</title>
     
     <link rel="stylesheet" href="../../_static/sphinxdoc.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -24,9 +24,9 @@
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
     <link rel="top" title="MIIC 1.0 documentation" href="../../index.html" />
-    <link rel="up" title="Utilities" href="../miic_utils.html" />
-    <link rel="next" title="miic.core.miic_utils.print_tuple" href="miic.core.miic_utils.print_tuple.html" />
-    <link rel="prev" title="miic.core.miic_utils.print_input" href="miic.core.miic_utils.print_input.html" /> 
+    <link rel="up" title="Correlation matrix dictionary processing" href="../corr_mat_processing.html" />
+    <link rel="next" title="miic.core.corr_mat_processing.corr_mat_add_lat_lon_ele" href="miic.core.corr_mat_processing.corr_mat_add_lat_lon_ele.html" />
+    <link rel="prev" title="miic.core.corr_mat_processing.corr_mat_stretch" href="miic.core.corr_mat_processing.corr_mat_stretch.html" /> 
   </head>
   <body role="document">
     <div class="related" role="navigation" aria-label="related navigation">
@@ -39,14 +39,14 @@
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="miic.core.miic_utils.print_tuple.html" title="miic.core.miic_utils.print_tuple"
+          <a href="miic.core.corr_mat_processing.corr_mat_add_lat_lon_ele.html" title="miic.core.corr_mat_processing.corr_mat_add_lat_lon_ele"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="miic.core.miic_utils.print_input.html" title="miic.core.miic_utils.print_input"
+          <a href="miic.core.corr_mat_processing.corr_mat_stretch.html" title="miic.core.corr_mat_processing.corr_mat_stretch"
              accesskey="P">previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="../../index.html">MIIC 1.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../core.html" >MIIC Library Reference</a> &raquo;</li>
-          <li class="nav-item nav-item-2"><a href="../miic_utils.html" accesskey="U">Utilities</a> &raquo;</li> 
+          <li class="nav-item nav-item-2"><a href="../corr_mat_processing.html" accesskey="U">Correlation matrix dictionary processing</a> &raquo;</li> 
       </ul>
     </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
@@ -54,7 +54,7 @@
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
-      <li><a href="../../_sources/modules/autogen/miic.core.miic_utils.print_tuples.txt"
+      <li><a href="../../_sources/modules/autogen/miic.core.corr_mat_processing.corr_mat_correct_stretch.txt"
             rel="nofollow">Show Source</a></li>
     </ul>
    </div>
@@ -79,12 +79,35 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="miic-core-miic-utils-print-tuples">
-<h1>miic.core.miic_utils.print_tuples<a class="headerlink" href="#miic-core-miic-utils-print-tuples" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="miic-core-corr-mat-processing-corr-mat-correct-stretch">
+<h1>miic.core.corr_mat_processing.corr_mat_correct_stretch<a class="headerlink" href="#miic-core-corr-mat-processing-corr-mat-correct-stretch" title="Permalink to this headline">¶</a></h1>
 <dl class="function">
-<dt id="miic.core.miic_utils.print_tuples">
-<code class="descname">print_tuples</code><span class="sig-paren">(</span><em>iterable</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/miic/core/miic_utils.html#print_tuples"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#miic.core.miic_utils.print_tuples" title="Permalink to this definition">¶</a></dt>
-<dd><p>Print tuples.</p>
+<dt id="miic.core.corr_mat_processing.corr_mat_correct_stretch">
+<code class="descname">corr_mat_correct_stretch</code><span class="sig-paren">(</span><em>corr_mat</em>, <em>dv</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/miic/core/corr_mat_processing.html#corr_mat_correct_stretch"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#miic.core.corr_mat_processing.corr_mat_correct_stretch" title="Permalink to this definition">¶</a></dt>
+<dd><p>Correct stretching of correlation matrix</p>
+<p>In the case of a homogeneous subsurface velocity change the correlation
+traces are stretched or compressed. This stretching can be measured
+with <cite>corr_mat_stretch</cite>. The resulting <cite>dv</cite> dictionary can be passed to
+this function to remove the stretching from the correlation matrix.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>corr_mat</strong> (<em>dictionary</em>) &#8211; correlation matrix dictionary as produced by
+<a class="reference internal" href="miic.core.macro.recombine_corr_data.html#miic.core.macro.recombine_corr_data" title="miic.core.macro.recombine_corr_data"><code class="xref py py-class docutils literal"><span class="pre">recombine_corr_data</span></code></a></li>
+<li><strong>dv</strong> (<em>Dictionary</em>) &#8211; velocity change dictionary</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first">Dictionary</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">corrected correlation matrix dictionary</p>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 </div>
@@ -105,14 +128,14 @@
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="miic.core.miic_utils.print_tuple.html" title="miic.core.miic_utils.print_tuple"
+          <a href="miic.core.corr_mat_processing.corr_mat_add_lat_lon_ele.html" title="miic.core.corr_mat_processing.corr_mat_add_lat_lon_ele"
              >next</a> |</li>
         <li class="right" >
-          <a href="miic.core.miic_utils.print_input.html" title="miic.core.miic_utils.print_input"
+          <a href="miic.core.corr_mat_processing.corr_mat_stretch.html" title="miic.core.corr_mat_processing.corr_mat_stretch"
              >previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="../../index.html">MIIC 1.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../core.html" >MIIC Library Reference</a> &raquo;</li>
-          <li class="nav-item nav-item-2"><a href="../miic_utils.html" >Utilities</a> &raquo;</li> 
+          <li class="nav-item nav-item-2"><a href="../corr_mat_processing.html" >Correlation matrix dictionary processing</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
