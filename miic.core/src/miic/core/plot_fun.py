@@ -295,6 +295,8 @@ def plot_dv(dv,
             save_dir='.',
             figure_file_name=None,
             mark_time=None,
+            normalize_simmat=False,
+            sim_mat_Clim=[],
             figsize=(9, 11), dpi=72):
     """ Plot the "extended" dv dictionary
 
@@ -333,6 +335,12 @@ def plot_dv(dv,
     :type mark_time: string or :class:`~datetime.datetime` object
     :param mark_time: It is a "special" time location that will be represented
         in the `dv/v` and `corr` plot as a vertical line.
+    :type normalize_simmat: Bool
+    :param normalize_simmat: if True the simmat will be normalized to a maximum
+        of 1. Defaults to False
+    :type sim_mat_Clim: 2 element array_like
+    :param sim_mat_Clim: if non-empty it set the color scale limits of the
+        similarity matrix image
     """
 
     check_state = dv_check(dv)
@@ -387,6 +395,10 @@ def plot_dv(dv,
 
     rtime = convert_time(dv['time'])
 
+    # normalize simmat if requested
+    if normalize_simmat:
+        sim_mat = sim_mat/np.tile(np.max(sim_mat,axis=1),(sim_mat.shape[1],1)).T
+
 #    if dv_type == 'single_ref':
 #        dt = 1 - dt
 #        stretch_vect = stretch_vect - 1
@@ -428,7 +440,10 @@ def plot_dv(dv,
         gs = [311, 312, 313]
 
     ax1 = f.add_subplot(gs[0])
-    plt.imshow(sim_mat.T, interpolation='none', aspect='auto')
+    imh = plt.imshow(sim_mat.T, interpolation='none', aspect='auto')
+    if sim_mat_Clim:
+        assert  len(sim_mat_Clim) == 2, "sim_mat_Clim must be a two element list"            
+        imh.set_clim(sim_mat_Clim[0], sim_mat_Clim[1])
     plt.gca().get_xaxis().set_visible(False)
     ax1.set_yticks(np.floor(np.linspace(0, n_stretching - 1, 7)).astype('int'))
     ax1.set_yticklabels(["%4.3f" % x for x in
