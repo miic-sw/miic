@@ -437,7 +437,7 @@ def spectralWhitening(B,args,params):
     if 'joint_norm' in args.keys():
         print 'joint_norm in args'
         if args['joint_norm'] == True:
-            assert B.shape[0] % 3 != 0, "for joint normalization the number\
+            assert B.shape[1] % 3 == 0, "for joint normalization the number\
                       of traces needs to the multiple of 3: %d" % B.shape[0]
             for ii in np.arange(0,B.shape[1],3):
                 print 'ii', ii
