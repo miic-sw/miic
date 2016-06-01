@@ -789,7 +789,11 @@ def _read_filepattern(fpattern, starttime, endtime, trim):
                 st += read(fname,starttime=UTCDateTime(starttime),endtime=UTCDateTime(endtime))
             else:
                 st += read(fname)
-    st.merge()
+    try:
+        st.merge()
+    except:
+        print "Error merging traces for requested period!"
+        st = Stream()
     return st
 
 
