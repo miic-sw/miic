@@ -1,4 +1,12 @@
 # -*- coding: utf-8 -*-
+"""
+Estimate potential errors in the timing of seismic data. The script estimates
+time differences between station pairs and performes a minimization to obtain 
+consistent estimates of individual clock errors.
+
+The operation is controlled by a parameter file that is passed a command line
+argument.
+"""
 from copy import deepcopy
 import datetime
 import logging
@@ -17,6 +25,11 @@ from miic.core.corr_mat_processing import corr_mat_shift, corr_mat_normalize, \
 
 
 def time_difference_estimation(par_file):
+    """Estimate clock differences between pairs of stations
+    
+    This function estimates the time differences between the clocks of pairs
+    of stations by measuring the shift of noise correlation functions.
+    """
     par = __import__(par_file)
     logging.basicConfig(filename=os.path.join(par.log_dir,'time_difference_\
         estimation.log'), level=logging.DEBUG, format='%(asctime)s %(message)s')
@@ -24,7 +37,7 @@ def time_difference_estimation(par_file):
     logger.info('Hello')
     create_path(par.dt_res_dir)
     create_path(par.dt_fig_dir)
-    # create lists of times windows for analysing changes
+    # create lists of times windows for analyzing changes
     start_time_list = datetime_list(par.dt_start_date, par.dt_end_date,
                                     par.dt_date_inc)
     end_time_list = deepcopy(start_time_list)
