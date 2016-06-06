@@ -1618,17 +1618,12 @@ def corr_mat_shift(corr_mat, ref_trc=None, tw=None, shift_range=10,
     # miic.core.stretch_mod.time_stretch_estimate
 
     # In case a reference is provided but the matrix needs to be trimmed the
-    # references also need to be trimmed. To do so we append the references to
-    # the matrix, trimm it and remove the references again
+    # reference also needs to be trimmed. To do so we append the reference to
+    # the matrix, trimm it and remove the reference again
     if ref_trc != None:
-        rts = ref_trc.shape
-        if len(rts) == 1:
-            nr = 1
-        else:
-            nr = rts[0]
         corr_mat['corr_data'] = np.concatenate((corr_mat['corr_data'],
                             np.atleast_2d(ref_trc)), 0)
-        reft = np.tile(convert_time_to_string([datetime(1900, 1, 1)]), (nr))
+        reft = np.tile(convert_time_to_string([datetime(1900, 1, 1)]), (1))
         corr_mat['time'] = np.concatenate((corr_mat['time'], reft), 0)
 
     # trim the marices
@@ -1647,9 +1642,9 @@ def corr_mat_shift(corr_mat, ref_trc=None, tw=None, shift_range=10,
         # ref_trc = np.mean(corr_mat['corr_data'], 0)
     else:
         # extract and remove references from corr matrix again
-        ref_trc = corr_mat['corr_data'][-nr:, :]
-        corr_mat['corr_data'] = corr_mat['corr_data'][:-nr, :]
-        corr_mat['time'] = corr_mat['time'][:-nr]
+        ref_trc = corr_mat['corr_data'][-1, :]
+        corr_mat['corr_data'] = corr_mat['corr_data'][:-1, :]
+        corr_mat['time'] = corr_mat['time'][:-1]
 
     # print ref_trc.shape
     

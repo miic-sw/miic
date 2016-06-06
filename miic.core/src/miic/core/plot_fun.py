@@ -582,7 +582,7 @@ def plot_single_corr_matrix(corr_mat, seconds=0, filename=None,
     ax = plt.imshow(X,
                     aspect='auto',
                     origin='upper',
-                    interpolation='none',
+                    interpolation='nearest',
                     extent=(tlag[0], tlag[-1], X.shape[0], 0))
     if clim:
         plt.clim(clim)

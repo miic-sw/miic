@@ -29,7 +29,7 @@ except ImportError:
     BC_UI = False
     pass
     
-from obspy.signal.invsim import cosTaper
+from obspy.signal.invsim import cosine_taper
 
 from miic.core.miic_utils import nextpow2, from_str_to_datetime, dv_check, \
     flatten_recarray, convert_time
@@ -316,7 +316,7 @@ def time_shift_estimate(corr_data, ref_trc=None, tw=None, shift_range=10,
 
     # taper and extend the reference trace to avoid interpolation
     # artefacts at the ends of the trace
-    taper = cosTaper(len(ref_trc), 0.05)
+    taper = cosine_taper(len(ref_trc), 0.05)
     ref_trc *= taper
 
     # different values of shifting to be tested
@@ -442,7 +442,7 @@ def time_shift_apply(corr_data, shift):
         shift = np.delete(shift, np.arange(1, shift.shape[1]), axis=1)
 
     # taper the reference matrix to avoid interpolation
-    taper = cosTaper(mat.shape[1], 0.05)
+    taper = cosine_taper(mat.shape[1], 0.05)
     mat *= np.tile(taper, [mat.shape[0], 1])
 
     # find a suitable length for the FFT
@@ -561,7 +561,7 @@ def time_stretch_estimate(corr_data, ref_trc=None, tw=None, stretch_range=0.1,
 
     # taper and extend the reference trace to avoid interpolation
     # artefacts at the ends of the trace
-    taper = cosTaper(len(ref_trc), 0.05)
+    taper = cosine_taper(len(ref_trc), 0.05)
     ref_trc *= taper
 
     # different values of shifting to be tested
@@ -652,7 +652,7 @@ def time_stretch_apply(corr_data, stretch, single_sided=False):
 
     # taper and extend the reference trace to avoid interpolation
     # artefacts at the ends of the trace
-    taper = cosTaper(mat.shape[1], 0.05)
+    taper = cosine_taper(mat.shape[1], 0.05)
     mat *= np.tile(taper, [mat.shape[0], 1])
 
     # time axis
