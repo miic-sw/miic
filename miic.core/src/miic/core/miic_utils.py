@@ -948,14 +948,17 @@ if BC_UI:
                           Item('inc'))
 
 
-def combinations(n_trace, std_comb):
+def combinations(n_trace, std_comb,k=0):
     """ Create the list of combinations.
 
     Create the list of possible combinations between a specified number
-    of traces. Two different possibility are available: ``Auto-corr`` and
-    ``Full-corr``. The former generates a list of tuples of this form (n,n)
-    while the latter generates all the possible tuples of this form (n,m)
+    of traces. Several different possibility are available:
+    ``Auto-corr`` andgenerates a list of tuples of this form (n,n)
+    ``Full-corr`` generates all the possible tuples of this form (n,m)
     where ``n!=m`` and ``0 <= n < n_trace`` and ``0 <= m < n_trace``.
+    ``Single-corr``,k generates all the possible tuples of the form (n,k)
+                  or (k,n) for n!=k, such that always the first number is smaller than the second.
+                  If k<0 or >=n, return empty list
 
     :type n_trace: int
     :param n_trace: Number of traces
@@ -977,6 +980,14 @@ def combinations(n_trace, std_comb):
     elif std_comb == 'Full-corr':
         comb = [(x, y) for x in range(n_trace) \
                        for y in range(x + 1, n_trace)]
+    elif std_comb == 'Single-corr':
+        if k>=0 and k<n_trace:
+            comb = [(x, k) for x in range(k)]
+            comb += [(k,x) for x in range(k+1,n_trace)]
+        else:
+            comb = []
+    else:
+        raise ValueError, "Unknown combination type %s" % std_comb
     return comb
 
 
@@ -2392,9 +2403,9 @@ def from_str_comb_to_list(str_comb, full_stations_list):
 
 
 def extract_stations_info(stats_df):
-    """ Extrace stations geogarphical infromation from stats DataFrame
+    """ Extrace stations geographical infromation from stats DataFrame
 
-    This funciton extraxt the geographycal information about all stations
+    This function extraxt the geographycal information about all stations
     reported in the stats DataFrame as it is created by the funciton
     :py:func:`~miic.core.macro.from_single_pattern_to_panel`.
 
