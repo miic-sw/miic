@@ -1,0 +1,81 @@
+#### Project wide parameters
+# lowest level project directory
+proj_dir : '/home/chris/PROJECTS/STATION_SYNCHRONIZATION/applic2/'
+# directory ofr logging information
+log_subdir : 'log'
+# folder for figures
+fig_subdir : 'figures'
+
+#### parameters that are network specific
+# channel combinations
+net:
+    stations : ['5E.S105', '5E.S106', '5E.S107', '5E.S108']   # stations used in the project
+    channels : ['HHZ']                 # channels used in the project
+    # comb is a list combinations to investigate: list of dictionaries
+    # 'sta' holds a list with the two indecies of the station in the station list
+    # 'cha' holds a list of channel combinations
+    comb : [{'sta':[0,1],'cha':[[0,0]]},
+            {'sta':[0,2],'cha':[[0,0]]},
+            {'sta':[0,3],'cha':[[0,0]]},
+            {'sta':[1,2],'cha':[[0,0]]},
+            {'sta':[1,3],'cha':[[0,0]]},
+            {'sta':[2,3],'cha':[[0,0]]}]
+
+    
+    
+    
+#### parameters for correlation (emperical Green's function creation)
+# sub folder where correlations are stored
+co:
+    subdir : 'corr'
+    res_dir : ''
+
+
+
+
+#### parameters for the estimation of time differences
+dt:
+    # subfolder for storage of time difference results
+    subdir : 'time_diffs'
+    res_dir : ''
+
+    # Plotting
+    plot_corr_matrix : True
+    plot_time_shifts : True
+
+    ### Definition of calender time windows for the time difference measurements
+    start_date : '2011-05-01 00:00:00.0'   # %Y-%m-%dT%H:%M:%S.%fZ'
+    end_date : '2013-04-01 00:00:00.0'
+    win_len : 86400                         # length of window in which EGFs are stacked
+    date_inc : 86400                        # increment of measurements
+
+    ### Frequencies
+    freq_min : 0.1
+    freq_max : 0.5
+
+    ### Definition of lapse time window
+    tw_start : 0     # lapse time of first sample [s]
+    tw_len : 20       # length of window [s]
+    
+    ### Range to try shifting
+    shift_range : 1000
+    shift_steps : 1000
+    
+    
+#### parameters for the estimation of clock errors
+ce:
+    # subfolder for storage of clock error results
+    subdir : 'clock_error'
+    res_dir : ''
+        
+    # Way to esimate clock errors
+    # 'drift' for correcting a steady drift of the clock e.g. in ocean bottom seismometers
+    # 'variable' it the clock errors vary with time e.g. for episodic GPG signals
+    type : 'variable'
+    # limit time range to estimate drift
+    drift_start : '2011-12-23'
+    drift_end : '2011-12-25'
+    # Reference stations used to fix the absolute timing
+    ref_stations : ['5E.S105', '5E.S106', '5E.S108']
+
+    
