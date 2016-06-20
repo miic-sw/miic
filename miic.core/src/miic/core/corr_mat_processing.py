@@ -43,7 +43,7 @@ from miic.core.miic_utils import convert_time, convert_time_to_string, \
     select_var_from_dict, _check_stats, _stats_dict_from_obj
 
 from miic.core.stretch_mod import multi_ref_vchange_and_align, time_shift_estimate, \
-    time_stretch_apply
+    time_stretch_apply, time_shift_apply
 from miic.core.stream import _Selector
 
 
@@ -1562,7 +1562,7 @@ def corr_mat_shift(corr_mat, ref_trc=None, tw=None, shift_range=10,
         ``tw = None`` the full time range is used.
     :type shift_range: scalar
     :param shift_range: Maximum amount of shifting in samples.
-        Shidting is tested from ``-stretch_range`` to
+        Shifting is tested from ``-stretch_range`` to
         ``stretch_range``.
     :type shift_steps: scalar`
     :param shift_steps: Number of shifted version to be tested. The
@@ -1672,7 +1672,37 @@ def corr_mat_shift(corr_mat, ref_trc=None, tw=None, shift_range=10,
     return dt
 
 
+def corr_mat_correct_shift(corr_mat, dt):
+    """Correct shift of a correlation matrix
 
+    In the case of a clock error the correlation traces are shifted in lag time
+    This shifting can be measured with `corr_mat_shift`. The resulting `dt` 
+    dictionary can be passed to this function to remove the shifhting from the
+    correlation matrix.
+
+    :type corr_mat: dictionary
+    :param corr_mat: correlation matrix dictionary as produced by
+        :class:`~miic.core.macro.recombine_corr_data`
+    :type dt: Dictionary
+    :param dt: velocity change dictionary
+
+    :rtype: Dictionary
+    :return: corrected correlation matrix dictionary
+    """
+
+    # check input
+    if corr_mat_check(corr_mat)['is_incomplete']:
+        raise ValueError("Error: corr_mat is not a valid correlation_matix \
+            dictionary.")
+
+    if dv_check(dt)['is_incomplete']:
+        raise ValueError("Error: dv is not a valid Velocity change\
+            dictionary.")
+
+    ccorr_mat = deepcopy(corr_mat)
+    ccorr_mat['corr_data'] = time_shift_apply(ccorr_mat['corr_data'],-1.*dt['value'])
+
+    return ccorr_mat
 
 def corr_mat_add_lat_lon_ele(corr_mat, coord_df):
     """ Add coordinates to correlation matrix.

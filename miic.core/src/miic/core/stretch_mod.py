@@ -347,6 +347,7 @@ def time_shift_estimate(corr_data, ref_trc=None, tw=None, shift_range=10,
         sim_mat = vdict['sim_mat']
 
     else:
+        """
         # estimate shifts for causal and acausal part individually and avarage
         # to avoid apparent shift from velocity change and asymmetric
         # amplitudes
@@ -375,6 +376,16 @@ def time_shift_estimate(corr_data, ref_trc=None, tw=None, shift_range=10,
         corr = (lcorr + rcorr) / 2.
         shift = (lshift + rshift) / 2.
         sim_mat = (lsim_mat + rsim_mat) / 2.
+        """
+        dtdict = velocity_change_estimete(mat, tw, ref_shift,
+                                          shifts,
+                                          sides='both',
+                                          return_sim_mat=True,
+                                          remove_nans=remove_nans)
+        corr = dtdict['corr']
+        shift = dtdict['value']
+        sim_mat = dtdict['sim_mat']
+
 
     # create the result dictionary
     dt = {'corr': np.squeeze(corr),

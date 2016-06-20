@@ -30,6 +30,7 @@ GNU Lesser General Public License, Version 3
        ~lat_lon_ele_load
        ~convert_time
        ~convert_time_to_string
+       ~serial_date_from_datetime
            
     
     BlockCanvas oriented

@@ -1585,6 +1585,16 @@ if BC_UI:
         trait_view = View()
 
 
+def serial_date_from_datetime(dt):
+    """ Converts a datetime.datetime object into a number as toordinal but
+    including seconds.
+    """
+
+    sd = dt.toordinal() + float(dt.hour)/24 + float(dt.minute)/1440 + \
+        (float(dt.second)+float(dt.microsecond)/1000000)/86400
+    return sd
+
+
 def flatten(x):
     """ Return the flattened version of the input array x
 
