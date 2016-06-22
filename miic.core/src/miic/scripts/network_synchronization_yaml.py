@@ -219,7 +219,9 @@ def clock_offset_inversion(par):
         cnt +=1
     G = G[:,:-1]
     # do the inversion for every measurement
+
     co = np.zeros((ndata,len(par['net']['stations'])))
+    co[:] = np.nan
     d = np.zeros([len(DIFFS),1])
     
     for nd in range(ndata):
@@ -230,19 +232,33 @@ def clock_offset_inversion(par):
             station1 = par['net']['stations'][idx1]        
             station2 = par['net']['stations'][idx2]
             d[cnt,0] = DIFFS[station1+'-'+station2]['mean_diff'][nd]
-        m  = np.linalg.lstsq(G,d)[0]
+        # delete rows in case some measurements are missing
+        if nd == 77:
+            print d
+        tG = deepcopy(G)
+        nanind = np.where(np.isnan(d))[0]
+        nonanind = np.where(~np.isnan(d))[0]
+        tG = np.delete(tG,nanind,axis=0)
+        d = np.delete(d,nanind,0)
+        # delete columns that only contain zeros (unconstrained stations)
+	idy = np.where(np.sum(np.abs(tG),axis=0)==0)[0]
+        tG = np.delete(tG,idy,axis=1)
+        tm  = np.linalg.lstsq(tG,d)[0]
         # m is the drift of stations[:-1] setting drift of the last station to zero
-        print d
-        m = np.append(m,0.)
-        co[nd,:] = m
+        tm = np.append(tm,0.)
+        cnt = 0
+        for idx in  range(len(par['net']['stations'])):
+            if idx not in idy:
+                co[nd,idx] = tm[cnt]
+                cnt += 1
 
     # adjust for reference stations
     for nd in range(ndata):
-        mr = 0
+        mr = []
         for rs in par['ce']['ref_stations']:
-            mr += co[nd,par['net']['stations'].index(rs)]
-        co[nd,:] -= mr/len(par['ce']['ref_stations'])
-        
+            mr.append(co[nd,par['net']['stations'].index(rs)])
+        co[nd,:] -= np.nanmean(np.array(mr))
+
     return co        
     
 
@@ -329,7 +345,6 @@ if __name__=="__main__":
         print 'Specify the parameter file name as first argument.'
         sys.exit()
     par_file = sys.argv[1]
-    
     # initialize the project, create folders and set derived parameters
     par = ini_project(par_file)
     
