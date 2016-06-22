@@ -115,7 +115,12 @@ def time_difference_estimation(par):
     # available correlations
     combs = combination_names(par['net'])
     for comb in combs:
-        filename = dir_read(par['co']['res_dir'],'*'+comb+'*')[0]
+        fpattern = 'mat__*'+comb+'*.mat'
+        filenames = dir_read(par['co']['res_dir'],fpattern)
+        if len(filenames) != 1:
+            logging.info('%d files found for correlation matrix matching %s. No processing done.' % (len(filenames),fpattern))
+        else:
+            filename = filenames[0]
         try:
             logging.info('Working on combination %s' % comb)
             mat = mat_to_ndarray(filename)
@@ -325,11 +330,14 @@ if __name__=="__main__":
         sys.exit()
     par_file = sys.argv[1]
     
+    # initialize the project, create folders and set derived parameters
     par = ini_project(par_file)
     
-    # estimae time differences between station pairs    
-    #time_difference_estimation(par)
+    # estimate time differences between station pairs    
+    time_difference_estimation(par)
     
+    # calculate clock erroros assuming either a constant drift or variable
+    # clock errors
     if par['ce']['type'] == 'drift':
         clock_drift_inversion(par)
     else:
