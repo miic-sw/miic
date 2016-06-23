@@ -63,3 +63,18 @@ def estimate_trend(dv_dict):
     w = np.append(w, std)
 
     return w
+
+
+def dt_baseline(dt_dict):
+    """Find best baseline of time shift measurement
+
+    In a time shift measurement on a set of noise correlation functions the
+    baseline is undefined as the reference is arbitrary. However, if two
+    stations recieve GPS signal the time difference will be constant. This
+    means that shifts resulting from wrong timing will be random and those from
+    correct times are constant. Here we estimate the most common time shift and
+    assume that it characterises periods with correctly working clocks.
+    """
+    dt_bl = dt_dict['second_axis'][np.argmax(np.nansum(dt_dict['sim_mat'],axis=0))][0]
+
+    return dt_bl
