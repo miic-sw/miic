@@ -17,12 +17,14 @@ import yaml
 import cPickle as pickle
 
 from miic.core.miic_utils import dir_read, mat_to_ndarray, datetime_list, \
-    create_path, save_dv
+    create_path, save_dv, convert_time, save_dict_to_matlab_file
 import miic.core.plot_fun as pl
 from miic.core.corr_mat_processing import corr_mat_shift, corr_mat_normalize, \
     corr_mat_extract_trace, corr_mat_resample, corr_mat_filter, corr_mat_trim,\
     corr_mat_correct_shift
 import miic.core.change_processing as cpr
+
+import matplotlib.pyplot as plt
 
     
 def ini_project(par_file):
@@ -58,7 +60,9 @@ def ini_project(par_file):
                                              par['dt']['subdir'])
     par['ce']['res_dir'] = os.path.join(par['proj_dir'],
                                              par['ce']['subdir'])
-    
+    par['ce']['fig_dir'] = os.path.join(par['fig_dir'],
+                                             par['ce']['subdir'])
+
     return par
     
 
@@ -179,32 +183,48 @@ def clock_offset_inversion(par):
     """
     
     create_path(par['ce']['res_dir'])
+    create_path(par['ce']['fig_dir'])
     
     DIFFS = {}
     ndata = -1
+    # loop over station combinations
     for comb in par['net']['comb']:
         station1 = par['net']['stations'][comb['sta'][0]]
         station2 = par['net']['stations'][comb['sta'][1]]
         print station1, station2
-        DIFFS.update({station1+'-'+station2:{'diff':[],'comp':[],'corr':[]}})
-
+        comb_key = station1+'-'+station2
+        # loop over channel combinations
         for cha in comb['cha']:
             comp = par['net']['channels'][cha[0]]+par['net']['channels'][cha[1]]
             print comp
             file_pattern = '*%s%s.%s%s.*.%s.mat' % (station1.split('.')[0],station2.split('.')[0],station1.split('.')[1],station2.split('.')[1],comp)
             filename = dir_read(par['dt']['res_dir'],file_pattern)[0]
             dt = mat_to_ndarray(filename)
+            dt_bl = cpr.dt_baseline(dt)
+            # correct baseline
+            dt['value'] -= dt_bl
+            # check if time period match
+            flag = 0
             if ndata < 0:
                 ndata = len(dt['time'])
+                time_vec = dt['time']
             else:
-                if ndata != len(dt['time']):
-                    print "Wrong number of measurements"
-            DIFFS[station1+'-'+station2]['diff'].append(dt['value'])
-            DIFFS[station1+'-'+station2]['comp'].append(comp)
-            DIFFS[station1+'-'+station2]['corr'].append(dt['corr'])
-        DIFFS[station1+'-'+station2]['diff'] = np.array(DIFFS[station1+'-'+station2]['diff'])
-        DIFFS[station1+'-'+station2]['corr'] = np.array(DIFFS[station1+'-'+station2]['corr'])
-        DIFFS[station1+'-'+station2].update({'mean_diff':np.mean(DIFFS[station1+'-'+station2]['diff'],axis=0),
+                if ndata == len(dt['time']):
+                    for idx,tt in enumerate(dt['time']):
+                        if tt != time_vec[idx]:
+                            flag += 1
+            # only if dt measurements span the same time
+            if flag == 0:
+                if comb_key not in DIFFS.keys():
+                    DIFFS.update({comb_key:{'diff':[],'comp':[],'corr':[]}})
+                DIFFS[station1+'-'+station2]['diff'].append(dt['value'])
+                DIFFS[station1+'-'+station2]['comp'].append(comp)
+                DIFFS[station1+'-'+station2]['corr'].append(dt['corr'])
+        #claculate averages over components for same station combinations
+        if comb_key in DIFFS.keys():
+            DIFFS[station1+'-'+station2]['diff'] = np.array(DIFFS[station1+'-'+station2]['diff'])
+            DIFFS[station1+'-'+station2]['corr'] = np.array(DIFFS[station1+'-'+station2]['corr'])
+            DIFFS[station1+'-'+station2].update({'mean_diff':np.mean(DIFFS[station1+'-'+station2]['diff'],axis=0),
                                               'std':np.std(DIFFS[station1+'-'+station2]['diff'],axis=0)})
     # create the matrix to invert
     G = np.zeros([len(par['net']['comb']),len(par['net']['stations'])])
@@ -222,6 +242,8 @@ def clock_offset_inversion(par):
 
     co = np.zeros((ndata,len(par['net']['stations'])))
     co[:] = np.nan
+    R = np.zeros((ndata,len(par['net']['comb'])))
+    R[:] = np.nan
     d = np.zeros([len(DIFFS),1])
     
     for nd in range(ndata):
@@ -239,11 +261,11 @@ def clock_offset_inversion(par):
         nanind = np.where(np.isnan(d))[0]
         nonanind = np.where(~np.isnan(d))[0]
         tG = np.delete(tG,nanind,axis=0)
-        d = np.delete(d,nanind,0)
+        td = np.delete(d,nanind,0)
         # delete columns that only contain zeros (unconstrained stations)
-	idy = np.where(np.sum(np.abs(tG),axis=0)==0)[0]
+        idy = np.where(np.sum(np.abs(tG),axis=0)==0)[0]
         tG = np.delete(tG,idy,axis=1)
-        tm  = np.linalg.lstsq(tG,d)[0]
+        tm  = np.linalg.lstsq(tG,td)[0]
         # m is the drift of stations[:-1] setting drift of the last station to zero
         tm = np.append(tm,0.)
         cnt = 0
@@ -251,6 +273,8 @@ def clock_offset_inversion(par):
             if idx not in idy:
                 co[nd,idx] = tm[cnt]
                 cnt += 1
+        # calculate residuals
+        R[nd,:] = np.dot(G,co[nd,:-1]) - np.squeeze(d)
 
     # adjust for reference stations
     for nd in range(ndata):
@@ -258,6 +282,27 @@ def clock_offset_inversion(par):
         for rs in par['ce']['ref_stations']:
             mr.append(co[nd,par['net']['stations'].index(rs)])
         co[nd,:] -= np.nanmean(np.array(mr))
+
+    # create a data structure
+    ce = {'time':time_vec}
+    std_err = np.nanstd(R,axis=1)
+    ce.update({'std_err':std_err})
+    ce.update({'clock_errors':{}})
+    for ind,sta in enumerate(par['net']['stations']):
+        ce['clock_errors'].update({sta:{'clock_offset':co[:,ind]}})
+
+    if par['ce']['plot_clock_error']:
+        tt = convert_time(ce['time'])
+        for sta in ce['clock_errors'].keys():
+            plt.plot(tt, ce['clock_errors'][sta]['clock_offset'],label=sta)
+        plt.plot(tt, ce['std_err'],label='ERR')
+        plt.legend()
+        plt.savefig(os.path.join(par['ce']['fig_dir'],'clock_errors.png'))
+
+    f = open(os.path.join(par['ce']['res_dir'],'clock_errors.pkl'),'wb')
+    pickle.dump(ce,f)
+    f.close()
+    save_dict_to_matlab_file(os.path.join(par['ce']['res_dir'],'clock_errors.mat'),ce)
 
     return co        
     

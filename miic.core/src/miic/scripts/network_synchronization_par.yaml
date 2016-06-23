@@ -67,7 +67,10 @@ ce:
     # subfolder for storage of clock error results
     subdir : 'clock_error'
     res_dir : ''
-        
+
+    # Plotting
+    plot_clock_error : True
+
     # Way to esimate clock errors
     # 'drift' for correcting a steady drift of the clock e.g. in ocean bottom seismometers
     # 'variable' it the clock errors vary with time e.g. for episodic GPG signals
