@@ -31,8 +31,9 @@ def ini_project(par_file):
     """Initialize a project of network synchrinization
     
     Read the yaml parameter file, and complete its content, i.e. combine
-    subdirectory names. Some project relevant directories are created and the 
-    parameter dictionary is returned.
+    subdirectory names. Some project relevant directories are created and
+    directory names completed. The list of combinations is filled if not given
+    explicitly. The parameter dictionary is returned.
     
     :type par_file: str
     :param par_file: path of the yaml parameter file
@@ -62,6 +63,21 @@ def ini_project(par_file):
                                              par['ce']['subdir'])
     par['ce']['fig_dir'] = os.path.join(par['fig_dir'],
                                              par['ce']['subdir'])
+
+    # fill list of combinations if not given explicitly
+    if par['net']['comb'][0]['sta'] == 'all_stations':
+        ncomb =[]
+        for ind1 in range(len(par['net']['stations'])):
+            for ind2 in range(ind1+1,len(par['net']['stations'])):
+                ncomb.append({'sta':[ind1,ind2],'cha':par['net']['comb'][0]['cha']})
+        par['net']['comb'] = deepcopy(ncomb)
+    for cind,comb in enumerate(par['net']['comb']):
+        if comb['cha'] == 'all_channels':
+            cha = []
+            for ind1 in range(len(par['net']['channels'])):
+                for ind2 in range(len(par['net']['channels'])):
+                    cha.append([ind1,ind2])
+            par['net']['comb'][cind]['cha'] = deepcopy(cha)
 
     return par
     

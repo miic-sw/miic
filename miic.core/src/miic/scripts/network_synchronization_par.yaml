@@ -9,17 +9,25 @@ fig_subdir : 'figures'
 #### parameters that are network specific
 # channel combinations
 net:
-    stations : ['5E.S105', '5E.S106', '5E.S107', '5E.S108']   # stations used in the project
-    channels : ['HHZ']                 # channels used in the project
+    stations : ['5E.S105', '5E.S106', '5E.S107', '5E.S108']   # stations used
+    # in the project given as "NET.STATION"
+    channels : ['HHZ','HHN','HHE']                 # channels used in the project
     # comb is a list combinations to investigate: list of dictionaries
     # 'sta' holds a list with the two indecies of the station in the station list
     # 'cha' holds a list of channel combinations
-    comb : [{'sta':[0,1],'cha':[[0,0]]},
-            {'sta':[0,2],'cha':[[0,0]]},
-            {'sta':[0,3],'cha':[[0,0]]},
-            {'sta':[1,2],'cha':[[0,0]]},
-            {'sta':[1,3],'cha':[[0,0]]},
-            {'sta':[2,3],'cha':[[0,0]]}]
+    # the strings 'all_stations' amd 'all_channels' are replaced. Examples of
+    # valid entries are
+    # comb : [{'sta':[0,1],'cha':[[0,0]]},
+    #         {'sta':[0,2],'cha':[[0,0]]},
+    #         {'sta':[0,3],'cha':[[0,0]]},
+    #         {'sta':[1,2],'cha':[[0,0]]},
+    #         {'sta':[1,3],'cha':[[0,0]]},
+    #         {'sta':[2,3],'cha':[[0,0]]}]
+    # comb : [{'sta':'all_stations','cha':[[0,1]]}]
+    # comb : [{'sta':[0,1],'cha':'all_channels'},
+    #         {'sta':[0,2],'cha'[[0,1]]}]
+    # comb : [{'sta':'all_stations','cha':'all_channels'}]
+    comb : [{'sta':'all_stations','cha':'all_channels'}]
 
     
     
