@@ -139,6 +139,7 @@ def time_difference_estimation(par):
         filenames = dir_read(par['co']['res_dir'],fpattern)
         if len(filenames) != 1:
             logging.info('%d files found for correlation matrix matching %s. No processing done.' % (len(filenames),fpattern))
+            continue
         else:
             filename = filenames[0]
         try:
