@@ -140,8 +140,8 @@ def time_difference_estimation(par):
         if len(filenames) != 1:
             logging.info('%d files found for correlation matrix matching %s. No processing done.' % (len(filenames),fpattern))
             continue
-        else:
-            filename = filenames[0]
+
+        filename = filenames[0]
         try:
             logging.info('Working on combination %s' % comb)
             mat = mat_to_ndarray(filename)
@@ -159,9 +159,9 @@ def time_difference_estimation(par):
             # plot correlation matrix
             if par['dt']['plot_corr_matrix']:
                 pl.plot_single_corr_matrix(tmat,filename=os.path.join(par['dt']['fig_dir']
-                ,tmat['stats']['station']+'_'+tmat['stats']['channel']),clim=[-1,1])
+                                ,tmat['stats']['station']+'_'+tmat['stats']['channel']),clim=[-1,1])
             tw = [np.arange(par['dt']['tw_start']*tmat['stats']['sampling_rate'],(par['dt']['tw_start']+par['dt']['tw_len'])*tmat['stats']['sampling_rate'],1)]
-            
+
             # extract initial reference trace (mean excluding very different traces)
             tr = corr_mat_extract_trace(tmat,method='mean')
             tw = [np.arange(par['dt']['tw_start']*tmat['stats']['sampling_rate'],(par['dt']['tw_start']+par['dt']['tw_len'])*tmat['stats']['sampling_rate'],1)]
@@ -215,7 +215,11 @@ def clock_offset_inversion(par):
             comp = par['net']['channels'][cha[0]]+par['net']['channels'][cha[1]]
             print comp
             file_pattern = '*%s%s.%s%s.*.%s.mat' % (station1.split('.')[0],station2.split('.')[0],station1.split('.')[1],station2.split('.')[1],comp)
-            filename = dir_read(par['dt']['res_dir'],file_pattern)[0]
+            filenames = dir_read(par['dt']['res_dir'],file_pattern)[0]
+            if len(filenames) != 1:
+                logging.info('%d files found for correlation matrix matching %s. No processing done.' % (len(filenames),fpattern))
+                continue
+            filename = filenames[0]
             dt = mat_to_ndarray(filename)
             dt_bl = cpr.dt_baseline(dt)
             # correct baseline
