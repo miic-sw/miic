@@ -78,3 +78,26 @@ def dt_baseline(dt_dict):
     dt_bl = dt_dict['second_axis'][np.argmax(np.nansum(dt_dict['sim_mat'],axis=0))][0]
 
     return dt_bl
+
+
+def dv_combine(dv_dict_l, method='average_sim_mat'):
+    """Combine a set of change measuements
+    
+    A list of dv dictionaries from e.g. different channels of the same station
+    combination is combined into a single dv dictionary.
+
+    If method is 'average_sim_mat' the similarity matrices are averaged. The
+    value along the crest of the averated matrix is used as new value.
+    """
+    assert type(dv_dict_l) == type([]), "dv_dict_l is not a list"
+    
+    if method == 'average_sim_mat':
+        res_dv = deepcopy(dv_dict_l[0])
+        for dv in dv_dict_l[1:]:
+            res_dv['sim_mat'] += dv['sim_mat']
+        res_dv['sim_mat'] /= len(dv_dict_l)
+        res_dv['value'] = res_dv['second_axis'][np.argmax(res_dv['sim_mat'],axis=1)]
+        res_dv['corr'] = np.max(res_dv['sim_mat'],axis=1)
+    
+    return res_dv
+
