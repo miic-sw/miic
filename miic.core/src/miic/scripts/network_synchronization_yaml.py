@@ -215,9 +215,9 @@ def clock_offset_inversion(par):
             comp = par['net']['channels'][cha[0]]+par['net']['channels'][cha[1]]
             print comp
             file_pattern = '*%s%s.%s%s.*.%s.mat' % (station1.split('.')[0],station2.split('.')[0],station1.split('.')[1],station2.split('.')[1],comp)
-            filenames = dir_read(par['dt']['res_dir'],file_pattern)[0]
+            filenames = dir_read(par['dt']['res_dir'],file_pattern)
             if len(filenames) != 1:
-                logging.info('%d files found for correlation matrix matching %s. No processing done.' % (len(filenames),fpattern))
+                logging.info('%d files found for correlation matrix matching %s. No processing done.' % (len(filenames),file_pattern))
                 continue
             filename = filenames[0]
             dt = mat_to_ndarray(filename)
@@ -238,7 +238,7 @@ def clock_offset_inversion(par):
             if flag == 0:
                 if comb_key not in DIFFS.keys():
                     DIFFS.update({comb_key:{'diff':[],'comp':[],'corr':[]}})
-                DIFFS[station1+'-'+station2]['diff'].append(dt['value'])
+                DIFFS[station1+'-'+station2]['diff'].append(dt['value']/dt['stats']['sampling_rate'])
                 DIFFS[station1+'-'+station2]['comp'].append(comp)
                 DIFFS[station1+'-'+station2]['corr'].append(dt['corr'])
         #claculate averages over components for same station combinations
@@ -317,6 +317,7 @@ def clock_offset_inversion(par):
         for sta in ce['clock_errors'].keys():
             plt.plot(tt, ce['clock_errors'][sta]['clock_offset'],label=sta)
         plt.plot(tt, ce['std_err'],label='ERR')
+        plt.ylabel('clock offset [s]')
         plt.legend()
         plt.savefig(os.path.join(par['ce']['fig_dir'],'clock_errors.png'))
 
@@ -324,7 +325,19 @@ def clock_offset_inversion(par):
     pickle.dump(ce,f)
     f.close()
     save_dict_to_matlab_file(os.path.join(par['ce']['res_dir'],'clock_errors.mat'),ce)
-
+    # write to text file
+    f = open(os.path.join(par['ce']['res_dir'],'clock_errors.txt'),'wb')
+    f.write('relative (up to an additive constant) errors of the station clocks\n')
+    f.write('time\tstd_err\t')
+    for sta in par['net']['stations']:
+        f.write(sta+'\t')
+    f.write('\n')
+    for ii,t in enumerate(time_vec):
+        f.write('%s\t%e\t' % (t,ce['std_err'][ii]))
+        for sta in par['net']['stations']:
+            f.write('%e\t' % ce['clock_errors'][sta]['clock_offset'][ii])
+        f.write('\n')
+    f.close()
     return co        
     
 
@@ -415,7 +428,7 @@ if __name__=="__main__":
     par = ini_project(par_file)
     
     # estimate time differences between station pairs    
-    time_difference_estimation(par)
+    #time_difference_estimation(par)
     
     # calculate clock erroros assuming either a constant drift or variable
     # clock errors
