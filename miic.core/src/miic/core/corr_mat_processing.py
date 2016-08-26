@@ -17,7 +17,7 @@ Created on Nov 25, 2012
 # Main imports
 import numpy as np
 from copy import copy, deepcopy
-from scipy.signal import butter, lfilter, hilbert
+from scipy.signal import butter, lfilter, hilbert, resample
 from scipy.io import savemat
 from datetime import datetime, timedelta
 from glob import glob1
@@ -36,6 +36,7 @@ except ImportError:
 # Obspy imports
 from obspy.signal.invsim import cosTaper
 from obspy.core import trace, stream
+
 
 # Local imports
 from miic.core.miic_utils import convert_time, convert_time_to_string, \
@@ -1015,7 +1016,109 @@ if BC_UI:
     
         trait_view = View(Item('width'),
                           Item('slope_frac'))
+
+
+def corr_mat_resample_time(corr_mat,freq):
+    """Resample the lapse time axis of a correlation matrix.
+
+    :type corr_mat: dict
+    :param corr_mat: correlation matrix dictionary
+    :type freq: float
+    :param factor: new sampling frequency
+
+    :rtype: dict
+    :return: **corr_mat**: is the same dictionary as the input but with
+        resampled data.
+    """
+
+    # check input
+    if not isinstance(corr_mat, dict):
+        raise TypeError("corr_mat needs to be correlation matrix dictionary.")
+
+    if corr_mat_check(corr_mat)['is_incomplete']:
+        raise ValueError("Error: corr_mat is not a valid correlation_matix \
+            dictionary.")
+    """
+    """
+    # make last samples
+    # x1 = n2*f1/f2-n1 + x2*f1/f2
+    otime = float(corr_mat['stats']['npts'])/corr_mat['stats']['sampling_rate']
+    num = np.floor(otime * freq)
+    ntime = num/freq
+    n1 = 0.
+    n2 = 0.
+
+    while ntime != otime:
+        if ntime < otime:
+            n1 += 1
+            ntime = (num + n1)/freq
+        else:
+            n2 += 1
+            otime = float(corr_mat['stats']['npts']+n2)/corr_mat['stats']['sampling_rate']
+        if n1 > num:
+            raise TypeError("No mathicng trace length found. Resampling not possible.")
+            break
+    corr_mat = corr_mat_filter(corr_mat,[0.001,0.8*freq/2])
+    rmat = {'stats':deepcopy(corr_mat['stats']),
+            'stats_tr1':deepcopy(corr_mat['stats_tr1']),
+            'stats_tr2':deepcopy(corr_mat['stats_tr2']),
+            'time':deepcopy(corr_mat['time'])}
+    mat = np.concatenate((corr_mat['corr_data'],np.zeros((corr_mat['corr_data'].shape[0],corr_mat['corr_data'].shape[1]+int(2*n2)))),axis=1)
+    trmat = resample(mat,int(2*(num+n1)),axis=1)
+    rmat.update({'corr_data':deepcopy(trmat[:,:num])})
+    rmat['stats']['npts'] = rmat['corr_data'].shape[1]
+    rmat['stats']['sampling_rate'] = freq
+    endtime = convert_time([rmat['stats']['starttime']])[0]+timedelta(seconds=float(rmat['stats']['npts']-1)/freq)
+    rmat['stats']['endtime'] = convert_time_to_string([endtime])[0]
+    return rmat
+
+
+def corr_mat_decimate(corr_mat, factor):
+    """Downsample a correlation matrix by an integer sample
     
+    :type corr_mat: dict
+    :param corr_mat: correlation matrix dictionary
+    :type factor: int
+    :param factor: decimation factor
+
+    :rtype: dict
+    :return: **corr_mat**: is the same dictionary as the input but with
+        decimated sampling rate.
+    """
+
+    # check input
+    if not isinstance(corr_mat, dict):
+        raise TypeError("corr_mat needs to be correlation matrix dictionary.")
+
+    if corr_mat_check(corr_mat)['is_incomplete']:
+        raise ValueError("Error: corr_mat is not a valid correlation_matix \
+            dictionary.")
+
+    # apply low pass filter
+    freq = corr_mat['stats']['sampling_rate'] * 0.5 / float(factor)
+
+    fe = float(corr_mat['stats']['sampling_rate']) / 2
+
+    (b, a) = butter(4, freq / fe, btype='lowpass')
+
+    fdat = deepcopy(corr_mat)
+    fdat['corr_data'] = lfilter(b, a, fdat['corr_data'], axis=1)
+    fdat['corr_data'] = lfilter(b, a, fdat['corr_data'][:, ::-1],
+                                        axis=1)[:,::-1]
+
+    fdat['corr_data'] = deepcopy(fdat['corr_data'][:,::factor])
+    fdat['stats']['npts'] = fdat['corr_data'].shape[1]
+    fdat['stats']['sampling_rate'] = float(fdat['stats']['sampling_rate'])/factor
+    start = convert_time([fdat['stats']['starttime']])[0]
+    length = (fdat['stats']['npts'] - 1)/fdat['stats']['sampling_rate']
+    print start, length
+    fdat['stats']['endtime'] = convert_time_to_string([convert_time([fdat['stats']['starttime']])[0] \
+            + timedelta(seconds=(fdat['stats']['npts'] - 1)/fdat['stats']['sampling_rate'])])[0]
+    return fdat
+
+
+
+
 
 def corr_mat_import_US_stream(st, pretrigger=0):
     """ Convert a stream with multiple traces from an active measurement
