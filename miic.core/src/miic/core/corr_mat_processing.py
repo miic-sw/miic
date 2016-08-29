@@ -1024,7 +1024,7 @@ def corr_mat_resample_time(corr_mat,freq):
     :type corr_mat: dict
     :param corr_mat: correlation matrix dictionary
     :type freq: float
-    :param factor: new sampling frequency
+    :param freq: new sampling frequency
 
     :rtype: dict
     :return: **corr_mat**: is the same dictionary as the input but with
