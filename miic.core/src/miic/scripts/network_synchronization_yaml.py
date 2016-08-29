@@ -276,8 +276,6 @@ def clock_offset_inversion(par):
             station2 = par['net']['stations'][idx2]
             d[cnt,0] = DIFFS[station1+'-'+station2]['mean_diff'][nd]
         # delete rows in case some measurements are missing
-        if nd == 77:
-            print d
         tG = deepcopy(G)
         nanind = np.where(np.isnan(d))[0]
         nonanind = np.where(~np.isnan(d))[0]
@@ -286,7 +284,7 @@ def clock_offset_inversion(par):
         # delete columns that only contain zeros (unconstrained stations)
         idy = np.where(np.sum(np.abs(tG),axis=0)==0)[0]
         tG = np.delete(tG,idy,axis=1)
-        tm  = np.linalg.lstsq(tG,td)[0]
+        tm  = np.linalg.lstsq(tG,td,rcond=1e-5)[0]
         # m is the drift of stations[:-1] setting drift of the last station to zero
         tm = np.append(tm,0.)
         cnt = 0
