@@ -112,7 +112,7 @@ def pxcorr(comm,A,**kwargs):
         ## frequency domain postProcessing
         #
         
-        tmp = np.fft.irfft(M).real
+        tmp = np.fft.irfft(M,axis=0).real
         # cut the center and do fftshift
         C[:,ii] = np.concatenate((tmp[-sampleToSave:],tmp[:sampleToSave+1]))/norm
         starttimes[ii] = zerotime -sampleToSave/kwargs['sampling_rate'] - roffset
@@ -307,7 +307,7 @@ def mute(A,args,params):
     in this case.
     
     :Example:
-    ``args:{'filter':{'type':'bandpass', 'freqmin':1., 'freqmax':6.},'taper_len':1., 'threshold':1000, 'std_factor':1, 'extend_gaps':True}``
+    ``args={'filter':{'type':'bandpass', 'freqmin':1., 'freqmax':6.},'taper_len':1., 'threshold':1000, 'std_factor':1, 'extend_gaps':True}``
               
     :type A: numpy.ndarray
     :param A: time series data with time oriented along the first \\
@@ -335,6 +335,11 @@ def mute(A,args,params):
     :return: clipped time series data
     """
 
+    # return zeros if length of traces is shorter than taper
+    ntap = int(args['taper_len']*params['sampling_rate'])
+    if A.shape[0]<=ntap:
+        return np.zeros_like(A)
+
     # filter if asked to
     if 'filter' in args.keys():
         C = TDfilter(A,args['filter'],params)
@@ -342,7 +347,8 @@ def mute(A,args,params):
         C = deepcopy(A)
     
     # calculate envelope
-    D = np.abs(signal.hilbert(C,axis=0))
+    #D = np.abs(signal.hilbert(C,axis=0))
+    D = np.abs(C)
     
     # calculate threshold
     if 'threshold' in args.keys():
@@ -356,7 +362,6 @@ def mute(A,args,params):
     mask = np.ones_like(D)
     mask[D>np.tile(np.atleast_2d(thres),(A.shape[0],1))]=0
     # extend the muted segments to make sure the whole segment is zero after
-    ntap = int(args['taper_len']*params['sampling_rate'])
     if args['extend_gaps']:
         tap = np.ones(ntap)/ntap
         for ind in range(A.shape[1]):
