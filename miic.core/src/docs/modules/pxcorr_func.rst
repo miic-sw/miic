@@ -19,6 +19,7 @@ This module implements a suite of functions that allow
         ~TDnormalization
         ~taper
         ~clip
+        ~mute
         ~TDfilter
         ~normalizeStandardDeviation
         ~signBitNormalization
@@ -31,7 +32,6 @@ This module implements a suite of functions that allow
         :nosignatures:
         
         ~spectralWhitening
-        ~stream_pxcorr
         ~FDsignBitNormalization
         
         
