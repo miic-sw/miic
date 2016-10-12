@@ -278,7 +278,6 @@ def clock_offset_inversion(par):
         # delete rows in case some measurements are missing
         tG = deepcopy(G)
         nanind = np.where(np.isnan(d))[0]
-        nonanind = np.where(~np.isnan(d))[0]
         tG = np.delete(tG,nanind,axis=0)
         td = np.delete(d,nanind,0)
         # delete columns that only contain zeros (unconstrained stations)
