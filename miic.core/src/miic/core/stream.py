@@ -748,6 +748,13 @@ def read_from_filesystem(ID,starttime,endtime,fs,trim=True):
     period spans multiple files.
     """
 
+    #check input
+    assert type(starttime) is datetime.datetime, \
+        'starttime is not a datetime.datetime object: %s is type %s' % \
+        (starttime, type(starttime))
+    assert type(endtime) is datetime.datetime, \
+        'endtime is not a datetime.datetime object: %s is type' % \
+        (endtime, type(endtime))
     # translate file structure string
     fpattern = _current_filepattern(ID,starttime,fs)
     st = _read_filepattern(fpattern, starttime, endtime,trim)
