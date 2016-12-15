@@ -313,6 +313,50 @@ class _StDownsample:
         return tr
 
 
+def stack_stream(st):
+    """Calculate mean of all traces in stream
+
+    Calculate the mean of all overlapping segments of the trace in the input
+    stream provided the traces match the sampling rate of the first trace.
+
+    :type st: :class:`~obspy.core.stream.Stream`
+    :param st: The stream with the traces to be stacked
+
+    :rtype: :class:`~obspy.core.stream.Stream`
+    :return: **rst**: Stream with stacked data in the first trace and number of
+        stacked traces for each sample in the second trace
+    """
+    sampling_rate = st[0].stats.sampling_rate
+    starttime = st[0].stats.starttime
+    endtime = st[0].stats.endtime
+    for tr in st:
+        if tr.stats.starttime < starttime:
+            starttime = tr.stats.starttime
+        if tr.stats.endtime > endtime:
+            endtime = tr.stats.endtime
+    npts = (endtime-starttime)*sampling_rate + 1
+    sum_tr = deepcopy(st[0])
+    sum_tr.stats.starttime = starttime
+    sum_tr.data = np.zeros(npts,dtype=float)
+    sum_tr.stats.station = 'MEAN'
+    num_tr = deepcopy(sum_tr)
+    num_tr.stats.station= 'NUM'
+    for tr in st[1:]:
+        if tr.stats.sampling_rate == sampling_rate:
+            sind = int(np.floor((tr.stats.starttime-starttime) * sampling_rate))
+            tnpts = tr.stats.npts
+            sum_tr.data[sind:sind+tnpts] += tr.data
+            num_tr.data[sind:sind+tnpts] += 1
+    rst = stream.Stream()
+    sum_tr.data /= num_tr.data
+    rst.append(sum_tr)
+    rst.append(num_tr)
+    return rst
+                   
+    
+
+
+
 def stream_downsample(st, final_freq, no_filter=False, \
                       strict_length=False, parallel=True, processes=None):
     """Downsample all the traces in the input stream to a desired frequency.
@@ -748,6 +792,13 @@ def read_from_filesystem(ID,starttime,endtime,fs,trim=True):
     period spans multiple files.
     """
 
+    #check input
+    assert type(starttime) is datetime.datetime, \
+        'starttime is not a datetime.datetime object: %s is type %s' % \
+        (starttime, type(starttime))
+    assert type(endtime) is datetime.datetime, \
+        'endtime is not a datetime.datetime object: %s is type' % \
+        (endtime, type(endtime))
     # translate file structure string
     fpattern = _current_filepattern(ID,starttime,fs)
     st = _read_filepattern(fpattern, starttime, endtime,trim)

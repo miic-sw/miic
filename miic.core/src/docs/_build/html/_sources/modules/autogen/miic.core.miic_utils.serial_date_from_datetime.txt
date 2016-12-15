@@ -1,0 +1,6 @@
+miic.core.miic_utils.serial_date_from_datetime
+==============================================
+
+.. currentmodule:: miic.core.miic_utils
+
+.. autofunction:: serial_date_from_datetime

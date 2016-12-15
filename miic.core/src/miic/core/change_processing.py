@@ -80,8 +80,8 @@ def dt_baseline(dt_dict):
     correct times are constant. Here we estimate the most common time shift and
     assume that it characterises periods with correctly working clocks.
     """
-    dt_bl = dt_dict['second_axis'][np.argmax(np.nansum(dt_dict['sim_mat'],axis=0))][0]
-
+    hh = np.histogram(dt_dict['value'],bins=np.squeeze(dt_dict['second_axis']))
+    dt_bl = hh[1][np.argmax(hh[0])]
     return dt_bl
 
 

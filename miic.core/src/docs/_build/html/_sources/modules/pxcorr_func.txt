@@ -19,6 +19,7 @@ This module implements a suite of functions that allow
         ~TDnormalization
         ~taper
         ~clip
+        ~mute
         ~TDfilter
         ~normalizeStandardDeviation
         ~signBitNormalization

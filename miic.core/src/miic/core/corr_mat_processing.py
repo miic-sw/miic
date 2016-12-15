@@ -1024,7 +1024,7 @@ def corr_mat_resample_time(corr_mat,freq):
     :type corr_mat: dict
     :param corr_mat: correlation matrix dictionary
     :type freq: float
-    :param factor: new sampling frequency
+    :param freq: new sampling frequency
 
     :rtype: dict
     :return: **corr_mat**: is the same dictionary as the input but with
@@ -1287,7 +1287,7 @@ def corr_mat_extract_trace(corr_mat, method='mean', percentile=50.):
         corr_mat = corr_mat_normalize(corr_mat, normtype='absmax')
         mm = np.ma.masked_array(corr_mat['corr_data'],
                     np.isnan(corr_mat['corr_data']))
-        trace['corr_trace'] = np.mean(mm, 0).filled(np.nan)
+        trace['corr_trace'] = (np.mean(mm, 0).filled(np.nan))
     elif method == 'similarity_percentile':
         # normalize the matrix
         corr_mat = corr_mat_normalize(corr_mat, normtype='absmax')

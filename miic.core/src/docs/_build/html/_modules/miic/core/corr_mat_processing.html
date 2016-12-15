@@ -83,7 +83,7 @@
 <span class="c"># Main imports</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
 <span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">copy</span><span class="p">,</span> <span class="n">deepcopy</span>
-<span class="kn">from</span> <span class="nn">scipy.signal</span> <span class="kn">import</span> <span class="n">butter</span><span class="p">,</span> <span class="n">lfilter</span><span class="p">,</span> <span class="n">hilbert</span>
+<span class="kn">from</span> <span class="nn">scipy.signal</span> <span class="kn">import</span> <span class="n">butter</span><span class="p">,</span> <span class="n">lfilter</span><span class="p">,</span> <span class="n">hilbert</span><span class="p">,</span> <span class="n">resample</span>
 <span class="kn">from</span> <span class="nn">scipy.io</span> <span class="kn">import</span> <span class="n">savemat</span>
 <span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timedelta</span>
 <span class="kn">from</span> <span class="nn">glob</span> <span class="kn">import</span> <span class="n">glob1</span>
@@ -103,13 +103,14 @@
 <span class="kn">from</span> <span class="nn">obspy.signal.invsim</span> <span class="kn">import</span> <span class="n">cosTaper</span>
 <span class="kn">from</span> <span class="nn">obspy.core</span> <span class="kn">import</span> <span class="n">trace</span><span class="p">,</span> <span class="n">stream</span>
 
+
 <span class="c"># Local imports</span>
 <span class="kn">from</span> <span class="nn">miic.core.miic_utils</span> <span class="kn">import</span> <span class="n">convert_time</span><span class="p">,</span> <span class="n">convert_time_to_string</span><span class="p">,</span> \
     <span class="n">corr_mat_check</span><span class="p">,</span> <span class="n">dv_check</span><span class="p">,</span> <span class="n">flatten_recarray</span><span class="p">,</span> <span class="n">nd_mat_center_part</span><span class="p">,</span> <span class="n">mat_to_ndarray</span><span class="p">,</span> \
     <span class="n">select_var_from_dict</span><span class="p">,</span> <span class="n">_check_stats</span><span class="p">,</span> <span class="n">_stats_dict_from_obj</span>
 
 <span class="kn">from</span> <span class="nn">miic.core.stretch_mod</span> <span class="kn">import</span> <span class="n">multi_ref_vchange_and_align</span><span class="p">,</span> <span class="n">time_shift_estimate</span><span class="p">,</span> \
-    <span class="n">time_stretch_apply</span>
+    <span class="n">time_stretch_apply</span><span class="p">,</span> <span class="n">time_shift_apply</span>
 <span class="kn">from</span> <span class="nn">miic.core.stream</span> <span class="kn">import</span> <span class="n">_Selector</span>
 
 
@@ -1081,7 +1082,109 @@
     
         <span class="n">trait_view</span> <span class="o">=</span> <span class="n">View</span><span class="p">(</span><span class="n">Item</span><span class="p">(</span><span class="s">&#39;width&#39;</span><span class="p">),</span>
                           <span class="n">Item</span><span class="p">(</span><span class="s">&#39;slope_frac&#39;</span><span class="p">))</span>
-    
+
+
+<div class="viewcode-block" id="corr_mat_resample_time"><a class="viewcode-back" href="../../../modules/autogen/miic.core.corr_mat_processing.corr_mat_resample_time.html#miic.core.corr_mat_processing.corr_mat_resample_time">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_resample_time</span><span class="p">(</span><span class="n">corr_mat</span><span class="p">,</span><span class="n">freq</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Resample the lapse time axis of a correlation matrix.</span>
+
+<span class="sd">    :type corr_mat: dict</span>
+<span class="sd">    :param corr_mat: correlation matrix dictionary</span>
+<span class="sd">    :type freq: float</span>
+<span class="sd">    :param freq: new sampling frequency</span>
+
+<span class="sd">    :rtype: dict</span>
+<span class="sd">    :return: **corr_mat**: is the same dictionary as the input but with</span>
+<span class="sd">        resampled data.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c"># check input</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">corr_mat</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s">&quot;corr_mat needs to be correlation matrix dictionary.&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">corr_mat_check</span><span class="p">(</span><span class="n">corr_mat</span><span class="p">)[</span><span class="s">&#39;is_incomplete&#39;</span><span class="p">]:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;Error: corr_mat is not a valid correlation_matix </span><span class="se">\</span>
+<span class="s">            dictionary.&quot;</span><span class="p">)</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c"># make last samples</span>
+    <span class="c"># x1 = n2*f1/f2-n1 + x2*f1/f2</span>
+    <span class="n">otime</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">corr_mat</span><span class="p">[</span><span class="s">&#39;stats&#39;</span><span class="p">][</span><span class="s">&#39;npts&#39;</span><span class="p">])</span><span class="o">/</span><span class="n">corr_mat</span><span class="p">[</span><span class="s">&#39;stats&#39;</span><span class="p">][</span><span class="s">&#39;sampling_rate&#39;</span><span class="p">]</span>
+    <span class="n">num</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">otime</span> <span class="o">*</span> <span class="n">freq</span><span class="p">)</span>
+    <span class="n">ntime</span> <span class="o">=</span> <span class="n">num</span><span class="o">/</span><span class="n">freq</span>
+    <span class="n">n1</span> <span class="o">=</span> <span class="mf">0.</span>
+    <span class="n">n2</span> <span class="o">=</span> <span class="mf">0.</span>
+
+    <span class="k">while</span> <span class="n">ntime</span> <span class="o">!=</span> <span class="n">otime</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">ntime</span> <span class="o">&lt;</span> <span class="n">otime</span><span class="p">:</span>
+            <span class="n">n1</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">ntime</span> <span class="o">=</span> <span class="p">(</span><span class="n">num</span> <span class="o">+</span> <span class="n">n1</span><span class="p">)</span><span class="o">/</span><span class="n">freq</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">n2</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">otime</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">corr_mat</span><span class="p">[</span><span class="s">&#39;stats&#39;</span><span class="p">][</span><span class="s">&#39;npts&#39;</span><span class="p">]</span><span class="o">+</span><span class="n">n2</span><span class="p">)</span><span class="o">/</span><span class="n">corr_mat</span><span class="p">[</span><span class="s">&#39;stats&#39;</span><span class="p">][</span><span class="s">&#39;sampling_rate&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">n1</span> <span class="o">&gt;</span> <span class="n">num</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s">&quot;No mathicng trace length found. Resampling not possible.&quot;</span><span class="p">)</span>
+            <span class="k">break</span>
+    <span class="n">corr_mat</span> <span class="o">=</span> <span class="n">corr_mat_filter</span><span class="p">(</span><span class="n">corr_mat</span><span class="p">,[</span><span class="mf">0.001</span><span class="p">,</span><span class="mf">0.8</span><span class="o">*</span><span class="n">freq</span><span class="o">/</span><span class="mi">2</span><span class="p">])</span>
+    <span class="n">rmat</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;stats&#39;</span><span class="p">:</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">corr_mat</span><span class="p">[</span><span class="s">&#39;stats&#39;</span><span class="p">]),</span>
+            <span class="s">&#39;stats_tr1&#39;</span><span class="p">:</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">corr_mat</span><span class="p">[</span><span class="s">&#39;stats_tr1&#39;</span><span class="p">]),</span>
+            <span class="s">&#39;stats_tr2&#39;</span><span class="p">:</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">corr_mat</span><span class="p">[</span><span class="s">&#39;stats_tr2&#39;</span><span class="p">]),</span>
+            <span class="s">&#39;time&#39;</span><span class="p">:</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">corr_mat</span><span class="p">[</span><span class="s">&#39;time&#39;</span><span class="p">])}</span>
+    <span class="n">mat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">corr_mat</span><span class="p">[</span><span class="s">&#39;corr_data&#39;</span><span class="p">],</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">corr_mat</span><span class="p">[</span><span class="s">&#39;corr_data&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">corr_mat</span><span class="p">[</span><span class="s">&#39;corr_data&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">+</span><span class="nb">int</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">n2</span><span class="p">)))),</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">trmat</span> <span class="o">=</span> <span class="n">resample</span><span class="p">(</span><span class="n">mat</span><span class="p">,</span><span class="nb">int</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="p">(</span><span class="n">num</span><span class="o">+</span><span class="n">n1</span><span class="p">)),</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">rmat</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s">&#39;corr_data&#39;</span><span class="p">:</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">trmat</span><span class="p">[:,:</span><span class="n">num</span><span class="p">])})</span>
+    <span class="n">rmat</span><span class="p">[</span><span class="s">&#39;stats&#39;</span><span class="p">][</span><span class="s">&#39;npts&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">rmat</span><span class="p">[</span><span class="s">&#39;corr_data&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">rmat</span><span class="p">[</span><span class="s">&#39;stats&#39;</span><span class="p">][</span><span class="s">&#39;sampling_rate&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">freq</span>
+    <span class="n">endtime</span> <span class="o">=</span> <span class="n">convert_time</span><span class="p">([</span><span class="n">rmat</span><span class="p">[</span><span class="s">&#39;stats&#39;</span><span class="p">][</span><span class="s">&#39;starttime&#39;</span><span class="p">]])[</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">rmat</span><span class="p">[</span><span class="s">&#39;stats&#39;</span><span class="p">][</span><span class="s">&#39;npts&#39;</span><span class="p">]</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">/</span><span class="n">freq</span><span class="p">)</span>
+    <span class="n">rmat</span><span class="p">[</span><span class="s">&#39;stats&#39;</span><span class="p">][</span><span class="s">&#39;endtime&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">convert_time_to_string</span><span class="p">([</span><span class="n">endtime</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">rmat</span>
+
+</div>
+<span class="k">def</span> <span class="nf">corr_mat_decimate</span><span class="p">(</span><span class="n">corr_mat</span><span class="p">,</span> <span class="n">factor</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Downsample a correlation matrix by an integer sample</span>
+<span class="sd">    </span>
+<span class="sd">    :type corr_mat: dict</span>
+<span class="sd">    :param corr_mat: correlation matrix dictionary</span>
+<span class="sd">    :type factor: int</span>
+<span class="sd">    :param factor: decimation factor</span>
+
+<span class="sd">    :rtype: dict</span>
+<span class="sd">    :return: **corr_mat**: is the same dictionary as the input but with</span>
+<span class="sd">        decimated sampling rate.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c"># check input</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">corr_mat</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s">&quot;corr_mat needs to be correlation matrix dictionary.&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">corr_mat_check</span><span class="p">(</span><span class="n">corr_mat</span><span class="p">)[</span><span class="s">&#39;is_incomplete&#39;</span><span class="p">]:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;Error: corr_mat is not a valid correlation_matix </span><span class="se">\</span>
+<span class="s">            dictionary.&quot;</span><span class="p">)</span>
+
+    <span class="c"># apply low pass filter</span>
+    <span class="n">freq</span> <span class="o">=</span> <span class="n">corr_mat</span><span class="p">[</span><span class="s">&#39;stats&#39;</span><span class="p">][</span><span class="s">&#39;sampling_rate&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="mf">0.5</span> <span class="o">/</span> <span class="nb">float</span><span class="p">(</span><span class="n">factor</span><span class="p">)</span>
+
+    <span class="n">fe</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">corr_mat</span><span class="p">[</span><span class="s">&#39;stats&#39;</span><span class="p">][</span><span class="s">&#39;sampling_rate&#39;</span><span class="p">])</span> <span class="o">/</span> <span class="mi">2</span>
+
+    <span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">a</span><span class="p">)</span> <span class="o">=</span> <span class="n">butter</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="n">freq</span> <span class="o">/</span> <span class="n">fe</span><span class="p">,</span> <span class="n">btype</span><span class="o">=</span><span class="s">&#39;lowpass&#39;</span><span class="p">)</span>
+
+    <span class="n">fdat</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">corr_mat</span><span class="p">)</span>
+    <span class="n">fdat</span><span class="p">[</span><span class="s">&#39;corr_data&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">lfilter</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">fdat</span><span class="p">[</span><span class="s">&#39;corr_data&#39;</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">fdat</span><span class="p">[</span><span class="s">&#39;corr_data&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">lfilter</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">fdat</span><span class="p">[</span><span class="s">&#39;corr_data&#39;</span><span class="p">][:,</span> <span class="p">::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
+                                        <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)[:,::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="n">fdat</span><span class="p">[</span><span class="s">&#39;corr_data&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">fdat</span><span class="p">[</span><span class="s">&#39;corr_data&#39;</span><span class="p">][:,::</span><span class="n">factor</span><span class="p">])</span>
+    <span class="n">fdat</span><span class="p">[</span><span class="s">&#39;stats&#39;</span><span class="p">][</span><span class="s">&#39;npts&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">fdat</span><span class="p">[</span><span class="s">&#39;corr_data&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">fdat</span><span class="p">[</span><span class="s">&#39;stats&#39;</span><span class="p">][</span><span class="s">&#39;sampling_rate&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">fdat</span><span class="p">[</span><span class="s">&#39;stats&#39;</span><span class="p">][</span><span class="s">&#39;sampling_rate&#39;</span><span class="p">])</span><span class="o">/</span><span class="n">factor</span>
+    <span class="n">start</span> <span class="o">=</span> <span class="n">convert_time</span><span class="p">([</span><span class="n">fdat</span><span class="p">[</span><span class="s">&#39;stats&#39;</span><span class="p">][</span><span class="s">&#39;starttime&#39;</span><span class="p">]])[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">length</span> <span class="o">=</span> <span class="p">(</span><span class="n">fdat</span><span class="p">[</span><span class="s">&#39;stats&#39;</span><span class="p">][</span><span class="s">&#39;npts&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span><span class="o">/</span><span class="n">fdat</span><span class="p">[</span><span class="s">&#39;stats&#39;</span><span class="p">][</span><span class="s">&#39;sampling_rate&#39;</span><span class="p">]</span>
+    <span class="k">print</span> <span class="n">start</span><span class="p">,</span> <span class="n">length</span>
+    <span class="n">fdat</span><span class="p">[</span><span class="s">&#39;stats&#39;</span><span class="p">][</span><span class="s">&#39;endtime&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">convert_time_to_string</span><span class="p">([</span><span class="n">convert_time</span><span class="p">([</span><span class="n">fdat</span><span class="p">[</span><span class="s">&#39;stats&#39;</span><span class="p">][</span><span class="s">&#39;starttime&#39;</span><span class="p">]])[</span><span class="mi">0</span><span class="p">]</span> \
+            <span class="o">+</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="p">(</span><span class="n">fdat</span><span class="p">[</span><span class="s">&#39;stats&#39;</span><span class="p">][</span><span class="s">&#39;npts&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span><span class="o">/</span><span class="n">fdat</span><span class="p">[</span><span class="s">&#39;stats&#39;</span><span class="p">][</span><span class="s">&#39;sampling_rate&#39;</span><span class="p">])])[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">fdat</span>
+
+
+
+
 
 <div class="viewcode-block" id="corr_mat_import_US_stream"><a class="viewcode-back" href="../../../modules/autogen/miic.core.corr_mat_processing.corr_mat_import_US_stream.html#miic.core.corr_mat_processing.corr_mat_import_US_stream">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_import_US_stream</span><span class="p">(</span><span class="n">st</span><span class="p">,</span> <span class="n">pretrigger</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Convert a stream with multiple traces from an active measurement</span>
@@ -1628,7 +1731,7 @@
 <span class="sd">        ``tw = None`` the full time range is used.</span>
 <span class="sd">    :type shift_range: scalar</span>
 <span class="sd">    :param shift_range: Maximum amount of shifting in samples.</span>
-<span class="sd">        Shidting is tested from ``-stretch_range`` to</span>
+<span class="sd">        Shifting is tested from ``-stretch_range`` to</span>
 <span class="sd">        ``stretch_range``.</span>
 <span class="sd">    :type shift_steps: scalar`</span>
 <span class="sd">    :param shift_steps: Number of shifted version to be tested. The</span>
@@ -1684,17 +1787,12 @@
     <span class="c"># miic.core.stretch_mod.time_stretch_estimate</span>
 
     <span class="c"># In case a reference is provided but the matrix needs to be trimmed the</span>
-    <span class="c"># references also need to be trimmed. To do so we append the references to</span>
-    <span class="c"># the matrix, trimm it and remove the references again</span>
+    <span class="c"># reference also needs to be trimmed. To do so we append the reference to</span>
+    <span class="c"># the matrix, trimm it and remove the reference again</span>
     <span class="k">if</span> <span class="n">ref_trc</span> <span class="o">!=</span> <span class="bp">None</span><span class="p">:</span>
-        <span class="n">rts</span> <span class="o">=</span> <span class="n">ref_trc</span><span class="o">.</span><span class="n">shape</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">rts</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="n">nr</span> <span class="o">=</span> <span class="mi">1</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">nr</span> <span class="o">=</span> <span class="n">rts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
         <span class="n">corr_mat</span><span class="p">[</span><span class="s">&#39;corr_data&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">corr_mat</span><span class="p">[</span><span class="s">&#39;corr_data&#39;</span><span class="p">],</span>
                             <span class="n">np</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span><span class="n">ref_trc</span><span class="p">)),</span> <span class="mi">0</span><span class="p">)</span>
-        <span class="n">reft</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">convert_time_to_string</span><span class="p">([</span><span class="n">datetime</span><span class="p">(</span><span class="mi">1900</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)]),</span> <span class="p">(</span><span class="n">nr</span><span class="p">))</span>
+        <span class="n">reft</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">convert_time_to_string</span><span class="p">([</span><span class="n">datetime</span><span class="p">(</span><span class="mi">1900</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)]),</span> <span class="p">(</span><span class="mi">1</span><span class="p">))</span>
         <span class="n">corr_mat</span><span class="p">[</span><span class="s">&#39;time&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">corr_mat</span><span class="p">[</span><span class="s">&#39;time&#39;</span><span class="p">],</span> <span class="n">reft</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span>
 
     <span class="c"># trim the marices</span>
@@ -1713,9 +1811,9 @@
         <span class="c"># ref_trc = np.mean(corr_mat[&#39;corr_data&#39;], 0)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="c"># extract and remove references from corr matrix again</span>
-        <span class="n">ref_trc</span> <span class="o">=</span> <span class="n">corr_mat</span><span class="p">[</span><span class="s">&#39;corr_data&#39;</span><span class="p">][</span><span class="o">-</span><span class="n">nr</span><span class="p">:,</span> <span class="p">:]</span>
-        <span class="n">corr_mat</span><span class="p">[</span><span class="s">&#39;corr_data&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">corr_mat</span><span class="p">[</span><span class="s">&#39;corr_data&#39;</span><span class="p">][:</span><span class="o">-</span><span class="n">nr</span><span class="p">,</span> <span class="p">:]</span>
-        <span class="n">corr_mat</span><span class="p">[</span><span class="s">&#39;time&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">corr_mat</span><span class="p">[</span><span class="s">&#39;time&#39;</span><span class="p">][:</span><span class="o">-</span><span class="n">nr</span><span class="p">]</span>
+        <span class="n">ref_trc</span> <span class="o">=</span> <span class="n">corr_mat</span><span class="p">[</span><span class="s">&#39;corr_data&#39;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]</span>
+        <span class="n">corr_mat</span><span class="p">[</span><span class="s">&#39;corr_data&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">corr_mat</span><span class="p">[</span><span class="s">&#39;corr_data&#39;</span><span class="p">][:</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]</span>
+        <span class="n">corr_mat</span><span class="p">[</span><span class="s">&#39;time&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">corr_mat</span><span class="p">[</span><span class="s">&#39;time&#39;</span><span class="p">][:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
 
     <span class="c"># print ref_trc.shape</span>
     
@@ -1743,7 +1841,37 @@
     <span class="k">return</span> <span class="n">dt</span>
 
 
+<span class="k">def</span> <span class="nf">corr_mat_correct_shift</span><span class="p">(</span><span class="n">corr_mat</span><span class="p">,</span> <span class="n">dt</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Correct shift of a correlation matrix</span>
 
+<span class="sd">    In the case of a clock error the correlation traces are shifted in lag time</span>
+<span class="sd">    This shifting can be measured with `corr_mat_shift`. The resulting `dt` </span>
+<span class="sd">    dictionary can be passed to this function to remove the shifhting from the</span>
+<span class="sd">    correlation matrix.</span>
+
+<span class="sd">    :type corr_mat: dictionary</span>
+<span class="sd">    :param corr_mat: correlation matrix dictionary as produced by</span>
+<span class="sd">        :class:`~miic.core.macro.recombine_corr_data`</span>
+<span class="sd">    :type dt: Dictionary</span>
+<span class="sd">    :param dt: velocity change dictionary</span>
+
+<span class="sd">    :rtype: Dictionary</span>
+<span class="sd">    :return: corrected correlation matrix dictionary</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c"># check input</span>
+    <span class="k">if</span> <span class="n">corr_mat_check</span><span class="p">(</span><span class="n">corr_mat</span><span class="p">)[</span><span class="s">&#39;is_incomplete&#39;</span><span class="p">]:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;Error: corr_mat is not a valid correlation_matix </span><span class="se">\</span>
+<span class="s">            dictionary.&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">dv_check</span><span class="p">(</span><span class="n">dt</span><span class="p">)[</span><span class="s">&#39;is_incomplete&#39;</span><span class="p">]:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;Error: dv is not a valid Velocity change</span><span class="se">\</span>
+<span class="s">            dictionary.&quot;</span><span class="p">)</span>
+
+    <span class="n">ccorr_mat</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">corr_mat</span><span class="p">)</span>
+    <span class="n">ccorr_mat</span><span class="p">[</span><span class="s">&#39;corr_data&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">time_shift_apply</span><span class="p">(</span><span class="n">ccorr_mat</span><span class="p">[</span><span class="s">&#39;corr_data&#39;</span><span class="p">],</span><span class="o">-</span><span class="mf">1.</span><span class="o">*</span><span class="n">dt</span><span class="p">[</span><span class="s">&#39;value&#39;</span><span class="p">])</span>
+
+    <span class="k">return</span> <span class="n">ccorr_mat</span>
 
 <div class="viewcode-block" id="corr_mat_add_lat_lon_ele"><a class="viewcode-back" href="../../../modules/autogen/miic.core.corr_mat_processing.corr_mat_add_lat_lon_ele.html#miic.core.corr_mat_processing.corr_mat_add_lat_lon_ele">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_add_lat_lon_ele</span><span class="p">(</span><span class="n">corr_mat</span><span class="p">,</span> <span class="n">coord_df</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Add coordinates to correlation matrix.</span>
@@ -2116,7 +2244,7 @@
     </div>
     <div class="footer" role="contentinfo">
         &copy; Copyright 2012, Eraldo Pomponi.
-      Last updated on 2016-04-11T11:04:13.
+      Last updated on 2016-08-29T15:31:19.
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
     </div>
   </body>

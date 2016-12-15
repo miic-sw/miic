@@ -31,6 +31,7 @@ Created on Nov 25, 2012
        ~corr_mat_trim
        ~corr_mat_merge
        ~corr_mat_resample
+       ~corr_mat_resample_time
        ~corr_mat_reverse
        ~corr_mat_time_select
        ~corr_mat_correct_decay

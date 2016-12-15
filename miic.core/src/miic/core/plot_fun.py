@@ -666,8 +666,8 @@ def plot_trace_distance_section(traces, scale=0, azim=0,
     The Orientation is controlled by the ``azim`` argument. Traces are
     plotted such that the difference of the interstation azimuth to ``azim`` is
     smaller than 90 degrees. If it is larger the stations are exchanged and the
-    traces are flipped at the zero time. ``plot_type`` may be 'line', 'wiggle'
-    or 'cwiggle'.
+    traces are flipped at the zero time. ``plot_type`` may be 'line', 'wiggle',
+    'cwiggle' or 'plain_cwiggle'.
     If ``annotate`` is set to True, the station combination name will be
     printed on each curve (in the left side).
 
@@ -725,7 +725,7 @@ def plot_trace_distance_section(traces, scale=0, azim=0,
             pdata[0] = pdata[-1] = 0.
             pdata[pdata < 0] = 0.
             plt.fill(tim, pdata * scale + dist, 'k', linewidth=0)
-        elif plot_type == 'cwiggle':
+        elif plot_type in ['cwiggle','plain_cwiggle']:
             pdata = copy(data)
             ndata = copy(data)
             pdata[0] = pdata[-1] = 0.
@@ -734,8 +734,8 @@ def plot_trace_distance_section(traces, scale=0, azim=0,
             ndata[0] = ndata[-1] = 0.
             ndata[ndata > 0] = 0.
             plt.fill(tim, ndata / max(data) * scale + dist, 'b', linewidth=0)
-
-        plt.plot(tim, data * scale + dist, 'k', linewidth=0.5)
+        if plot_type != 'plain_cwiggle':
+            plt.plot(tim, data * scale + dist, 'k', linewidth=0.5)
         if 'arrivals' in tr.stats['sac']:
             for phase in tr.stats['sac']['arrivals']:
                 #print phase['time']-zerotime, phase['name']

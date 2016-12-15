@@ -358,6 +358,92 @@
     <span class="k">return</span> <span class="n">A</span>
 
 </div>
+<div class="viewcode-block" id="mute"><a class="viewcode-back" href="../../../modules/autogen/miic.core.pxcorr_func.mute.html#miic.core.pxcorr_func.mute">[docs]</a><span class="k">def</span> <span class="nf">mute</span><span class="p">(</span><span class="n">A</span><span class="p">,</span><span class="n">args</span><span class="p">,</span><span class="n">params</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Mute parts of data that exceed a threshold</span>
+<span class="sd">    </span>
+<span class="sd">    To completely surpress the effect of data with high amplitudes e.g. after</span>
+<span class="sd">    aftershocks these parts of the data are muted (set to zero). The respective</span>
+<span class="sd">    parts of the signal are identified as those where the envelope in a given</span>
+<span class="sd">    frequency exceeds a threshold given directly as absolute numer or as a </span>
+<span class="sd">    multiple of the data&#39;s standard deviation. A taper of length `taper_len` is</span>
+<span class="sd">    applied to smooth the edges of muted segments. Setting `extend_gaps` to</span>
+<span class="sd">    Ture will ensure that the taper is applied outside the segments and data</span>
+<span class="sd">    inside these segments will all zero. Edges of the data will be tapered too</span>
+<span class="sd">    in this case.</span>
+<span class="sd">    </span>
+<span class="sd">    :Example:</span>
+<span class="sd">    ``args={&#39;filter&#39;:{&#39;type&#39;:&#39;bandpass&#39;, &#39;freqmin&#39;:1., &#39;freqmax&#39;:6.},&#39;taper_len&#39;:1., &#39;threshold&#39;:1000, &#39;std_factor&#39;:1, &#39;extend_gaps&#39;:True}``</span>
+<span class="sd">              </span>
+<span class="sd">    :type A: numpy.ndarray</span>
+<span class="sd">    :param A: time series data with time oriented along the first \\</span>
+<span class="sd">        dimension (columns)</span>
+<span class="sd">    :type args: dictionary</span>
+<span class="sd">    :param args: the following keywords are allowed:</span>
+<span class="sd">    </span>
+<span class="sd">        * `filter`: (dictionary) description of filter to be applied befor calculation of \\</span>
+<span class="sd">            the signal envelope. If not given the envelope is calculated \\</span>
+<span class="sd">            from raw data. The value of the keyword filter is the same as \\</span>
+<span class="sd">            the `args` for the function `TDfilter`.</span>
+<span class="sd">        * `threshold`: (float) absolute amplitude of threhold for muting</span>
+<span class="sd">        * `std_factor`: (float) alternativly to an absolute number the threhold can be\\</span>
+<span class="sd">            estimated as a multiple of the standard deviation if the scaling\\</span>
+<span class="sd">            is given in as value of the keyword `std_factor`. If neither\\</span>
+<span class="sd">            `threshold` nor `std_factor` are given `std_factor`=1 is assumed.\\</span>
+<span class="sd">        * `extend_gaps` (boolean) if True date abive the threshold is \\</span>
+<span class="sd">            guaranteed to be muted, otherwise tapering will leak into these\\</span>
+<span class="sd">            parts. This step involves an additional convolution.</span>
+<span class="sd">        * `taper_len`: (float) length of taper for muted segments in seconds</span>
+<span class="sd">    :type params: dictionary</span>
+<span class="sd">    :param params: filled automatically by `pxcorr`</span>
+<span class="sd">    </span>
+<span class="sd">    :rtype: numpy.ndarray</span>
+<span class="sd">    :return: clipped time series data</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c"># filter if asked to</span>
+    <span class="k">if</span> <span class="s">&#39;filter&#39;</span> <span class="ow">in</span> <span class="n">args</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="n">C</span> <span class="o">=</span> <span class="n">TDfilter</span><span class="p">(</span><span class="n">A</span><span class="p">,</span><span class="n">args</span><span class="p">[</span><span class="s">&#39;filter&#39;</span><span class="p">],</span><span class="n">params</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">C</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">A</span><span class="p">)</span>
+    
+    <span class="c"># calculate envelope</span>
+    <span class="c">#D = np.abs(signal.hilbert(C,axis=0))</span>
+    <span class="n">D</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">C</span><span class="p">)</span>
+    
+    <span class="c"># calculate threshold</span>
+    <span class="k">if</span> <span class="s">&#39;threshold&#39;</span> <span class="ow">in</span> <span class="n">args</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="n">thres</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">A</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">+</span> <span class="n">args</span><span class="p">[</span><span class="s">&#39;threshold&#39;</span><span class="p">]</span>
+    <span class="k">elif</span> <span class="s">&#39;std_factor&#39;</span> <span class="ow">in</span> <span class="n">args</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="n">thres</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">C</span><span class="p">,</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="o">*</span> <span class="n">args</span><span class="p">[</span><span class="s">&#39;std_factor&#39;</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">thres</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">C</span><span class="p">,</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    
+    <span class="c"># calculate mask</span>
+    <span class="n">mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">D</span><span class="p">)</span>
+    <span class="n">mask</span><span class="p">[</span><span class="n">D</span><span class="o">&gt;</span><span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span><span class="n">thres</span><span class="p">),(</span><span class="n">A</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="mi">1</span><span class="p">))]</span><span class="o">=</span><span class="mi">0</span>
+    <span class="c"># extend the muted segments to make sure the whole segment is zero after</span>
+    <span class="n">ntap</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="s">&#39;taper_len&#39;</span><span class="p">]</span><span class="o">*</span><span class="n">params</span><span class="p">[</span><span class="s">&#39;sampling_rate&#39;</span><span class="p">])</span>
+    <span class="k">if</span> <span class="n">args</span><span class="p">[</span><span class="s">&#39;extend_gaps&#39;</span><span class="p">]:</span>
+        <span class="n">tap</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">ntap</span><span class="p">)</span><span class="o">/</span><span class="n">ntap</span>
+        <span class="k">for</span> <span class="n">ind</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">A</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
+            <span class="n">mask</span><span class="p">[:,</span><span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">convolve</span><span class="p">(</span><span class="n">mask</span><span class="p">[:,</span><span class="n">ind</span><span class="p">],</span><span class="n">tap</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s">&#39;same&#39;</span><span class="p">)</span>
+        <span class="n">nmask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">D</span><span class="p">)</span>
+        <span class="n">nmask</span><span class="p">[</span><span class="n">mask</span><span class="o">&lt;</span><span class="mf">1.</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">nmask</span> <span class="o">=</span> <span class="n">mask</span>
+    
+    <span class="c"># apply taper</span>
+    <span class="n">tap</span> <span class="o">=</span> <span class="mf">2.</span> <span class="o">-</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">ntap</span><span class="p">,</span><span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span><span class="o">/</span><span class="n">ntap</span><span class="o">*</span><span class="mf">2.</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span> <span class="o">+</span> <span class="mf">1.</span><span class="p">)</span>
+    <span class="n">tap</span> <span class="o">/=</span> <span class="n">ntap</span>
+    <span class="k">for</span> <span class="n">ind</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">A</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
+        <span class="n">nmask</span><span class="p">[:,</span><span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">convolve</span><span class="p">(</span><span class="n">nmask</span><span class="p">[:,</span><span class="n">ind</span><span class="p">],</span><span class="n">tap</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s">&#39;same&#39;</span><span class="p">)</span>
+    
+    <span class="c"># mute date with tapered mask</span>
+    <span class="n">A</span> <span class="o">*=</span> <span class="n">nmask</span>
+    <span class="k">return</span> <span class="n">A</span>
+
+</div>
 <div class="viewcode-block" id="TDfilter"><a class="viewcode-back" href="../../../modules/autogen/miic.core.pxcorr_func.TDfilter.html#miic.core.pxcorr_func.TDfilter">[docs]</a><span class="k">def</span> <span class="nf">TDfilter</span><span class="p">(</span><span class="n">A</span><span class="p">,</span><span class="n">args</span><span class="p">,</span><span class="n">params</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Filter time series data</span>
@@ -366,7 +452,7 @@
 <span class="sd">    </span>
 <span class="sd">    `args` has the following structure:</span>
 <span class="sd">    </span>
-<span class="sd">        args = {&#39;type&#39;:`filterType`, fargs}``</span>
+<span class="sd">        args = {&#39;type&#39;:`filterType`, fargs}</span>
 <span class="sd">            </span>
 <span class="sd">        `type` may be `bandpass` with the corresponding fargs `freqmin` and \\ </span>
 <span class="sd">        `freqmax` or `highpass`/`lowpass` with the `fargs` `freqmin`/`freqmax`</span>
@@ -385,7 +471,7 @@
 <span class="sd">    :rtype: numpy.ndarray</span>
 <span class="sd">    :return: filtered time series data</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">func</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">osignal</span><span class="p">,</span><span class="n">args</span><span class="p">[</span><span class="s">&#39;type&#39;</span><span class="p">])</span>
+    <span class="n">func</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">osignal</span><span class="o">.</span><span class="n">filter</span><span class="p">,</span><span class="n">args</span><span class="p">[</span><span class="s">&#39;type&#39;</span><span class="p">])</span>
     <span class="n">args</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
     <span class="n">args</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;type&#39;</span><span class="p">)</span>
     <span class="c"># filtering in obspy.signal is done along the last dimension that why .T</span>
@@ -503,7 +589,7 @@
     <span class="k">if</span> <span class="s">&#39;joint_norm&#39;</span> <span class="ow">in</span> <span class="n">args</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
         <span class="k">print</span> <span class="s">&#39;joint_norm in args&#39;</span>
         <span class="k">if</span> <span class="n">args</span><span class="p">[</span><span class="s">&#39;joint_norm&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="bp">True</span><span class="p">:</span>
-            <span class="k">assert</span> <span class="n">B</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">%</span> <span class="mi">3</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">,</span> <span class="s">&quot;for joint normalization the number</span><span class="se">\</span>
+            <span class="k">assert</span> <span class="n">B</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">%</span> <span class="mi">3</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> <span class="s">&quot;for joint normalization the number</span><span class="se">\</span>
 <span class="s">                      of traces needs to the multiple of 3: </span><span class="si">%d</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">B</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
             <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="n">B</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="mi">3</span><span class="p">):</span>
                 <span class="k">print</span> <span class="s">&#39;ii&#39;</span><span class="p">,</span> <span class="n">ii</span>
@@ -948,6 +1034,14 @@
                                <span class="p">{</span><span class="s">&#39;function&#39;</span><span class="p">:</span><span class="n">taper</span><span class="p">,</span>
                                 <span class="s">&#39;args&#39;</span><span class="p">:{</span><span class="s">&#39;type&#39;</span><span class="p">:</span><span class="s">&#39;cosTaper&#39;</span><span class="p">,</span>
                                         <span class="s">&#39;p&#39;</span><span class="p">:</span><span class="mf">0.01</span><span class="p">}},</span>
+                               <span class="p">{</span><span class="s">&#39;function&#39;</span><span class="p">:</span><span class="n">mute</span><span class="p">,</span>
+                                <span class="s">&#39;args&#39;</span><span class="p">:{</span><span class="s">&#39;filter&#39;</span><span class="p">:{</span><span class="s">&#39;type&#39;</span><span class="p">:</span><span class="s">&#39;bandpass&#39;</span><span class="p">,</span>
+                                                 <span class="s">&#39;freqmin&#39;</span><span class="p">:</span><span class="mf">1.</span><span class="p">,</span>
+                                                 <span class="s">&#39;freqmax&#39;</span><span class="p">:</span><span class="mf">6.</span><span class="p">},</span>
+                                       <span class="s">&#39;taper_len&#39;</span><span class="p">:</span><span class="mf">1.</span><span class="p">,</span>
+                                       <span class="c"># &#39;threshold&#39;:1000, absolute threshold</span>
+                                       <span class="s">&#39;std_factor&#39;</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span>
+                                       <span class="s">&#39;extend_gaps&#39;</span><span class="p">:</span><span class="bp">True</span><span class="p">}},</span>
                                <span class="p">{</span><span class="s">&#39;function&#39;</span><span class="p">:</span><span class="n">TDfilter</span><span class="p">,</span>
                                 <span class="s">&#39;args&#39;</span><span class="p">:{</span><span class="s">&#39;type&#39;</span><span class="p">:</span><span class="s">&#39;bandpass&#39;</span><span class="p">,</span>
                                         <span class="s">&#39;freqmin&#39;</span><span class="p">:</span><span class="mf">1.</span><span class="p">,</span>
@@ -992,7 +1086,7 @@
     </div>
     <div class="footer" role="contentinfo">
         &copy; Copyright 2012, Eraldo Pomponi.
-      Last updated on 2016-04-11T11:04:13.
+      Last updated on 2016-08-29T15:31:19.
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
     </div>
   </body>

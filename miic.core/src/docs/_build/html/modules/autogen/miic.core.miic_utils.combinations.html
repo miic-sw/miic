@@ -83,13 +83,17 @@
 <h1>miic.core.miic_utils.combinations<a class="headerlink" href="#miic-core-miic-utils-combinations" title="Permalink to this headline">¶</a></h1>
 <dl class="function">
 <dt id="miic.core.miic_utils.combinations">
-<code class="descname">combinations</code><span class="sig-paren">(</span><em>n_trace</em>, <em>std_comb</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/miic/core/miic_utils.html#combinations"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#miic.core.miic_utils.combinations" title="Permalink to this definition">¶</a></dt>
+<code class="descname">combinations</code><span class="sig-paren">(</span><em>n_trace</em>, <em>std_comb</em>, <em>k=0</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/miic/core/miic_utils.html#combinations"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#miic.core.miic_utils.combinations" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create the list of combinations.</p>
 <p>Create the list of possible combinations between a specified number
-of traces. Two different possibility are available: <code class="docutils literal"><span class="pre">Auto-corr</span></code> and
-<code class="docutils literal"><span class="pre">Full-corr</span></code>. The former generates a list of tuples of this form (n,n)
-while the latter generates all the possible tuples of this form (n,m)
-where <code class="docutils literal"><span class="pre">n!=m</span></code> and <code class="docutils literal"><span class="pre">0</span> <span class="pre">&lt;=</span> <span class="pre">n</span> <span class="pre">&lt;</span> <span class="pre">n_trace</span></code> and <code class="docutils literal"><span class="pre">0</span> <span class="pre">&lt;=</span> <span class="pre">m</span> <span class="pre">&lt;</span> <span class="pre">n_trace</span></code>.</p>
+of traces. Several different possibility are available:
+<code class="docutils literal"><span class="pre">Auto-corr</span></code> andgenerates a list of tuples of this form (n,n)
+<code class="docutils literal"><span class="pre">Full-corr</span></code> generates all the possible tuples of this form (n,m)
+where <code class="docutils literal"><span class="pre">n!=m</span></code> and <code class="docutils literal"><span class="pre">0</span> <span class="pre">&lt;=</span> <span class="pre">n</span> <span class="pre">&lt;</span> <span class="pre">n_trace</span></code> and <code class="docutils literal"><span class="pre">0</span> <span class="pre">&lt;=</span> <span class="pre">m</span> <span class="pre">&lt;</span> <span class="pre">n_trace</span></code>.
+<code class="docutils literal"><span class="pre">Single-corr</span></code>,k generates all the possible tuples of the form (n,k)</p>
+<blockquote>
+<div>or (k,n) for n!=k, such that always the first number is smaller than the second.
+If k&lt;0 or &gt;=n, return empty list</div></blockquote>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -143,7 +147,7 @@ comb = [(0,0),(1,1),(2,2)]</p>
     </div>
     <div class="footer" role="contentinfo">
         &copy; Copyright 2012, Eraldo Pomponi.
-      Last updated on 2016-04-11T11:04:13.
+      Last updated on 2016-08-29T12:08:33.
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
     </div>
   </body>

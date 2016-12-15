@@ -112,7 +112,7 @@ def pxcorr(comm,A,**kwargs):
         ## frequency domain postProcessing
         #
         
-        tmp = np.fft.irfft(M).real
+        tmp = np.fft.irfft(M,axis=0).real
         # cut the center and do fftshift
         C[:,ii] = np.concatenate((tmp[-sampleToSave:],tmp[:sampleToSave+1]))/norm
         starttimes[ii] = zerotime -sampleToSave/kwargs['sampling_rate'] - roffset
@@ -292,6 +292,96 @@ def clip(A,args,params):
     return A
 
 
+def mute(A,args,params):
+    """
+    Mute parts of data that exceed a threshold
+    
+    To completely surpress the effect of data with high amplitudes e.g. after
+    aftershocks these parts of the data are muted (set to zero). The respective
+    parts of the signal are identified as those where the envelope in a given
+    frequency exceeds a threshold given directly as absolute numer or as a 
+    multiple of the data's standard deviation. A taper of length `taper_len` is
+    applied to smooth the edges of muted segments. Setting `extend_gaps` to
+    Ture will ensure that the taper is applied outside the segments and data
+    inside these segments will all zero. Edges of the data will be tapered too
+    in this case.
+    
+    :Example:
+    ``args={'filter':{'type':'bandpass', 'freqmin':1., 'freqmax':6.},'taper_len':1., 'threshold':1000, 'std_factor':1, 'extend_gaps':True}``
+              
+    :type A: numpy.ndarray
+    :param A: time series data with time oriented along the first \\
+        dimension (columns)
+    :type args: dictionary
+    :param args: the following keywords are allowed:
+    
+        * `filter`: (dictionary) description of filter to be applied befor calculation of \\
+            the signal envelope. If not given the envelope is calculated \\
+            from raw data. The value of the keyword filter is the same as \\
+            the `args` for the function `TDfilter`.
+        * `threshold`: (float) absolute amplitude of threhold for muting
+        * `std_factor`: (float) alternativly to an absolute number the threhold can be\\
+            estimated as a multiple of the standard deviation if the scaling\\
+            is given in as value of the keyword `std_factor`. If neither\\
+            `threshold` nor `std_factor` are given `std_factor`=1 is assumed.\\
+        * `extend_gaps` (boolean) if True date abive the threshold is \\
+            guaranteed to be muted, otherwise tapering will leak into these\\
+            parts. This step involves an additional convolution.
+        * `taper_len`: (float) length of taper for muted segments in seconds
+    :type params: dictionary
+    :param params: filled automatically by `pxcorr`
+    
+    :rtype: numpy.ndarray
+    :return: clipped time series data
+    """
+
+    # return zeros if length of traces is shorter than taper
+    ntap = int(args['taper_len']*params['sampling_rate'])
+    if A.shape[0]<=ntap:
+        return np.zeros_like(A)
+
+    # filter if asked to
+    if 'filter' in args.keys():
+        C = TDfilter(A,args['filter'],params)
+    else:
+        C = deepcopy(A)
+    
+    # calculate envelope
+    #D = np.abs(signal.hilbert(C,axis=0))
+    D = np.abs(C)
+    
+    # calculate threshold
+    if 'threshold' in args.keys():
+        thres = np.zeros(A.shape[1]) + args['threshold']
+    elif 'std_factor' in args.keys():
+        thres = np.std(C,axis=0) * args['std_factor']
+    else:
+        thres = np.std(C,axis=0)
+    
+    # calculate mask
+    mask = np.ones_like(D)
+    mask[D>np.tile(np.atleast_2d(thres),(A.shape[0],1))]=0
+    # extend the muted segments to make sure the whole segment is zero after
+    if args['extend_gaps']:
+        tap = np.ones(ntap)/ntap
+        for ind in range(A.shape[1]):
+            mask[:,ind] = np.convolve(mask[:,ind],tap, mode='same')
+        nmask = np.ones_like(D)
+        nmask[mask<1.] = 0
+    else:
+        nmask = mask
+    
+    # apply taper
+    tap = 2. - (np.cos(np.arange(ntap,dtype=float)/ntap*2.*np.pi) + 1.)
+    tap /= ntap
+    for ind in range(A.shape[1]):
+        nmask[:,ind] = np.convolve(nmask[:,ind],tap, mode='same')
+    
+    # mute date with tapered mask
+    A *= nmask
+    return A
+
+
 def TDfilter(A,args,params):
     """
     Filter time series data
@@ -300,7 +390,7 @@ def TDfilter(A,args,params):
     
     `args` has the following structure:
     
-        args = {'type':`filterType`, fargs}``
+        args = {'type':`filterType`, fargs}
             
         `type` may be `bandpass` with the corresponding fargs `freqmin` and \\ 
         `freqmax` or `highpass`/`lowpass` with the `fargs` `freqmin`/`freqmax`
@@ -319,7 +409,7 @@ def TDfilter(A,args,params):
     :rtype: numpy.ndarray
     :return: filtered time series data
     """
-    func = getattr(osignal,args['type'])
+    func = getattr(osignal.filter,args['type'])
     args = deepcopy(args)
     args.pop('type')
     # filtering in obspy.signal is done along the last dimension that why .T
@@ -882,6 +972,14 @@ def set_sample_options():
                                {'function':taper,
                                 'args':{'type':'cosTaper',
                                         'p':0.01}},
+                               {'function':mute,
+                                'args':{'filter':{'type':'bandpass',
+                                                 'freqmin':1.,
+                                                 'freqmax':6.},
+                                       'taper_len':1.,
+                                       # 'threshold':1000, absolute threshold
+                                       'std_factor':1,
+                                       'extend_gaps':True}},
                                {'function':TDfilter,
                                 'args':{'type':'bandpass',
                                         'freqmin':1.,

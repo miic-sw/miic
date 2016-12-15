@@ -1,0 +1,6 @@
+miic.core.pxcorr_func.mute
+==========================
+
+.. currentmodule:: miic.core.pxcorr_func
+
+.. autofunction:: mute
