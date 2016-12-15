@@ -178,7 +178,7 @@
         <span class="c">## frequency domain postProcessing</span>
         <span class="c">#</span>
         
-        <span class="n">tmp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">irfft</span><span class="p">(</span><span class="n">M</span><span class="p">)</span><span class="o">.</span><span class="n">real</span>
+        <span class="n">tmp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">irfft</span><span class="p">(</span><span class="n">M</span><span class="p">,</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">real</span>
         <span class="c"># cut the center and do fftshift</span>
         <span class="n">C</span><span class="p">[:,</span><span class="n">ii</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">tmp</span><span class="p">[</span><span class="o">-</span><span class="n">sampleToSave</span><span class="p">:],</span><span class="n">tmp</span><span class="p">[:</span><span class="n">sampleToSave</span><span class="o">+</span><span class="mi">1</span><span class="p">]))</span><span class="o">/</span><span class="n">norm</span>
         <span class="n">starttimes</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span> <span class="o">=</span> <span class="n">zerotime</span> <span class="o">-</span><span class="n">sampleToSave</span><span class="o">/</span><span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;sampling_rate&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">roffset</span>
@@ -401,6 +401,11 @@
 <span class="sd">    :return: clipped time series data</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
+    <span class="c"># return zeros if length of traces is shorter than taper</span>
+    <span class="n">ntap</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="s">&#39;taper_len&#39;</span><span class="p">]</span><span class="o">*</span><span class="n">params</span><span class="p">[</span><span class="s">&#39;sampling_rate&#39;</span><span class="p">])</span>
+    <span class="k">if</span> <span class="n">A</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">&lt;=</span><span class="n">ntap</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">A</span><span class="p">)</span>
+
     <span class="c"># filter if asked to</span>
     <span class="k">if</span> <span class="s">&#39;filter&#39;</span> <span class="ow">in</span> <span class="n">args</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
         <span class="n">C</span> <span class="o">=</span> <span class="n">TDfilter</span><span class="p">(</span><span class="n">A</span><span class="p">,</span><span class="n">args</span><span class="p">[</span><span class="s">&#39;filter&#39;</span><span class="p">],</span><span class="n">params</span><span class="p">)</span>
@@ -423,7 +428,6 @@
     <span class="n">mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">D</span><span class="p">)</span>
     <span class="n">mask</span><span class="p">[</span><span class="n">D</span><span class="o">&gt;</span><span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span><span class="n">thres</span><span class="p">),(</span><span class="n">A</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="mi">1</span><span class="p">))]</span><span class="o">=</span><span class="mi">0</span>
     <span class="c"># extend the muted segments to make sure the whole segment is zero after</span>
-    <span class="n">ntap</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="s">&#39;taper_len&#39;</span><span class="p">]</span><span class="o">*</span><span class="n">params</span><span class="p">[</span><span class="s">&#39;sampling_rate&#39;</span><span class="p">])</span>
     <span class="k">if</span> <span class="n">args</span><span class="p">[</span><span class="s">&#39;extend_gaps&#39;</span><span class="p">]:</span>
         <span class="n">tap</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">ntap</span><span class="p">)</span><span class="o">/</span><span class="n">ntap</span>
         <span class="k">for</span> <span class="n">ind</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">A</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
@@ -1086,7 +1090,7 @@
     </div>
     <div class="footer" role="contentinfo">
         &copy; Copyright 2012, Eraldo Pomponi.
-      Last updated on 2016-08-29T15:31:19.
+      Last updated on 2016-11-28T14:56:38.
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
     </div>
   </body>

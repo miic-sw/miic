@@ -1,0 +1,6 @@
+miic.core.stream.stream_stack_distance_intervals
+================================================
+
+.. currentmodule:: miic.core.stream
+
+.. autofunction:: stream_stack_distance_intervals

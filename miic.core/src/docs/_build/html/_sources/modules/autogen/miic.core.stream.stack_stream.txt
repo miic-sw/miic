@@ -1,0 +1,6 @@
+miic.core.stream.stack_stream
+=============================
+
+.. currentmodule:: miic.core.stream
+
+.. autofunction:: stack_stream

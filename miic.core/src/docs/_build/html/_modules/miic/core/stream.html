@@ -379,6 +379,50 @@
         <span class="k">return</span> <span class="n">tr</span>
 
 
+<div class="viewcode-block" id="stack_stream"><a class="viewcode-back" href="../../../modules/autogen/miic.core.stream.stack_stream.html#miic.core.stream.stack_stream">[docs]</a><span class="k">def</span> <span class="nf">stack_stream</span><span class="p">(</span><span class="n">st</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Calculate mean of all traces in stream</span>
+
+<span class="sd">    Calculate the mean of all overlapping segments of the trace in the input</span>
+<span class="sd">    stream provided the traces match the sampling rate of the first trace.</span>
+
+<span class="sd">    :type st: :class:`~obspy.core.stream.Stream`</span>
+<span class="sd">    :param st: The stream with the traces to be stacked</span>
+
+<span class="sd">    :rtype: :class:`~obspy.core.stream.Stream`</span>
+<span class="sd">    :return: **rst**: Stream with stacked data in the first trace and number of</span>
+<span class="sd">        stacked traces for each sample in the second trace</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">sampling_rate</span> <span class="o">=</span> <span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">sampling_rate</span>
+    <span class="n">starttime</span> <span class="o">=</span> <span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">starttime</span>
+    <span class="n">endtime</span> <span class="o">=</span> <span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">endtime</span>
+    <span class="k">for</span> <span class="n">tr</span> <span class="ow">in</span> <span class="n">st</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">starttime</span> <span class="o">&lt;</span> <span class="n">starttime</span><span class="p">:</span>
+            <span class="n">starttime</span> <span class="o">=</span> <span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">starttime</span>
+        <span class="k">if</span> <span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">endtime</span> <span class="o">&gt;</span> <span class="n">endtime</span><span class="p">:</span>
+            <span class="n">endtime</span> <span class="o">=</span> <span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">endtime</span>
+    <span class="n">npts</span> <span class="o">=</span> <span class="p">(</span><span class="n">endtime</span><span class="o">-</span><span class="n">starttime</span><span class="p">)</span><span class="o">*</span><span class="n">sampling_rate</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="n">sum_tr</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">sum_tr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">starttime</span> <span class="o">=</span> <span class="n">starttime</span>
+    <span class="n">sum_tr</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">npts</span><span class="p">,</span><span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="n">sum_tr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">station</span> <span class="o">=</span> <span class="s">&#39;MEAN&#39;</span>
+    <span class="n">num_tr</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">sum_tr</span><span class="p">)</span>
+    <span class="n">num_tr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">station</span><span class="o">=</span> <span class="s">&#39;NUM&#39;</span>
+    <span class="k">for</span> <span class="n">tr</span> <span class="ow">in</span> <span class="n">st</span><span class="p">[</span><span class="mi">1</span><span class="p">:]:</span>
+        <span class="k">if</span> <span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">sampling_rate</span> <span class="o">==</span> <span class="n">sampling_rate</span><span class="p">:</span>
+            <span class="n">sind</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">((</span><span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">starttime</span><span class="o">-</span><span class="n">starttime</span><span class="p">)</span> <span class="o">*</span> <span class="n">sampling_rate</span><span class="p">))</span>
+            <span class="n">tnpts</span> <span class="o">=</span> <span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">npts</span>
+            <span class="n">sum_tr</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">sind</span><span class="p">:</span><span class="n">sind</span><span class="o">+</span><span class="n">tnpts</span><span class="p">]</span> <span class="o">+=</span> <span class="n">tr</span><span class="o">.</span><span class="n">data</span>
+            <span class="n">num_tr</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">sind</span><span class="p">:</span><span class="n">sind</span><span class="o">+</span><span class="n">tnpts</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="n">rst</span> <span class="o">=</span> <span class="n">stream</span><span class="o">.</span><span class="n">Stream</span><span class="p">()</span>
+    <span class="n">sum_tr</span><span class="o">.</span><span class="n">data</span> <span class="o">/=</span> <span class="n">num_tr</span><span class="o">.</span><span class="n">data</span>
+    <span class="n">rst</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sum_tr</span><span class="p">)</span>
+    <span class="n">rst</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">num_tr</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">rst</span>
+                   
+    
+
+
+</div>
 <div class="viewcode-block" id="stream_downsample"><a class="viewcode-back" href="../../../modules/autogen/miic.core.stream.stream_downsample.html#miic.core.stream.stream_downsample">[docs]</a><span class="k">def</span> <span class="nf">stream_downsample</span><span class="p">(</span><span class="n">st</span><span class="p">,</span> <span class="n">final_freq</span><span class="p">,</span> <span class="n">no_filter</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> \
                       <span class="n">strict_length</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">parallel</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">processes</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Downsample all the traces in the input stream to a desired frequency.</span>
@@ -463,7 +507,7 @@
 
 
 
-<span class="k">def</span> <span class="nf">stream_envelope</span><span class="p">(</span><span class="n">st</span><span class="p">):</span>
+<div class="viewcode-block" id="stream_envelope"><a class="viewcode-back" href="../../../modules/autogen/miic.core.stream.stream_envelope.html#miic.core.stream.stream_envelope">[docs]</a><span class="k">def</span> <span class="nf">stream_envelope</span><span class="p">(</span><span class="n">st</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Calculate the envelopes of all traces in a stream.</span>
 
 <span class="sd">    It works on a copy of the stream.</span>
@@ -478,8 +522,8 @@
         <span class="n">tr</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">envelope</span><span class="p">(</span><span class="n">tr</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">st</span>
 
-
-<span class="k">def</span> <span class="nf">stream_stack_distance_intervals</span><span class="p">(</span><span class="n">st</span><span class="p">,</span> <span class="n">interval</span><span class="p">):</span>
+</div>
+<div class="viewcode-block" id="stream_stack_distance_intervals"><a class="viewcode-back" href="../../../modules/autogen/miic.core.stream.stream_stack_distance_intervals.html#miic.core.stream.stream_stack_distance_intervals">[docs]</a><span class="k">def</span> <span class="nf">stream_stack_distance_intervals</span><span class="p">(</span><span class="n">st</span><span class="p">,</span> <span class="n">interval</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Stack average traces in a stream if their distance difference is</span>
 <span class="sd">    smaller than interval.</span>
 
@@ -525,7 +569,7 @@
     <span class="k">return</span> <span class="n">sst</span>
 
 
-
+</div>
 <span class="k">class</span> <span class="nc">_StFilter</span><span class="p">:</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ftype</span><span class="p">,</span> <span class="n">param</span><span class="p">):</span>
@@ -814,6 +858,13 @@
 <span class="sd">    period spans multiple files.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
+    <span class="c">#check input</span>
+    <span class="k">assert</span> <span class="nb">type</span><span class="p">(</span><span class="n">starttime</span><span class="p">)</span> <span class="ow">is</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">,</span> \
+        <span class="s">&#39;starttime is not a datetime.datetime object: </span><span class="si">%s</span><span class="s"> is type </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> \
+        <span class="p">(</span><span class="n">starttime</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">starttime</span><span class="p">))</span>
+    <span class="k">assert</span> <span class="nb">type</span><span class="p">(</span><span class="n">endtime</span><span class="p">)</span> <span class="ow">is</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">,</span> \
+        <span class="s">&#39;endtime is not a datetime.datetime object: </span><span class="si">%s</span><span class="s"> is type&#39;</span> <span class="o">%</span> \
+        <span class="p">(</span><span class="n">endtime</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">endtime</span><span class="p">))</span>
     <span class="c"># translate file structure string</span>
     <span class="n">fpattern</span> <span class="o">=</span> <span class="n">_current_filepattern</span><span class="p">(</span><span class="n">ID</span><span class="p">,</span><span class="n">starttime</span><span class="p">,</span><span class="n">fs</span><span class="p">)</span>
     <span class="n">st</span> <span class="o">=</span> <span class="n">_read_filepattern</span><span class="p">(</span><span class="n">fpattern</span><span class="p">,</span> <span class="n">starttime</span><span class="p">,</span> <span class="n">endtime</span><span class="p">,</span><span class="n">trim</span><span class="p">)</span>
@@ -995,7 +1046,7 @@
     </div>
     <div class="footer" role="contentinfo">
         &copy; Copyright 2012, Eraldo Pomponi.
-      Last updated on 2016-08-29T15:31:19.
+      Last updated on 2016-11-28T14:56:38.
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
     </div>
   </body>

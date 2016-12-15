@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>miic.core.plot_fun.apparent_dv_plot &mdash; MIIC 1.0 documentation</title>
+    <title>miic.core.stream.stream_stack_distance_intervals &mdash; MIIC 1.0 documentation</title>
     
     <link rel="stylesheet" href="../../_static/sphinxdoc.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -24,9 +24,9 @@
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
     <link rel="top" title="MIIC 1.0 documentation" href="../../index.html" />
-    <link rel="up" title="Plotting functions" href="../plot_fun.html" />
-    <link rel="next" title="miic.core.plot_fun.diff_apparent_dv_plot" href="miic.core.plot_fun.diff_apparent_dv_plot.html" />
-    <link rel="prev" title="miic.core.plot_fun.plot_trace_distance_section" href="miic.core.plot_fun.plot_trace_distance_section.html" /> 
+    <link rel="up" title="Manipulation of Data Streams" href="../stream.html" />
+    <link rel="next" title="miic.core.stream.stream_envelope" href="miic.core.stream.stream_envelope.html" />
+    <link rel="prev" title="miic.core.stream.stack_stream" href="miic.core.stream.stack_stream.html" /> 
   </head>
   <body role="document">
     <div class="related" role="navigation" aria-label="related navigation">
@@ -39,14 +39,14 @@
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="miic.core.plot_fun.diff_apparent_dv_plot.html" title="miic.core.plot_fun.diff_apparent_dv_plot"
+          <a href="miic.core.stream.stream_envelope.html" title="miic.core.stream.stream_envelope"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="miic.core.plot_fun.plot_trace_distance_section.html" title="miic.core.plot_fun.plot_trace_distance_section"
+          <a href="miic.core.stream.stack_stream.html" title="miic.core.stream.stack_stream"
              accesskey="P">previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="../../index.html">MIIC 1.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../core.html" >MIIC Library Reference</a> &raquo;</li>
-          <li class="nav-item nav-item-2"><a href="../plot_fun.html" accesskey="U">Plotting functions</a> &raquo;</li> 
+          <li class="nav-item nav-item-2"><a href="../stream.html" accesskey="U">Manipulation of Data Streams</a> &raquo;</li> 
       </ul>
     </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
@@ -54,7 +54,7 @@
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
-      <li><a href="../../_sources/modules/autogen/miic.core.plot_fun.apparent_dv_plot.txt"
+      <li><a href="../../_sources/modules/autogen/miic.core.stream.stream_stack_distance_intervals.txt"
             rel="nofollow">Show Source</a></li>
     </ul>
    </div>
@@ -79,31 +79,33 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="miic-core-plot-fun-apparent-dv-plot">
-<h1>miic.core.plot_fun.apparent_dv_plot<a class="headerlink" href="#miic-core-plot-fun-apparent-dv-plot" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="miic-core-stream-stream-stack-distance-intervals">
+<h1>miic.core.stream.stream_stack_distance_intervals<a class="headerlink" href="#miic-core-stream-stream-stack-distance-intervals" title="Permalink to this headline">¶</a></h1>
 <dl class="function">
-<dt id="miic.core.plot_fun.apparent_dv_plot">
-<code class="descname">apparent_dv_plot</code><span class="sig-paren">(</span><em>adv_dict</em>, <em>time_stamp</em>, <em>inter_points=1000</em>, <em>save_file_name=None</em>, <em>ax=None</em>, <em>use_gridspec=False</em>, <em>shrink=1</em>, <em>coord_sys='geo'</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/miic/core/plot_fun.html#apparent_dv_plot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#miic.core.plot_fun.apparent_dv_plot" title="Permalink to this definition">¶</a></dt>
-<dd><p>Apparent velocity change plot</p>
-<p>This function does plot the apparent velocity change that occurred at
-a certain time of interest.
-The dv values available at that time are interpolated on a regular grid
-taking into account their position as specified by <code class="docutils literal"><span class="pre">stations_info</span></code>
-parameter.</p>
+<dt id="miic.core.stream.stream_stack_distance_intervals">
+<code class="descname">stream_stack_distance_intervals</code><span class="sig-paren">(</span><em>st</em>, <em>interval</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/miic/core/stream.html#stream_stack_distance_intervals"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#miic.core.stream.stream_stack_distance_intervals" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stack average traces in a stream if their distance difference is
+smaller than interval.</p>
+<p>The stream containing a number of traces with given distance (e.g. from source)
+is used to create a number of equally spaced traces by averaging traces that fall
+into the same distance bin. If interval is a scalar the bins are equally spaced with
+a width of interval. If interval is a sequence its elements define the lower distance
+limit of the bins.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>apparent_dv</strong> (<code class="xref py py-class docutils literal"><span class="pre">DataFrame</span></code>) &#8211; Apparent dv DataFrame produced by, e.g.,
-<code class="xref py py-func docutils literal"><span class="pre">inversion_with_missed_data_macro()</span></code></li>
-<li><strong>stations_info</strong> (<code class="xref py py-class docutils literal"><span class="pre">DataFrame</span></code>) &#8211; Stations geo information. This DataFrame is supposed
-to have the stations names as index and, at least, two columns:
-&#8216;easting&#8217; and &#8216;nothing&#8217;.</li>
-<li><strong>time_stamp</strong> (<code class="xref py py-class docutils literal"><span class="pre">datetime</span></code>) &#8211; Day of interest</li>
-<li><strong>inter_points</strong> (<em>int</em>) &#8211; Interpolation points</li>
-<li><strong>save_file_name</strong> (<em>str</em>) &#8211; Filename where to save the produced figure.</li>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>st</strong> (<code class="xref py py-class docutils literal"><span class="pre">Stream</span></code>) &#8211; Stream fo be used for stacking.</li>
+<li><strong>interval</strong> (<em>scalar os array like</em>) &#8211; width of bins in case of scalar or smaller edge of
+bins if interval is a sequence.</li>
 </ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Rtype sst:</th><td class="field-body"><p class="first"><code class="xref py py-class docutils literal"><span class="pre">Stream</span></code></p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><strong>sst</strong>: stacked stream</p>
 </td>
 </tr>
 </tbody>
@@ -128,19 +130,19 @@ to have the stations names as index and, at least, two columns:
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="miic.core.plot_fun.diff_apparent_dv_plot.html" title="miic.core.plot_fun.diff_apparent_dv_plot"
+          <a href="miic.core.stream.stream_envelope.html" title="miic.core.stream.stream_envelope"
              >next</a> |</li>
         <li class="right" >
-          <a href="miic.core.plot_fun.plot_trace_distance_section.html" title="miic.core.plot_fun.plot_trace_distance_section"
+          <a href="miic.core.stream.stack_stream.html" title="miic.core.stream.stack_stream"
              >previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="../../index.html">MIIC 1.0 documentation</a> &raquo;</li>
           <li class="nav-item nav-item-1"><a href="../core.html" >MIIC Library Reference</a> &raquo;</li>
-          <li class="nav-item nav-item-2"><a href="../plot_fun.html" >Plotting functions</a> &raquo;</li> 
+          <li class="nav-item nav-item-2"><a href="../stream.html" >Manipulation of Data Streams</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &copy; Copyright 2012, Eraldo Pomponi.
-      Last updated on 2016-11-28T14:55:22.
+      Last updated on 2016-11-28T14:56:38.
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
     </div>
   </body>

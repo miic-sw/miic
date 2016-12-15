@@ -15,6 +15,9 @@ Objects.
        :nosignatures:
        
        ~read_from_filesystem
+       ~stack_stream
+       ~stream_stack_distance_intervals
+       ~stream_envelope
        ~stream_combine
        ~stream_add_lat_lon_ele
        ~stream_save_sac
@@ -22,4 +25,5 @@ Objects.
        ~stream_filter
        ~trace_sym_pad_shrink_to_npts
        ~corr_trace_to_obspy
+       
   

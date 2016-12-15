@@ -1,0 +1,6 @@
+miic.core.stream.stream_envelope
+================================
+
+.. currentmodule:: miic.core.stream
+
+.. autofunction:: stream_envelope
