@@ -503,6 +503,107 @@ def stream_stack_distance_intervals(st, interval):
     return sst
 
 
+def stream_mute(st, filter=(), mute_method='std_factor', mute_value=3,
+                taper_len=5,extend_gaps=True):
+    """
+    Mute parts of data that exceed a threshold
+
+    To completely surpress the effect of data with high amplitudes e.g. after
+    aftershocks these parts of the data are muted (set to zero). The respective
+    parts of the signal are identified as those where the envelope in a given
+    frequency exceeds a threshold given directly as absolute number or as a
+    multiple of the data's standard deviation. A taper of length `taper_len` is
+    applied to smooth the edges of muted segments. Setting `extend_gaps` to
+    Ture will ensure that the taper is applied outside the segments and data
+    inside these segments will all zero. Edges of the data will be tapered too
+    in this case.
+    The function returns a muted copy of the data.
+
+    :Example:
+    ``args={'filter':{'type':'bandpass', 'freqmin':1., 'freqmax':6.},'taper_len':1., 'threshold':1000, 'std_factor':1, 'extend_gaps':True}``
+
+    :type st: obspy.Stream
+    :param st: stream with data to be muted
+    :type filter: dict
+    :param filter: Necessary arguments for the respective filter
+        that will be passed on. (e.g. ``freqmin=1.0``, ``freqmax=20.0`` for
+        ``"bandpass"``)
+    :type mute_method: str
+    :param mute_method: either 'std_factor' or 'threshold' that lead to muting
+        when the (filtered) envelope exceeds the standard deviation of the data
+        by a certain factor (mute_value) or when the envelope exceeds a fixed
+        value, respectively.
+    :type mute_value: float
+    :param mute_value: numerical value corresponding to 'mute_method'
+    :type taper_len: float
+    :param taper_len: length of taper in seconds
+    :type extend_gaps: Bool
+    :param extend_gaps: make sure tapering is done outside the segments to be
+        muted. This step involves an additional convolution.
+
+    :rtype: obspy.stream
+    :return: muted data
+    """
+
+    assert type(st) == Stream, "st is not an obspy stream"
+    assert mute_method in ['std_factor', 'threshold'], "unsupported mute_type"
+    assert type(mute_value) is float or type(mute_value) is int, \
+                                    "mute_value is not a number"
+    assert type(taper_len) is float or type(taper_len) is int, \
+                                    "taper_len is not a number"
+    assert type(extend_gaps) is bool, "extend_gaps is not a boolean."
+    # copy the data
+    cst = st.copy()
+    cst.merge()
+    cst.detrend('linear')
+    cst.taper(max_length=taper_len,max_percentage=0.1)
+
+
+    for ind,tr in enumerate(cst):
+        # return zeros if length of traces is shorter than taper
+        ntap = int(taper_len*tr.stats.sampling_rate)
+        if tr.stats.npts<=ntap:
+            cst[ind].data = np.zeros_like(tr.data)
+            continue
+
+        # filter if asked to
+        ftr = tr.copy()
+        if filter:
+            ftr.filter('bandpass', freqmin=filter[0], freqmax=filter[1])
+
+        # calculate envelope
+        #D = np.abs(signal.hilbert(C,axis=0))
+        D = np.abs(ftr.data)
+
+        # calculate threshold
+        if mute_method == 'threshold':
+            thres = np.zeros_like(ftr.data) + mute_value
+        elif mute_method == 'std_factor':
+            thres = np.std(ftr.data) * mute_value
+
+        # calculate mask
+        mask = np.ones_like(tr.data)
+        mask[D>thres]=0
+        # extend the muted segments to make sure the whole segment is zero after
+        if extend_gaps:
+            assert ntap != 0, "length of taper cannot be zero if extend_gaps is True"
+            tap = np.ones(ntap)/ntap
+            mask = np.convolve(mask,tap, mode='same')
+            nmask = np.ones_like(D)
+            nmask[mask<0.999999999] = 0
+        else:
+            nmask = mask
+
+        # apply taper
+        if ntap > 0:
+            tap = 2. - (np.cos(np.arange(ntap,dtype=float)/ntap*2.*np.pi) + 1.)
+            tap /= ntap
+            nmask = np.convolve(nmask,tap, mode='same')
+
+        # mute date with tapered mask
+        cst[ind].data *= nmask
+    return cst
+
 
 class _StFilter:
 

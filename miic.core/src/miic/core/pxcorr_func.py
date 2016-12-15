@@ -784,6 +784,10 @@ def calc_cross_combis(st, method='betweenStations'):
             letter of channel name) names are different and their station and
             network names are identical (single station cross-correlation).
         ``'autoComponents'``: Traces are combined only with themselves.
+        ``'allSimpleCombinations'``: All Traces are combined once (onle one of
+            (0,1) and (1,0))
+        ``'allCombinations'``: All traces are combined in both orders ((0,1)
+            and (1,0))
     """
 
     combis = []
@@ -803,9 +807,18 @@ def calc_cross_combis(st, method='betweenStations'):
     elif method == 'autoComponents':
         for ii in range(len(st)):
             combis.append((ii,ii))
+    elif method == 'allSimpleCombinations':
+        for ii in range(len(st)):
+            for jj in range(ii,len(st)):
+                    combis.append((ii,jj))
+    elif method == 'allCombinations':
+        for ii in range(len(st)):
+            for jj in range(len(st)):
+                combis.append((ii,jj))
     else:
-        raise ValueError("Method has to be one of ('betweenStations', " 
-                         "'betweenComponents' or 'autoComponents').")
+        raise ValueError("Method has to be one of ('betweenStations', "
+                         "'betweenComponents', 'autoComponents', "
+                         "'allSimpleCombinations' or 'allCombinations').")
     return combis
 
 
