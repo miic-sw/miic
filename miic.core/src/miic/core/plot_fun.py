@@ -414,13 +414,15 @@ def plot_dv(dv,
 
         tit = "Single reference dv/v"
         dv_tick_delta = 0.01
-        dv_y_label = "dv/v"
+        dv_y_label = "dv/v"   # plotting velocity requires to flip the
+                              #stretching axis
 
     elif (value_type == 'stretch') and (method == 'multi_ref'):
 
         tit = "Multi reference dv/v"
         dv_tick_delta = 0.01
-        dv_y_label = "dv/v"
+        dv_y_label = "dv/v"   # plotting velocity requires to flip the
+                              #stretching axis
 
     elif (value_type == 'shift') and (method == 'time_shift'):
 
@@ -441,16 +443,36 @@ def plot_dv(dv,
 
     ax1 = f.add_subplot(gs[0])
     imh = plt.imshow(sim_mat.T, interpolation='none', aspect='auto')
+    ###
+    scale = stretch_vect[1] - stretch_vect[0]
+    offset = stretch_vect[0]
+    mod_ind = (np.round((dv['value']-offset) / scale).astype(int))
+    mod_ind[np.isnan(dv['value'])] = 0
+    ax1.plot(mod_ind,'b.')
+    if 'model_value' in dv.keys():
+        mod_ind = (np.round((dv['model_value']-offset) / scale).astype(int))
+        mod_ind[np.isnan(dv['model_value'])] = 0
+        ax1.plot(mod_ind,'g.')
+    ax1.set_xlim(0,sim_mat.shape[0])
+    ax1.set_ylim(0,sim_mat.shape[1])
+    if value_type == 'stretch':
+        ax1.invert_yaxis()
+    ###
     if sim_mat_Clim:
         assert  len(sim_mat_Clim) == 2, "sim_mat_Clim must be a two element list"            
         imh.set_clim(sim_mat_Clim[0], sim_mat_Clim[1])
     plt.gca().get_xaxis().set_visible(False)
     ax1.set_yticks(np.floor(np.linspace(0, n_stretching - 1, 7)).astype('int'))
-    ax1.set_yticklabels(["%4.3f" % x for x in
-        stretch_vect[np.floor(np.linspace(0,
-                                          n_stretching - 1,
-                                          7)).astype('int')][:-1]])
 
+    if value_type == 'stretch':
+        ax1.set_yticklabels(["%4.3f" % x for x in
+            stretch_vect[np.floor(np.linspace(n_stretching - 1,0,
+                                              7)).astype('int')[:-1]]])
+    else:
+        ax1.set_yticklabels(["%4.3f" % x for x in
+            stretch_vect[np.floor(np.linspace(0,
+                                              n_stretching - 1,
+                                              7)).astype('int')[:-1]]])
     if 'stats' in dv:
         stats = flatten_recarray(dv['stats'])
         comb_mseedid = \
@@ -469,6 +491,8 @@ def plot_dv(dv,
 
     ax2 = f.add_subplot(gs[1])
     plt.plot(rtime, -dt, '.')
+    if 'model_value' in dv.keys():
+        plt.plot(rtime, -dv['model_value'],'g.')
     plt.xlim([rtime[0], rtime[-1]])
     plt.ylim((-stretching_amount, stretching_amount))
     if mark_time and not np.all(rtime < mark_time) \
@@ -485,6 +509,8 @@ def plot_dv(dv,
 
     ax3 = f.add_subplot(gs[2])
     plt.plot(rtime, corr, '.')
+    if 'model_corr' in dv.keys():
+        plt.plot(rtime, dv['model_corr'],'g.')
     plt.xlim([rtime[0], rtime[-1]])
     ax3.yaxis.set_ticks_position('right')
     ax3.set_ylabel("Correlation")
