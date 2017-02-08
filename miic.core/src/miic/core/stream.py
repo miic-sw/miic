@@ -849,7 +849,7 @@ def trace_sym_pad_shrink_to_npts(tr, npts):
     return tr_padded
 
 
-IDformat = ['%NET','%STA','%LOC','%CHA']
+IDformat = ['%NET','%net','%STA','%sta','%LOC','%loc','%CHA','%cha']
 
 def read_from_filesystem(ID,starttime,endtime,fs,trim=True):
     """Function to read data from a filesystem with a give file structure
@@ -880,10 +880,10 @@ def read_from_filesystem(ID,starttime,endtime,fs,trim=True):
     one of the following
      - %X as defined by datetime.strftime indicating an element of
        the time. e.g. %H
-     - %NET: network name
-     - %STA: station name
-     - %CHA: channel name
-     - %LOC: location
+     - %NET: network name or %net for lower case network name
+     - %STA: station name or %sta for lower case
+     - %CHA: channel name or %cha for lower case
+     - %LOC: location or %loc for lower case location code
      - string with out %
     The format strings are replaced either with an element of the starttime
     if they correspond to a datetime specifyer or with the respective part
@@ -1063,7 +1063,10 @@ def _fs_translate(part,ID,starttime):
         res = part
     # in case it belongs to the ID replace it with the respective ID-part
     if part in IDformat:
-        res = IDlist[IDformat.index(part)]
+        idx = IDformat.index(part)
+        res = IDlist[idx/2]
+        if idx%2 != 0:  # idx is odd and IDformat is lowercase
+            res = res.lower()
     # otherwise it must be part of the date string
     else:
         res = starttime.strftime(part)
