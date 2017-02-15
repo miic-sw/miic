@@ -869,12 +869,17 @@ def rotate_multi_corr_stream(st):
                 elif ttr.stats['channel'][6] == 'Z':
                     tl[8] = ttr                   
                     cnt += 256
-
         if cnt == 2**9-1:
             st0 = stream.Stream()
             for t in tl:
                 st0.append(t)
             st1 = _rotate_corr_stream(st0)
+            out_st += st1
+        elif cnt == 27: # only horizontal compoent combinations present
+            st0 = stream.Stream()
+            for t in [0, 1, 3, 4]:
+                st0.append(tl[t])
+            st1 = _rotate_corr_stream_horizontal(st0)
             out_st += st1
         for ttr in tst:
             for ind,tr in enumerate(st):
@@ -883,6 +888,60 @@ def rotate_multi_corr_stream(st):
     
     return out_st
 
+
+def _rotate_corr_stream_horizontal(st):
+    """ Rotate traces in stream from the EE-EN-NE-NN system to
+    the RR-RT-TR-TT system. The letters give the component order
+    in the input and output streams. Input traces are assumed to be of same length
+    and simultaneously sampled.
+    """
+
+    # rotation angles
+    # phi1 : counter clockwise angle between E and R(towards second station)
+    # the leading -1 accounts fact that we rotate the coordinate system, not a vector
+    phi1 = - np.pi/180*(90-st[0].stats['sac']['az'])
+    # phi2 : counter clockwise angle between E and R(away from first station)
+    phi2 = - np.pi/180*(90-st[0].stats['sac']['baz']+180)
+
+    c1 = np.cos(phi1)
+    s1 = np.sin(phi1)
+    c2 = np.cos(phi2)
+    s2 = np.sin(phi2)
+
+    rt = stream.Stream()
+    RR = st[0].copy()
+    RR.data = c1*c2*st[0].data - c1*s2*st[1].data - s1*c2*st[2].data + s1*s2*st[3].data
+    tcha = list(RR.stats['channel'])
+    tcha[2] = 'R'
+    tcha[6] = 'R'
+    RR.stats['channel'] = ''.join(tcha)
+    rt.append(RR)
+
+    RT = st[0].copy()
+    RT.data = c1*s2*st[0].data + c1*c2*st[1].data - s1*s2*st[2].data - s1*c2*st[3].data
+    tcha = list(RT.stats['channel'])
+    tcha[2] = 'R'
+    tcha[6] = 'T'
+    RT.stats['channel'] = ''.join(tcha)
+    rt.append(RT)
+
+    TR = st[0].copy()
+    TR.data = s1*c2*st[0].data - s1*s2*st[1].data + c1*c2*st[2].data - c1*s2*st[3].data
+    tcha = list(TR.stats['channel'])
+    tcha[2] = 'T'
+    tcha[6] = 'R'
+    TR.stats['channel'] = ''.join(tcha)
+    rt.append(TR)
+
+    TT = st[0].copy()
+    TT.data = s1*s2*st[0].data + s1*c2*st[1].data + c1*s2*st[2].data + c1*c2*st[3].data
+    tcha = list(TT.stats['channel'])
+    tcha[2] = 'T'
+    tcha[6] = 'T'
+    TT.stats['channel'] = ''.join(tcha)
+    rt.append(TT)
+
+    return rt
 
 
 def _rotate_corr_stream(st):
