@@ -388,12 +388,12 @@ def plot_dv(dv,
     value_type = dv['value_type'][0]
     method = dv['method'][0]
 
-    corr = dv['corr']
-    dt = dv['value']
+    corr = np.squeeze(dv['corr'])
+    dt = np.squeeze(dv['value'])
     sim_mat = dv['sim_mat']
-    stretch_vect = dv['second_axis']
+    stretch_vect = np.squeeze(dv['second_axis'])
 
-    rtime = convert_time(dv['time'])
+    rtime = convert_time(np.squeeze(dv['time']))
 
     # normalize simmat if requested
     if normalize_simmat:
@@ -658,7 +658,8 @@ if BC_UI:
 
 def plot_trace_distance_section(traces, scale=0, azim=0,
                                 outfile=None, title=None, plot_type='wiggle',
-                                annotate=False, figsize=(8, 6), dpi=72):
+                                annotate=False, joint_norm=False,
+                                figsize=(8, 6), dpi=72):
     """ Plot a time distance section of an obspy stream or list of traces.
 
     Take a list of correlation traces with proper geo information or an
@@ -690,6 +691,8 @@ def plot_trace_distance_section(traces, scale=0, azim=0,
     :type annotate: bool
     :param annotate: If True the station combination name will be printed on
         each curve (in the left side)
+    :type joint_norm: bool
+    :param joint_norm: joint normalization of all traces
     """
 
     zerotime = datetime.datetime(1971, 1, 1)
@@ -700,6 +703,12 @@ def plot_trace_distance_section(traces, scale=0, azim=0,
         st = traces
 
     plt.figure(figsize=figsize, dpi=dpi)
+
+    jnorm = 0
+    if joint_norm:
+        for tr in st:
+            if jnorm < np.max(np.abs(tr.data)):
+                jnorm = np.max(np.abs(tr.data))
 
     for tr in st:
         start = tr.stats['starttime'].datetime
@@ -717,7 +726,10 @@ def plot_trace_distance_section(traces, scale=0, azim=0,
             tim = arange(tr.stats['npts']) / \
                 tr.stats['sampling_rate'] + (start - zerotime).total_seconds()
 
-        data = tr.data / max(tr.data)
+        if joint_norm:
+            data = tr.data/jnorm
+        else:
+            data = tr.data / max(np.abs(tr.data))
 
         # fill wiggles
         if plot_type == 'wiggle':

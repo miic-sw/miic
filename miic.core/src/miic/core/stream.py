@@ -457,7 +457,7 @@ def stream_envelope(st):
     return st
 
 
-def stream_stack_distance_intervals(st, interval):
+def stream_stack_distance_intervals(st, interval, norm_type='no'):
     """ Stack average traces in a stream if their distance difference is
     smaller than interval.
 
@@ -472,6 +472,11 @@ def stream_stack_distance_intervals(st, interval):
     :type interval: scalar os array like
     :param interval: width of bins in case of scalar or smaller edge of
         bins if interval is a sequence.
+    :type norm_type: str
+    :param norm_type: normalization to be applied within bins before stacking
+        Possibilities are `no` for no normalization, `max` for normalization 
+        to maximum, `rms` for normaliation to root mean square or `abs_mean`
+        for normalization to the mean of the absolute value.
     :rtype sst: :class:`~obspy.core.stream.Stream`
     :return: **sst**: stacked stream
     """
@@ -493,12 +498,24 @@ def stream_stack_distance_intervals(st, interval):
             'channel':st[0].stats['channel'],'starttime':st[0].stats['starttime'],'sampling_rate':st[0].stats['sampling_rate'],
             'sac':{'dist':ii,'az':0,'evla':0.,'evlo':0.,'stla':ii/(np.pi*6371000)*180.,'stlo':0.}}))
     count = np.zeros_like(bins)
+    weight = np.zeros_like(bins)
     for tr in st:
         ind = sum((tr.stats.sac['dist'] - bins)>=0)-1
-        sst[ind].data[0:tr.stats['npts']] += tr.data
+        if norm_type == 'no':
+            norm = 1.
+        elif norm_type == 'max':
+            norm = np.max(np.abs(tr.data))
+        elif norm_type == 'rms':
+            norm = np.sqrt(np.mean(tr.data**2))
+        elif norm_type == 'abs_mean':
+            norm = np.mean(np.abs(tr.data))
+        else:
+            raise ValueError('norm_type %s not implemented' % norm_type)
+        sst[ind].data[0:tr.stats['npts']] += (tr.data/norm)
+        weight[ind] += norm
         count[ind] += 1
     for ind, tr in enumerate(sst):
-        tr.data /= count[ind]
+        tr.data *= weight[ind]/(count[ind]**2)
     
     return sst
 
@@ -529,10 +546,11 @@ def stream_mute(st, filter=(), mute_method='std_factor', mute_value=3,
         that will be passed on. (e.g. ``freqmin=1.0``, ``freqmax=20.0`` for
         ``"bandpass"``)
     :type mute_method: str
-    :param mute_method: either 'std_factor' or 'threshold' that lead to muting
-        when the (filtered) envelope exceeds the standard deviation of the data
-        by a certain factor (mute_value) or when the envelope exceeds a fixed
-        value, respectively.
+    :param mute_method: either 'std_factor', 'median_factor' or 'threshold'
+        that lead to muting when the (filtered) envelope exceeds the standard
+        deviation or the median of the absolute value of the data by a certain
+        factor (mute_value) or when the envelope exceeds a fixed
+        value (threshold), respectively.
     :type mute_value: float
     :param mute_value: numerical value corresponding to 'mute_method'
     :type taper_len: float
@@ -546,9 +564,7 @@ def stream_mute(st, filter=(), mute_method='std_factor', mute_value=3,
     """
 
     assert type(st) == Stream, "st is not an obspy stream"
-    assert mute_method in ['std_factor', 'threshold'], "unsupported mute_type"
-    assert type(mute_value) is float or type(mute_value) is int, \
-                                    "mute_value is not a number"
+    assert mute_method in ['std_factor', 'median_factor', 'threshold'], "unsupported mute_type"
     assert type(taper_len) is float or type(taper_len) is int, \
                                     "taper_len is not a number"
     assert type(extend_gaps) is bool, "extend_gaps is not a boolean."
@@ -580,6 +596,8 @@ def stream_mute(st, filter=(), mute_method='std_factor', mute_value=3,
             thres = np.zeros_like(ftr.data) + mute_value
         elif mute_method == 'std_factor':
             thres = np.std(ftr.data) * mute_value
+        elif mute_method == 'median_factor':
+            thres = mute_value * np.median(np.abs(ftr.data))
 
         # calculate mask
         mask = np.ones_like(tr.data)
