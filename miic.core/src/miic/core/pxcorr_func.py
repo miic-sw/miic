@@ -232,12 +232,12 @@ def taper(A,args,params):
     
         args = {'type':`type of taper`,taper_args}``
             
-        `type` may be `cosTaper` with the corresponding taper_args `p` the 
+        `type` may be `cosine_taper` with the corresponding taper_args `p` the 
         percentage of the traces to taper. Possibilities of `type` are \\
         given by `obspy.signal`.
             
         :Example:  
-        ``args = {'type':'cosTaper','p':0.1}``
+        ``args = {'type':'cosine_taper','p':0.1}``
     
     :type A: numpy.ndarray
     :param A: time series data with time oriented along the first \\
@@ -250,8 +250,8 @@ def taper(A,args,params):
     :rtype: numpy.ndarray
     :return: tapered time series data
     """
-    if args['type'] == 'cosTaper':
-        func = osignal.invsim.cosTaper
+    if args['type'] == 'cosine_taper':
+        func = osignal.invsim.cosine_taper
     else:
         func = getattr(signal,args['type'])
     args = deepcopy(args)
@@ -284,7 +284,6 @@ def clip(A,args,params):
     :return: clipped time series data
     """
     stds = np.std(A,axis=0)
-    print stds
     for ind in range(A.shape[1]):
         ts = args['std_factor']*stds[ind]
         A[A[:,ind]>ts,ind] = ts
@@ -488,11 +487,11 @@ def zeroPadding(A,args,params):
     """
     npts,ntrc = A.shape
     if args['type'] == 'nextPowerOfTwo':
-        N = osignal.util.nextpow2(npts)
+        N = osignal.util.next_pow_2(npts)
     elif args['type'] == 'avoidWrapAround':
         N = npts + params['sampling_rate'] * params['lengthToSave']
     elif args['type'] == 'avoidWrapPowerTwo':
-        N = osignal.util.nextpow2(npts + params['sampling_rate'] *
+        N = osignal.util.next_pow_2(npts + params['sampling_rate'] *
                                   params['lengthToSave'])
     else:
         raise ValueError("type '%s' of zero padding not implemented" %
@@ -523,9 +522,7 @@ def spectralWhitening(B,args,params):
     :return: whitened spectal data
     """
     absB = np.absolute(B)
-    print 'args', args
     if 'joint_norm' in args.keys():
-        print 'joint_norm in args'
         if args['joint_norm'] == True:
             assert B.shape[1] % 3 == 0, "for joint normalization the number\
                       of traces needs to the multiple of 3: %d" % B.shape[0]
@@ -533,7 +530,6 @@ def spectralWhitening(B,args,params):
                 print 'ii', ii
                 absB[:,ii:ii+3] = np.tile(np.atleast_2d(
                                     np.mean(absB[:,ii:ii+3],axis=1)).T,[1,3])
-            print 'here', absB
     B /= absB
     # remove zero freq component 
     #B[0,:] = 0.j
@@ -564,7 +560,7 @@ def FDfilter(B,args,params):
     """
     args = deepcopy(args)
     args.update({'freqs':params['freqs']})
-    tap = osignal.invsim.cosTaper(B.shape[0],**args)
+    tap = osignal.invsim.cosine_taper(B.shape[0],**args)
     B *= np.tile(np.atleast_2d(tap).T,(1,B.shape[1]))
     return B
     
@@ -688,7 +684,7 @@ def stream_pxcorr(st,options,comm=None):
         ``options = {'TDpreProcessing':[{'function':detrend,
                                 'args':{'type':'linear'}},
                                {'function':taper,
-                                'args':{'type':'cosTaper',
+                                'args':{'type':'cosine_taper',
                                         'p':0.01}},
                                {'function':TDfilter,
                                 'args':{'type':'bandpass',
@@ -983,7 +979,7 @@ def set_sample_options():
     args = {'TDpreProcessing':[{'function':detrend,
                                 'args':{'type':'linear'}},
                                {'function':taper,
-                                'args':{'type':'cosTaper',
+                                'args':{'type':'cosine_taper',
                                         'p':0.01}},
                                {'function':mute,
                                 'args':{'filter':{'type':'bandpass',
