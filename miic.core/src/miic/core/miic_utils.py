@@ -1302,19 +1302,16 @@ def trace_calc_az_baz_dist(tr1, tr2):
         raise TypeError("tr2 must be an obspy Trace object.")
 
     try:
-        from obspy.core.util.geodetics import gps2DistAzimuth
+        from obspy.geodetics import gps2dist_azimuth 
     except ImportError:
-        try:
-            from obspy.signal.rotate import gps2DistAzimuth
-        except ImportError:
-            print "Missed obspy funciton gps2DistAzimuth"
-            print "Update obspy.core"
-            return
+        print "Missed obspy funciton gps2dist_azimuth"
+        print "Update obspy."
+        return
 
-    dist, az, baz = gps2DistAzimuth(tr1.stats.sac.stla, \
-                                    tr1.stats.sac.stlo, \
-                                    tr2.stats.sac.stla, \
-                                    tr2.stats.sac.stlo)
+    dist, az, baz = gps2dist_azimuth(tr1.stats.sac.stla, \
+                                     tr1.stats.sac.stlo, \
+                                     tr2.stats.sac.stla, \
+                                     tr2.stats.sac.stlo)
 
     return az, baz, dist
 

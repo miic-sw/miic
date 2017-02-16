@@ -1856,16 +1856,13 @@ def corr_mat_add_lat_lon_ele(corr_mat, coord_df):
 
     # calculate relative information
     try:
-        from obspy.core.util.geodetics import gps2DistAzimuth
+        from obspy.geodetics import gps2dist_azimuth
     except ImportError:
-        try:
-            from obspy.signal.rotate import gps2DistAzimuth
-        except ImportError:
-            print "Missed obspy funciton gps2DistAzimuth"
-            print "Update obspy.core"
-            return
+        print "Missed obspy funciton gps2dist_azimuth"
+        print "Update obspy."
+        return
 
-    dist, az, baz = gps2DistAzimuth(corr_mat['stats']['stla'], \
+    dist, az, baz = gps2dist_azimuth(corr_mat['stats']['stla'], \
                                     corr_mat['stats']['stlo'], \
                                     corr_mat['stats']['evla'], \
                                     corr_mat['stats']['evlo'])
