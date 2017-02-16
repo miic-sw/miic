@@ -9,10 +9,124 @@ from obspy.core import UTCDateTime, stream, trace
 import obspy.signal as osignal
 
 from miic.core.corr_fun import combine_stats
-
-import matplotlib.pyplot as plt
+from miic.core.miic_utils import convert_to_matlab
 
 zerotime = UTCDateTime(1971,1,1)
+
+
+
+def pxcorr_write(comm,A,st,**kwargs):
+    """ A is an array with time along going the first dimension.
+    """
+    global zerotime
+
+    t0 = MPI.Wtime()
+    msize = A.shape
+    ntrc = msize[1]
+
+    psize = comm.Get_size()
+    rank = comm.Get_rank()
+    # time domain processing
+    # map of traces on precesses
+    pmap = (np.arange(ntrc)*psize)/ntrc
+
+    # indecies for traces to be worked on by each process
+    ind = pmap == rank
+
+    ######################################
+    ## time domain pre-processing
+    params = {}
+    for key in kwargs.keys():
+        if not 'Processing' in key:
+            params.update({key:kwargs[key]})
+    for proc in kwargs['TDpreProcessing']:
+        A[:,ind] = proc['function'](A[:,ind],proc['args'],params)
+    # zero-padding
+    A = zeroPadding(A,{'type':'avoidWrapPowerTwo'},params)
+
+    ######################################
+    ## FFT
+    # Allocate space for rfft of data
+    zmsize = A.shape
+    fftsize = zmsize[0]//2+1
+    B = np.zeros((fftsize,ntrc),dtype=complex)
+
+    B[:,ind] = np.fft.rfft(A[:,ind],axis=0)
+    freqs = rfftfreq(zmsize[0],1./kwargs['sampling_rate'])
+
+    ######################################
+    ## frequency domain pre-processing
+    params.update({'freqs':freqs})
+    for proc in kwargs['FDpreProcessing']:
+        B[:,ind] = proc['function'](B[:,ind],proc['args'],params)
+
+    ######################################
+    ## collect results
+    comm.barrier()
+    comm.Allreduce(MPI.IN_PLACE,[B,MPI.DOUBLE],op=MPI.SUM)
+
+    t1 = MPI.Wtime()
+
+    ######################################
+    ## correlation
+    csize = len(kwargs['combinations'])
+    irfftsize = (fftsize-1)*2
+    sampleToSave = int(np.ceil(kwargs['lengthToSave'] *
+                               kwargs['sampling_rate']))
+    C = np.zeros((sampleToSave*2+1,csize),dtype=np.float64)
+
+    center = irfftsize // 2
+
+    pmap = (np.arange(csize)*psize)/csize
+    ind = pmap == rank
+    ind = np.arange(csize)[ind]
+    for ii in ind:
+        #print rank, ii, kwargs['combinations'][ii]
+        # offset of starttimes in samples(just remove fractions of samples)
+        offset = (kwargs['starttime'][kwargs['combinations'][ii][0]] -
+                  kwargs['starttime'][kwargs['combinations'][ii][1]])
+        if kwargs['center_correlation']:
+            roffset = 0.
+        else:
+            # offset exceeding a fraction of integer
+            roffset = np.fix(offset * kwargs['sampling_rate']) / kwargs['sampling_rate']
+        # faction of samples to be compenasated by shifting
+        offset -= roffset
+        # normalization factor of fft correlation
+        if kwargs['normalize_correlation']:
+            norm = (np.sqrt(2.*np.sum(B[:,kwargs['combinations'][ii][0]] *
+                                      B[:,kwargs['combinations'][ii][0]].conj()) -
+                                      B[0,kwargs['combinations'][ii][0]]**2) *
+                    np.sqrt(2.*np.sum(B[:,kwargs['combinations'][ii][1]] *
+                                      B[:,kwargs['combinations'][ii][1]].conj()) -
+                                      B[0,kwargs['combinations'][ii][1]]**2) /
+                    irfftsize).real
+        else:
+            norm = 1.
+        M = (B[:,kwargs['combinations'][ii][0]].conj() *
+                               B[:,kwargs['combinations'][ii][1]] *
+                               np.exp(1j * freqs * offset * 2 * np.pi))
+                               #np.exp(-1j * freqs/kwargs['sampling_rate'] * offset/kwargs['sampling_rate'] * 2 * np.pi))
+
+        tmp = np.fft.irfft(M,axis=0).real
+        # cut the center and do fftshift
+        out = np.concatenate((tmp[-sampleToSave:],tmp[:sampleToSave+1]))/norm
+        starttime = zerotime -sampleToSave/kwargs['sampling_rate'] - roffset
+
+
+        # put trace into a stream
+        cst = stream.Stream()
+        cstats = combine_stats(st[kwargs['combinations'][ii][0]],
+                               st[kwargs['combinations'][ii][1]])
+        cstats['starttime'] = starttime
+        cstats['npts'] = len(out)
+        cst.append(trace.Trace(data=out, header=cstats))
+        cst[0].stats_tr1 = st[kwargs['combinations'][ii][0]].stats
+        cst[0].stats_tr2 = st[kwargs['combinations'][ii][1]].stats
+        if kwargs['direct_output']['function'] == 'convert_to_matlab':
+            convert_to_matlab(cst,kwargs['direct_output']['base_name'],
+                              kwargs['direct_output']['base_dir'])
+    return 0
 
 
 def pxcorr(comm,A,**kwargs):
@@ -745,7 +859,12 @@ def stream_pxcorr(st,options,comm=None):
     options.update({'starttime':starttime,
                     'sampling_rate':st[0].stats['sampling_rate']})
     
-    # call pxcorr_for correlation
+    # call pxcorr for correlation with direct output
+    if 'direct_output' in options.keys():
+        pxcorr_write(comm,A,st,**options)
+        return 0
+
+    # call pxcorr for correlation
     A, starttime = pxcorr(comm,A,**options)
     npts = A.shape[0]
     
@@ -760,7 +879,7 @@ def stream_pxcorr(st,options,comm=None):
         cst[-1].stats_tr1 = st[options['combinations'][ii][0]].stats
         cst[-1].stats_tr2 = st[options['combinations'][ii][1]].stats
         
-    return cst                     
+    return cst
      
 
 
@@ -875,12 +994,19 @@ def rotate_multi_corr_stream(st):
                 st0.append(t)
             st1 = _rotate_corr_stream(st0)
             out_st += st1
-        elif cnt == 27: # only horizontal compoent combinations present
+        elif cnt == 27: # only horizontal component combinations present
             st0 = stream.Stream()
             for t in [0, 1, 3, 4]:
                 st0.append(tl[t])
             st1 = _rotate_corr_stream_horizontal(st0)
             out_st += st1
+        elif cnt == 283: # horizontal combinations + ZZ
+            st0 = stream.Stream()
+            for t in [0, 1, 3, 4]:
+                st0.append(tl[t])
+            st1 = _rotate_corr_stream_horizontal(st0)
+            out_st += st1
+            out_st.append(tl[8])
         for ttr in tst:
             for ind,tr in enumerate(st):
                 if ttr.id == tr.id:
@@ -1031,7 +1157,6 @@ def _rotate_corr_stream(st):
     rtz.append(st[8].copy())
     
     return rtz
-
 
 
 def set_sample_options():
