@@ -862,7 +862,7 @@ def stream_pxcorr(st,options,comm=None):
     # call pxcorr for correlation with direct output
     if 'direct_output' in options.keys():
         pxcorr_write(comm,A,st,**options)
-        return 0
+        return stream.Stream()
 
     # call pxcorr for correlation
     A, starttime = pxcorr(comm,A,**options)
