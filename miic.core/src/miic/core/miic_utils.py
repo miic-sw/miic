@@ -1582,6 +1582,28 @@ if BC_UI:
         trait_view = View()
 
 
+def correlation_subdir_name(date):
+    """Create the path name to a sub folder with YEAR/JDAY format
+
+    The path will have the following structure:
+    YEAR/JDAY
+    
+    :type date: datetime.datetime or obspy.UTCDateTime
+    :param date: date of the data
+    
+    :rtype: str
+    :return: name of subpath
+    """
+
+    if isinstance(date,UTCDateTime):
+        date = date.datetime
+
+    subpath = os.path.join(str(date.year),"%03d" % date.timetuple().tm_yday)
+
+    return subpath
+
+
+
 def serial_date_from_datetime(dt):
     """ Converts a datetime.datetime object into a number as toordinal but
     including seconds.
