@@ -9,7 +9,7 @@ import os
 import yaml
 from miic.core.miic_utils import create_path
 import miic.core.pxcorr_func as px
-
+from copy import deepcopy
 
 
 def ini_project(par_file):
