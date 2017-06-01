@@ -53,17 +53,17 @@ def ini_project(par_file):
     create_path(par['log_dir'])
     create_path(par['fig_dir'])
     
-    par['co']['res_dir'] = os.path.join(par['proj_dir'],
-                                             par['co']['subdir'])
+    par['co'].update({'res_dir':os.path.join(par['proj_dir'],
+                                par['co']['subdir'])})
     
-    par['dt']['res_dir'] = os.path.join(par['proj_dir'],
-                                             par['dt']['subdir'])
-    par['dt']['fig_dir'] = os.path.join(par['fig_dir'],
-                                             par['dt']['subdir'])
-    par['ce']['res_dir'] = os.path.join(par['proj_dir'],
-                                             par['ce']['subdir'])
-    par['ce']['fig_dir'] = os.path.join(par['fig_dir'],
-                                             par['ce']['subdir'])
+    par['dt'].update({'res_dir':os.path.join(par['proj_dir'],
+                                par['dt']['subdir'])})
+    par['dt'].update({'fig_dir':os.path.join(par['fig_dir'],
+                                par['dt']['subdir'])})
+    par['ce'].update({'res_dir':os.path.join(par['proj_dir'],
+                                par['ce']['subdir'])})
+    par['ce'].update({'fig_dir':os.path.join(par['fig_dir'],
+                                par['ce']['subdir'])})
 
     # fill list of combinations if not given explicitly
     if par['net']['comb'][0]['sta'] == 'all_stations':
@@ -123,7 +123,7 @@ def time_difference_estimation(par):
     logging.basicConfig(filename=os.path.join(par['log_dir'],'time_difference_\
         estimation.log'), level=logging.DEBUG, format='%(asctime)s %(message)s')
     logger = logging.getLogger('time_difference_estimation')
-    logger.info('Hello')
+    logger.info('Time difference estimation.')
     create_path(par['dt']['res_dir'])
     create_path(par['dt']['fig_dir'])
     # create lists of times windows for analyzing changes
@@ -146,7 +146,6 @@ def time_difference_estimation(par):
         try:
             logging.info('Working on combination %s' % comb)
             mat = mat_to_ndarray(filename)
-            mat = corr_mat_trim(mat,-50,50)
             # normalize the matrix to maxima
             mat = corr_mat_normalize(mat,normtype='absmax')
             # resample the correlation matrix
@@ -199,7 +198,11 @@ def clock_offset_inversion(par):
     :type par: dict
     :param par: project parameters
     """
-    
+
+    logging.basicConfig(filename=os.path.join(par['log_dir'],'clock_offset_\
+        inversion.log'), level=logging.DEBUG, format='%(asctime)s %(message)s')
+    logger = logging.getLogger('clock_offset_inversion')
+    logger.info('Clock_offset_inversion.')
     create_path(par['ce']['res_dir'])
     create_path(par['ce']['fig_dir'])
     
@@ -295,6 +298,7 @@ def clock_offset_inversion(par):
         td = np.delete(d,nanind,0)
         # continue if no station combination is present at this time
         if len(td)<1:
+            logging.info('No data for %s.' % start_time_list[nd])
             continue
         # delete columns that only contain zeros (unconstrained stations)
         idy = np.where(np.sum(np.abs(tG),axis=0)==0)[0]
@@ -331,6 +335,7 @@ def clock_offset_inversion(par):
             try:
                 mr.append(co[nd,par['net']['stations'].index(rs)])
             except:
+                logging.info('Reference station % missing on %s.' % (rs, start_time_list[nd]))
                 pass
         co[nd,:] -= np.nanmean(np.array(mr))
 

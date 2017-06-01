@@ -35,8 +35,75 @@ net:
 #### parameters for correlation (emperical Green's function creation)
 # sub folder where correlations are stored
 co:
+    # subdirectory of 'proj_dir' to store correlation
+    # type: string
     subdir : 'corr'
-    res_dir : ''
+
+    # times sequences to read for cliping or muting on stream basis
+    # These should be long enough for the reference (e.g. the standard
+    # deviation) to be rather independent of the parts to remove
+    # type: string
+    read_start : '2015-08-10 00:00:00.0'
+    read_end : '2016-07-31 00:00:00.0'
+    # type: float [seconds]
+    read_len : 86400
+    read_inc : 86400
+
+    # subdevision of the read sequences for correlation
+    # type: presence of this key 
+    subdivision:
+        # if corr_len>=read_len no subdivision is done
+        # type: float [seconds]
+        corr_inc : 3600
+        corr_len : 3600
+        # recombine these subdivisions
+        # type: boolean
+        recombine_subdivision : True 
+        # delete 
+        # type: boolean
+        delete_subdivisions : True
+
+    # required input sampling rate (data with different sampling rate are not used)
+    # type: float [Hz]
+    sampling_rate : 50
+    # decimation factor (sampling_rate(correlation)=sampling_rate(date)/decimation)
+    # decimation <= 1 mean no decimation
+    # type: int
+    decimation : 5
+
+    # parameters for correlation preprocessing
+    corr_args : {'TDpreProcessing':[{'function':'detrend',
+                                     'args':{'type':'constant'}},
+                                   #{'function':px.TDfilter,
+                                   # 'args':{'type':'bandpass','freqmin':0.01,'freqmax':4}},
+                                    {'function':'mute',
+                                     'args':{'taper_len':100.,
+                                           # 'threshold':1000, absolute threshold
+                                             'std_factor':3,
+                                             'filter':{'type':'bandpass','freqmin':2,'freqmax':4},
+                                             'extend_gaps':True}},
+
+                                   #{'function':px.clip,
+                                   # 'args':{'std_factor':3}},
+                                   ],
+                 'FDpreProcessing':[{'function':'spectralWhitening',
+                                     'args':{'joint_norm':False}},
+                                    {'function':'FDfilter',
+                                     'args':{'freqs':[0.01,0.02,4,5]}}
+                                    ],
+                 'lengthToSave':800,
+                 'center_correlation':True,      # make sure zero correlation time is in the center
+                 'normalize_correlation':True,
+                 'combinations':[],
+                 'direct_output':{'function':'convert_to_matlab',
+                                  'base_name':'trace'}
+                }
+    # Method to combine different traces
+    combination_method : 'betweenStations'
+
+    # Component rotation
+    # type: string ['NO', 'ZNE->ZRT', 'NE->RT']
+    rotation : 'NO'
 
 
 
@@ -45,7 +112,6 @@ co:
 dt:
     # subfolder for storage of time difference results
     subdir : 'time_diffs'
-    res_dir : ''
 
     # Plotting
     plot_corr_matrix : True
@@ -74,7 +140,6 @@ dt:
 ce:
     # subfolder for storage of clock error results
     subdir : 'clock_error'
-    res_dir : ''
 
     # Plotting
     plot_clock_error : True
