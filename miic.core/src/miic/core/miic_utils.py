@@ -25,7 +25,6 @@ import scipy.io as sio
 from scipy.io import loadmat, savemat
 import datetime
 import collections
-from matplotlib.mlab import detrend_mean, detrend_linear
 import time
 from cPickle import Pickler
 import shutil
@@ -1145,105 +1144,6 @@ if BC_UI:
     class _fold_acausal_view(HasTraits):
         trait_view = View()
 
-
-def demean(x):
-    """ Return x minus the mean(x)
-
-    :type x: 1D :class:`~numpy.ndarray`
-    :param x: The data
-
-    :rtype: 1D :class:`~numpy.ndarray`
-    :return: **x_copy**: Mean removed data
-    """
-
-    x_copy = x.copy()
-
-    x_copy = detrend_mean(x_copy)
-
-    return x_copy
-
-
-if BC_UI:
-    class _demean_view(HasTraits):
-        trait_view = View()
-
-
-def stream_demean(signals):
-    """ Removes the mean from all Traces in signals
-
-    :type signals: :class:`~obspy.core.trace.Stream`
-    :param signals: The container for the Traces that we want to remove their
-        mean
-
-    :rtype: :class:`~obspy.core.trace.Stream`
-    :return: **signals_copy**: The resulting object containing the mean removed
-        version of all Traces in signals
-    """
-
-    if not isinstance(signals, Stream):
-        raise TypeError("'signals' must be an obspy Stream object")
-
-    signals_copy = signals.copy()
-
-    for tr in signals_copy:
-        tr.data = demean(tr.data)
-
-    return signals_copy
-
-
-if BC_UI:
-    class _stream_demean_view(HasTraits):
-        trait_view = View()
-
-
-def detrend(x):
-    """ Return x minus best fit line; "linear" detrending
-
-    :type x: 1D :class:`~numpy.ndarray`
-    :param x: The data
-
-    :rtype: 1D :class:`~numpy.ndarray`
-    :return: **x_copy**: Trend removed data
-    """
-
-    x_copy = x.copy()
-
-    x_copy = detrend_linear(x_copy)
-
-    return x_copy
-
-
-if BC_UI:
-    class _detrend_view(HasTraits):
-        trait_view = View()
-
-
-def stream_detrend(signals):
-    """ Removes the trend from all Traces in signals
-
-    :type signals: :class:`~obspy.core.trace.Stream`
-    :param signals: The container for the Traces that we want to remove their
-        trend
-
-    :rtype: :class:`~obspy.core.trace.Stream`
-    :return: **signals_copy**: The resulting object containing the trend
-        removed version of all Traces in signals
-    """
-
-    if not isinstance(signals, Stream):
-        raise TypeError("'signals' must be an obspy Stream object")
-
-    signals_copy = signals.copy()
-
-    for tr in signals_copy:
-        tr.data = detrend(tr.data)
-
-    return signals_copy
-
-
-if BC_UI:
-    class _stream_detrend_view(HasTraits):
-        trait_view = View()
 
 
 def lat_lon_ele_load(filename):
