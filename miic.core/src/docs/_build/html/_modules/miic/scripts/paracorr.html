@@ -1,0 +1,330 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>miic.scripts.paracorr &mdash; MIIC 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="top" title="MIIC 1.0 documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MIIC 1.0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for miic.scripts.paracorr</h1><div class="highlight"><pre>
+<span class="c"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot; calculate cross or autocorrelations</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">glob</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">datetime</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+
+<span class="kn">from</span> <span class="nn">mpi4py</span> <span class="kn">import</span> <span class="n">MPI</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
+
+<span class="kn">from</span> <span class="nn">obspy</span> <span class="kn">import</span> <span class="n">Stream</span><span class="p">,</span> <span class="n">Trace</span>
+<span class="kn">from</span> <span class="nn">obspy.core</span> <span class="kn">import</span> <span class="n">UTCDateTime</span>
+
+<span class="kn">from</span> <span class="nn">miic.core.miic_utils</span> <span class="kn">import</span> <span class="n">create_path</span><span class="p">,</span> <span class="n">dir_read</span><span class="p">,</span> <span class="n">lat_lon_ele_load</span><span class="p">,</span> \
+        <span class="n">convert_to_matlab</span><span class="p">,</span> <span class="n">mat_to_ndarray</span><span class="p">,</span> \
+        <span class="n">save_dict_to_matlab_file</span><span class="p">,</span> <span class="n">datetime_list</span><span class="p">,</span> <span class="n">correlation_subdir_name</span>
+<span class="kn">from</span> <span class="nn">miic.core.stream</span> <span class="kn">import</span> <span class="n">stream_add_lat_lon_ele</span><span class="p">,</span> <span class="n">read_from_filesystem</span>
+<span class="kn">from</span> <span class="nn">miic.core.corr_mat_processing</span> <span class="kn">import</span> <span class="n">corr_mat_create_from_traces</span><span class="p">,</span> <span class="n">corr_mat_extract_trace</span>
+<span class="kn">import</span> <span class="nn">miic.core.pxcorr_func</span> <span class="kn">as</span> <span class="nn">px</span>
+
+<span class="kn">from</span> <span class="nn">miic.core.script_utils</span> <span class="kn">import</span> <span class="n">ini_project</span>
+
+
+
+<div class="viewcode-block" id="paracorr"><a class="viewcode-back" href="../../../modules/autogen/miic.scripts.paracorr.paracorr.html#miic.scripts.paracorr.paracorr">[docs]</a><span class="k">def</span> <span class="nf">paracorr</span><span class="p">(</span><span class="n">par</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Computation of noise correlation functions</span>
+<span class="sd">    </span>
+<span class="sd">    Compute noise correlation functions according to specifications parameter</span>
+<span class="sd">    dictionary ``par``. This function is most conviniently used as a python</span>
+<span class="sd">    program passing the parameter file as argument. This use is explained in</span>
+<span class="sd">    the tutorial on correlation.</span>
+<span class="sd">    </span>
+<span class="sd">    The processing is performed in the following sequence</span>
+<span class="sd">    </span>
+<span class="sd">     * Data is read in typically day-long chunks ideally contained in a single </span>
+<span class="sd">       file to speed up reading time</span>
+<span class="sd">     * Preprocessing on the long sequences to avoid dominating influence of </span>
+<span class="sd">       perturbing signals if processed in shorter chunks.</span>
+<span class="sd">     * dividing these long sequences into shorter ones (typically an hour)</span>
+<span class="sd">     * time domain preprocessing</span>
+<span class="sd">     * frequency domain preprocessing</span>
+<span class="sd">     * correlation</span>
+<span class="sd">     * if ``direct_output`` is present data is directly writen by individual</span>
+<span class="sd">       processes</span>
+<span class="sd">     * optionally rotation of correlation tensor into ZRT system (not possible</span>
+<span class="sd">       in combination with direct output</span>
+<span class="sd">     * combination of correlation traces of subsequent time segments in </span>
+<span class="sd">       correlation matrices</span>
+<span class="sd">     * optionally delete traces of individual time segments</span>
+<span class="sd">    </span>
+<span class="sd">    :type par: dict</span>
+<span class="sd">    :param par: processing parameters</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="c"># set up the logger</span>
+    <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s">&#39;paracorr&#39;</span><span class="p">)</span>
+    <span class="n">hdlr</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">FileHandler</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">par</span><span class="p">[</span><span class="s">&#39;log_dir&#39;</span><span class="p">],</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">_paracorr.log&#39;</span> <span class="o">%</span> <span class="n">par</span><span class="p">[</span><span class="s">&#39;execution_start&#39;</span><span class="p">]))</span>
+    <span class="n">formatter</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">Formatter</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%(asctime)s</span><span class="s"> </span><span class="si">%(levelname)s</span><span class="s"> </span><span class="si">%(message)s</span><span class="s">&#39;</span><span class="p">)</span>
+    <span class="n">hdlr</span><span class="o">.</span><span class="n">setFormatter</span><span class="p">(</span><span class="n">formatter</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">addHandler</span><span class="p">(</span><span class="n">hdlr</span><span class="p">)</span> 
+    <span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">)</span>
+
+    <span class="n">sttimes</span> <span class="o">=</span> <span class="n">datetime_list</span><span class="p">(</span><span class="n">par</span><span class="p">[</span><span class="s">&#39;co&#39;</span><span class="p">][</span><span class="s">&#39;read_start&#39;</span><span class="p">],</span> <span class="n">par</span><span class="p">[</span><span class="s">&#39;co&#39;</span><span class="p">][</span><span class="s">&#39;read_end&#39;</span><span class="p">],</span> <span class="n">inc</span><span class="o">=</span><span class="n">par</span><span class="p">[</span><span class="s">&#39;co&#39;</span><span class="p">][</span><span class="s">&#39;read_inc&#39;</span><span class="p">])</span>	<span class="c">## loop over 24hrs/whole days</span>
+    <span class="n">time_inc</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="n">par</span><span class="p">[</span><span class="s">&#39;co&#39;</span><span class="p">][</span><span class="s">&#39;read_len&#39;</span><span class="p">])</span>
+    <span class="n">lle_df</span> <span class="o">=</span> <span class="n">lat_lon_ele_load</span><span class="p">(</span><span class="n">par</span><span class="p">[</span><span class="s">&#39;net&#39;</span><span class="p">][</span><span class="s">&#39;coordinate_file&#39;</span><span class="p">])</span>
+    <span class="n">res_dir</span> <span class="o">=</span> <span class="n">par</span><span class="p">[</span><span class="s">&#39;co&#39;</span><span class="p">][</span><span class="s">&#39;res_dir&#39;</span><span class="p">]</span>
+    <span class="n">station_list</span> <span class="o">=</span> <span class="n">par</span><span class="p">[</span><span class="s">&#39;net&#39;</span><span class="p">][</span><span class="s">&#39;stations&#39;</span><span class="p">]</span>
+    <span class="n">channel_list</span> <span class="o">=</span> <span class="n">par</span><span class="p">[</span><span class="s">&#39;net&#39;</span><span class="p">][</span><span class="s">&#39;channels&#39;</span><span class="p">]</span>
+
+
+    <span class="n">program_start</span> <span class="o">=</span> <span class="n">UTCDateTime</span><span class="p">()</span>
+
+    <span class="c"># bulid a dictionary that caches the streams that reside in the same file</span>
+    <span class="n">stream_cache</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">station</span> <span class="ow">in</span> <span class="n">par</span><span class="p">[</span><span class="s">&#39;net&#39;</span><span class="p">][</span><span class="s">&#39;stations&#39;</span><span class="p">]:</span>
+        <span class="n">stream_cache</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">station</span><span class="p">:{}})</span>
+        <span class="k">for</span> <span class="n">channel</span> <span class="ow">in</span> <span class="n">par</span><span class="p">[</span><span class="s">&#39;net&#39;</span><span class="p">][</span><span class="s">&#39;channels&#39;</span><span class="p">]:</span>
+            <span class="n">stream_cache</span><span class="p">[</span><span class="n">station</span><span class="p">]</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">channel</span><span class="p">:</span><span class="n">Stream</span><span class="p">()</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Trace</span><span class="p">())})</span>
+
+
+    <span class="c"># initialize MPI</span>
+    <span class="n">comm</span> <span class="o">=</span> <span class="n">MPI</span><span class="o">.</span><span class="n">COMM_WORLD</span>
+    <span class="n">rank</span> <span class="o">=</span> <span class="n">comm</span><span class="o">.</span><span class="n">Get_rank</span><span class="p">()</span>
+    <span class="n">psize</span> <span class="o">=</span> <span class="n">comm</span><span class="o">.</span><span class="n">Get_size</span><span class="p">()</span>
+
+    <span class="c"># mapping of stations to processes</span>
+    <span class="n">pmap</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">station_list</span><span class="p">))</span><span class="o">*</span><span class="n">psize</span><span class="p">)</span><span class="o">/</span><span class="nb">len</span><span class="p">(</span><span class="n">station_list</span><span class="p">)</span>
+    <span class="c"># indecies for stations to be worked on by each process</span>
+    <span class="n">st_ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">pmap</span> <span class="o">==</span> <span class="n">rank</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="c"># number of subdivision of read length</span>
+    <span class="k">if</span> <span class="s">&#39;subdivision&#39;</span> <span class="ow">in</span> <span class="n">par</span><span class="p">[</span><span class="s">&#39;co&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="n">nsub</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">((</span><span class="nb">float</span><span class="p">(</span><span class="n">par</span><span class="p">[</span><span class="s">&#39;co&#39;</span><span class="p">][</span><span class="s">&#39;read_len&#39;</span><span class="p">])</span> <span class="o">-</span> <span class="n">par</span><span class="p">[</span><span class="s">&#39;co&#39;</span><span class="p">][</span><span class="s">&#39;subdivision&#39;</span><span class="p">][</span><span class="s">&#39;corr_len&#39;</span><span class="p">])</span>
+                                      <span class="o">/</span><span class="n">par</span><span class="p">[</span><span class="s">&#39;co&#39;</span><span class="p">][</span><span class="s">&#39;subdivision&#39;</span><span class="p">][</span><span class="s">&#39;corr_inc&#39;</span><span class="p">])</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">nsub</span> <span class="o">=</span> <span class="mi">1</span>
+
+    <span class="c"># loop over times</span>
+    <span class="n">last_pathname</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">res_dir</span><span class="p">,</span> <span class="n">correlation_subdir_name</span><span class="p">(</span><span class="n">sttimes</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+    <span class="n">pathname</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">last_pathname</span><span class="p">)</span>
+    <span class="k">print</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">rank </span><span class="si">%d</span><span class="s"> of </span><span class="si">%d</span><span class="s">&#39;</span>  <span class="o">%</span> <span class="p">(</span><span class="n">rank</span><span class="p">,</span><span class="n">psize</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;Rank </span><span class="si">%d</span><span class="s"> of </span><span class="si">%d</span><span class="s"> Beginning execution.&#39;</span>  <span class="o">%</span> <span class="p">(</span><span class="n">rank</span><span class="p">,</span><span class="n">psize</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">sttime</span> <span class="ow">in</span> <span class="n">sttimes</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">rank</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">print</span> <span class="s">&quot;</span><span class="se">\n</span><span class="s">&gt;&gt;&gt; Working on </span><span class="si">%s</span><span class="s"> at </span><span class="si">%s</span><span class="s">:&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">sttime</span><span class="p">,</span><span class="n">UTCDateTime</span><span class="p">())</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">&gt;&gt;&gt; Working on </span><span class="si">%s</span><span class="s"> at </span><span class="si">%s</span><span class="s">:&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">sttime</span><span class="p">,</span><span class="n">UTCDateTime</span><span class="p">()))</span>
+        <span class="n">usttime</span> <span class="o">=</span> <span class="n">UTCDateTime</span><span class="p">(</span><span class="n">sttime</span><span class="p">)</span>
+        <span class="c"># fill cache and extract current stream: only done by process 0</span>
+        <span class="n">cst</span> <span class="o">=</span> <span class="n">Stream</span><span class="p">()</span>
+        
+        <span class="c"># loop over stations different stations for every process</span>
+        <span class="k">for</span> <span class="n">this_ind</span> <span class="ow">in</span> <span class="n">st_ind</span><span class="p">:</span>
+            <span class="n">station</span> <span class="o">=</span> <span class="n">station_list</span><span class="p">[</span><span class="n">this_ind</span><span class="p">]</span>
+            <span class="n">tst</span> <span class="o">=</span> <span class="n">Stream</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">channel</span> <span class="ow">in</span> <span class="n">channel_list</span><span class="p">:</span>
+                <span class="k">if</span> <span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">stream_cache</span><span class="p">[</span><span class="n">station</span><span class="p">][</span><span class="n">channel</span><span class="p">])</span><span class="o">==</span><span class="mi">0</span><span class="p">)</span> <span class="ow">or</span> 
+                        <span class="p">(</span><span class="ow">not</span> <span class="p">((</span><span class="n">stream_cache</span><span class="p">[</span><span class="n">station</span><span class="p">][</span><span class="n">channel</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;starttime&#39;</span><span class="p">]</span><span class="o">&lt;=</span><span class="n">usttime</span><span class="p">)</span> <span class="o">&amp;</span>
+                        <span class="p">(</span><span class="n">stream_cache</span><span class="p">[</span><span class="n">station</span><span class="p">][</span><span class="n">channel</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;endtime&#39;</span><span class="p">]</span><span class="o">&gt;=</span><span class="p">(</span><span class="n">usttime</span><span class="o">+</span><span class="n">par</span><span class="p">[</span><span class="s">&#39;co&#39;</span><span class="p">][</span><span class="s">&#39;read_len&#39;</span><span class="p">]))))):</span>
+                    <span class="n">stream_cache</span><span class="p">[</span><span class="n">station</span><span class="p">][</span><span class="n">channel</span><span class="p">]</span> <span class="o">=</span> <span class="n">read_from_filesystem</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">.*.</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span><span class="p">(</span><span class="n">station</span><span class="p">,</span> <span class="n">channel</span><span class="p">),</span> <span class="n">sttime</span><span class="p">,</span> <span class="n">sttime</span><span class="o">+</span><span class="n">time_inc</span><span class="p">,</span> <span class="n">par</span><span class="p">[</span><span class="s">&#39;net&#39;</span><span class="p">][</span><span class="s">&#39;fss&#39;</span><span class="p">],</span> <span class="n">trim</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">stream_cache</span><span class="p">[</span><span class="n">station</span><span class="p">][</span><span class="n">channel</span><span class="p">]:</span>
+                        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s"> </span><span class="si">%s</span><span class="s"> at </span><span class="si">%s</span><span class="s">: No trace read.&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">station</span><span class="p">,</span> <span class="n">channel</span><span class="p">,</span> <span class="n">sttime</span><span class="p">))</span>
+                        <span class="k">continue</span>
+                    <span class="n">samp_flag</span> <span class="o">=</span> <span class="bp">False</span>
+                    <span class="k">for</span> <span class="n">tr</span> <span class="ow">in</span> <span class="n">stream_cache</span><span class="p">[</span><span class="n">station</span><span class="p">][</span><span class="n">channel</span><span class="p">]:</span>
+                        <span class="k">if</span> <span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">sampling_rate</span> <span class="o">!=</span> <span class="n">par</span><span class="p">[</span><span class="s">&#39;co&#39;</span><span class="p">][</span><span class="s">&#39;sampling_rate&#39;</span><span class="p">]:</span>
+                            <span class="n">samp_flag</span> <span class="o">=</span> <span class="bp">True</span>
+                    <span class="k">if</span> <span class="n">samp_flag</span><span class="p">:</span>
+                        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s"> </span><span class="si">%s</span><span class="s"> at </span><span class="si">%s</span><span class="s">: Mismatching sampling rate.&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">station</span><span class="p">,</span> <span class="n">channel</span><span class="p">,</span> <span class="n">sttime</span><span class="p">))</span>
+                        <span class="k">continue</span>
+                    <span class="k">if</span> <span class="n">par</span><span class="p">[</span><span class="s">&#39;co&#39;</span><span class="p">][</span><span class="s">&#39;decimation&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                        <span class="n">sst</span> <span class="o">=</span> <span class="n">stream_cache</span><span class="p">[</span><span class="n">station</span><span class="p">][</span><span class="n">channel</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+                        <span class="n">sst</span><span class="o">.</span><span class="n">decimate</span><span class="p">(</span><span class="n">par</span><span class="p">[</span><span class="s">&#39;co&#39;</span><span class="p">][</span><span class="s">&#39;decimation&#39;</span><span class="p">])</span>
+                        <span class="n">stream_cache</span><span class="p">[</span><span class="n">station</span><span class="p">][</span><span class="n">channel</span><span class="p">]</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">sst</span><span class="o">.</span><span class="n">merge</span><span class="p">())</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">tst</span> <span class="o">+=</span> <span class="n">stream_cache</span><span class="p">[</span><span class="n">station</span><span class="p">][</span><span class="n">channel</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span><span class="o">.</span><span class="n">trim</span><span class="p">(</span><span class="n">starttime</span><span class="o">=</span><span class="n">usttime</span><span class="p">,</span> <span class="n">endtime</span><span class="o">=</span><span class="n">usttime</span><span class="o">+</span><span class="n">par</span><span class="p">[</span><span class="s">&#39;co&#39;</span><span class="p">][</span><span class="s">&#39;read_len&#39;</span><span class="p">])</span>
+                <span class="k">except</span><span class="p">:</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s"> </span><span class="si">%s</span><span class="s"> at </span><span class="si">%s</span><span class="s">: </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">station</span><span class="p">,</span> <span class="n">channel</span><span class="p">,</span> <span class="n">sttime</span><span class="p">,</span> <span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">()[</span><span class="mi">0</span><span class="p">]))</span>
+            <span class="n">cst</span> <span class="o">+=</span> <span class="n">tst</span>
+        <span class="n">cst</span> <span class="o">=</span> <span class="n">stream_add_lat_lon_ele</span><span class="p">(</span><span class="n">cst</span><span class="p">,</span><span class="n">lle_df</span><span class="p">)</span>
+        
+        <span class="c"># initial preprocessing on long time series</span>
+        <span class="k">if</span> <span class="s">&#39;preProcessing&#39;</span> <span class="ow">in</span> <span class="n">par</span><span class="p">[</span><span class="s">&#39;co&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">procStep</span> <span class="ow">in</span> <span class="n">par</span><span class="p">[</span><span class="s">&#39;co&#39;</span><span class="p">][</span><span class="s">&#39;preProcessing&#39;</span><span class="p">]:</span>
+                <span class="n">cst</span> <span class="o">=</span> <span class="n">procStep</span><span class="p">[</span><span class="s">&#39;function&#39;</span><span class="p">](</span><span class="n">cst</span><span class="p">,</span><span class="o">**</span><span class="n">procStep</span><span class="p">[</span><span class="s">&#39;args&#39;</span><span class="p">])</span>
+
+        <span class="c"># create output path</span>
+        <span class="n">pathname</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">par</span><span class="p">[</span><span class="s">&#39;co&#39;</span><span class="p">][</span><span class="s">&#39;res_dir&#39;</span><span class="p">],</span><span class="n">correlation_subdir_name</span><span class="p">(</span><span class="n">sttime</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">rank</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">create_path</span><span class="p">(</span><span class="n">pathname</span><span class="p">)</span>
+                
+        <span class="c"># broadcast every station to every process    </span>
+        <span class="n">st</span> <span class="o">=</span> <span class="n">Stream</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">pind</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">psize</span><span class="p">):</span>
+            <span class="n">pst</span> <span class="o">=</span> <span class="n">Stream</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">rank</span> <span class="o">==</span> <span class="n">pind</span><span class="p">:</span>
+                <span class="n">pst</span> <span class="o">=</span> <span class="p">(</span><span class="n">cst</span><span class="p">)</span>
+            <span class="n">pst</span> <span class="o">=</span> <span class="n">comm</span><span class="o">.</span><span class="n">bcast</span><span class="p">(</span><span class="n">pst</span><span class="p">,</span> <span class="n">root</span><span class="o">=</span><span class="n">pind</span><span class="p">)</span>
+            <span class="n">st</span> <span class="o">+=</span> <span class="n">pst</span>
+
+        <span class="c">## do correlations</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">st</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s">: No traces to correlate.&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">sttime</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">targs</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">par</span><span class="p">[</span><span class="s">&#39;co&#39;</span><span class="p">][</span><span class="s">&#39;corr_args&#39;</span><span class="p">])</span>
+            <span class="k">if</span> <span class="s">&#39;direct_output&#39;</span> <span class="ow">in</span> <span class="n">targs</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                <span class="n">targs</span><span class="p">[</span><span class="s">&#39;direct_output&#39;</span><span class="p">][</span><span class="s">&#39;base_dir&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pathname</span>
+            <span class="c"># loop over subdivisions</span>
+            <span class="k">for</span> <span class="n">subn</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nsub</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">nsub</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="n">sub_st</span> <span class="o">=</span> <span class="n">st</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span><span class="o">.</span><span class="n">trim</span><span class="p">(</span><span class="n">starttime</span><span class="o">=</span><span class="n">UTCDateTime</span><span class="p">(</span><span class="n">sttime</span><span class="p">)</span><span class="o">+</span><span class="n">subn</span><span class="o">*</span><span class="n">par</span><span class="p">[</span><span class="s">&#39;co&#39;</span><span class="p">][</span><span class="s">&#39;subdivision&#39;</span><span class="p">][</span><span class="s">&#39;corr_inc&#39;</span><span class="p">],</span>
+                                        <span class="n">endtime</span><span class="o">=</span><span class="n">UTCDateTime</span><span class="p">(</span><span class="n">sttime</span><span class="p">)</span><span class="o">+</span><span class="n">subn</span><span class="o">*</span><span class="n">par</span><span class="p">[</span><span class="s">&#39;co&#39;</span><span class="p">][</span><span class="s">&#39;subdivision&#39;</span><span class="p">][</span><span class="s">&#39;corr_inc&#39;</span><span class="p">]</span><span class="o">+</span><span class="n">par</span><span class="p">[</span><span class="s">&#39;co&#39;</span><span class="p">][</span><span class="s">&#39;subdivision&#39;</span><span class="p">][</span><span class="s">&#39;corr_len&#39;</span><span class="p">])</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">sub_st</span> <span class="o">=</span> <span class="n">st</span>
+                <span class="n">targs</span><span class="p">[</span><span class="s">&#39;combinations&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">px</span><span class="o">.</span><span class="n">calc_cross_combis</span><span class="p">(</span><span class="n">sub_st</span><span class="p">,</span><span class="n">method</span><span class="o">=</span><span class="n">par</span><span class="p">[</span><span class="s">&#39;co&#39;</span><span class="p">][</span><span class="s">&#39;combination_method&#39;</span><span class="p">])</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">targs</span><span class="p">[</span><span class="s">&#39;combinations&#39;</span><span class="p">])</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="n">cst</span> <span class="o">=</span> <span class="n">px</span><span class="o">.</span><span class="n">stream_pxcorr</span><span class="p">(</span><span class="n">sub_st</span><span class="p">,</span><span class="n">targs</span><span class="p">,</span><span class="n">comm</span><span class="o">=</span><span class="n">comm</span><span class="p">)</span>
+                <span class="c"># if &#39;direct_output&#39; in targs.keys() cst is empty and the following will not be executed</span>
+                <span class="k">if</span> <span class="n">cst</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">par</span><span class="p">[</span><span class="s">&#39;co&#39;</span><span class="p">][</span><span class="s">&#39;rotation&#39;</span><span class="p">]:</span>
+                        <span class="n">rcst</span> <span class="o">=</span> <span class="n">px</span><span class="o">.</span><span class="n">rotate_multi_corr_stream</span><span class="p">(</span><span class="n">cst</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">rcst</span> <span class="o">=</span> <span class="n">cst</span>
+                
+                    <span class="c"># distributed writing</span>
+                    <span class="c"># mapping of stations to processes</span>
+                    <span class="n">pmap</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">rcst</span><span class="p">))</span><span class="o">*</span><span class="n">psize</span><span class="p">)</span><span class="o">/</span><span class="nb">len</span><span class="p">(</span><span class="n">rcst</span><span class="p">)</span>
+                    <span class="c"># indecies for stations to be worked on by each process</span>
+                    <span class="n">tr_ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">pmap</span> <span class="o">==</span> <span class="n">rank</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;Process </span><span class="si">%d</span><span class="s"> starting to write </span><span class="si">%d</span><span class="s"> traces to </span><span class="si">%s</span><span class="s">.&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">rank</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">tr_ind</span><span class="p">),</span><span class="n">pathname</span><span class="p">))</span>
+                    <span class="n">this_st</span> <span class="o">=</span> <span class="n">Stream</span><span class="p">()</span>
+                    <span class="k">for</span> <span class="n">this_ind</span> <span class="ow">in</span> <span class="n">tr_ind</span><span class="p">:</span>
+                        <span class="n">this_st</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">rcst</span><span class="p">[</span><span class="n">this_ind</span><span class="p">])</span>
+                    <span class="n">convert_to_matlab</span><span class="p">(</span><span class="n">this_st</span><span class="p">,</span><span class="s">&#39;trace&#39;</span><span class="p">,</span><span class="n">pathname</span><span class="p">)</span>
+            
+        <span class="c"># if there is a subdivision of read traces</span>
+        <span class="k">if</span> <span class="p">(</span><span class="s">&#39;subdivision&#39;</span> <span class="ow">in</span> <span class="n">par</span><span class="p">[</span><span class="s">&#39;co&#39;</span><span class="p">])</span> <span class="ow">and</span> <span class="p">(</span><span class="n">rank</span> <span class="o">==</span> <span class="mi">0</span><span class="p">):</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;combining subdivisions&#39;</span><span class="p">)</span>
+            <span class="c"># combine traces to matrix</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">last_pathname</span> <span class="o">!=</span> <span class="n">pathname</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">sttime</span> <span class="o">==</span> <span class="n">sttimes</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]):</span>
+                <span class="n">corr_mat_create_from_traces</span><span class="p">(</span><span class="n">last_pathname</span><span class="p">,</span> <span class="n">last_pathname</span><span class="p">,</span> <span class="n">delete_trace_files</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">par</span><span class="p">[</span><span class="s">&#39;co&#39;</span><span class="p">][</span><span class="s">&#39;subdivision&#39;</span><span class="p">][</span><span class="s">&#39;recombine_subdivision&#39;</span><span class="p">]:</span>
+                    <span class="n">flist</span> <span class="o">=</span> <span class="n">dir_read</span><span class="p">(</span><span class="n">last_pathname</span><span class="p">,</span><span class="s">&#39;mat__*.mat&#39;</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">fl</span> <span class="ow">in</span> <span class="n">flist</span><span class="p">:</span>
+                        <span class="k">try</span><span class="p">:</span>
+                            <span class="n">mat</span> <span class="o">=</span> <span class="n">mat_to_ndarray</span><span class="p">(</span><span class="n">fl</span><span class="p">)</span>
+                            <span class="n">tr</span> <span class="o">=</span> <span class="n">corr_mat_extract_trace</span><span class="p">(</span><span class="n">mat</span><span class="p">,</span><span class="n">method</span><span class="o">=</span><span class="s">&#39;norm_mean&#39;</span><span class="p">)</span>
+                            <span class="n">save_dict_to_matlab_file</span><span class="p">(</span><span class="n">fl</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39;mat__&#39;</span><span class="p">,</span><span class="s">&#39;tr__&#39;</span><span class="p">),</span><span class="n">tr</span><span class="p">)</span>
+                            <span class="k">if</span> <span class="n">par</span><span class="p">[</span><span class="s">&#39;co&#39;</span><span class="p">][</span><span class="s">&#39;subdivision&#39;</span><span class="p">][</span><span class="s">&#39;delete_subdivisions&#39;</span><span class="p">]:</span>
+                                <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">fl</span><span class="p">)</span>
+                        <span class="k">except</span><span class="p">:</span>
+                            <span class="k">pass</span>
+                <span class="n">last_pathname</span> <span class="o">=</span> <span class="n">pathname</span>    
+
+
+
+    <span class="n">program_end</span> <span class="o">=</span> <span class="n">UTCDateTime</span><span class="p">()</span>
+
+    <span class="k">print</span> <span class="s">&#39;rank </span><span class="si">%d</span><span class="s"> execution time&#39;</span> <span class="o">%</span> <span class="n">rank</span><span class="p">,</span> <span class="n">program_end</span><span class="o">-</span><span class="n">program_start</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;Rank </span><span class="si">%d</span><span class="s"> of </span><span class="si">%d</span><span class="s"> End execution.&#39;</span>  <span class="o">%</span> <span class="p">(</span><span class="n">rank</span><span class="p">,</span><span class="n">psize</span><span class="p">))</span>
+
+
+</div>
+<span class="k">if</span> <span class="n">__name__</span><span class="o">==</span><span class="s">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">print</span> <span class="s">&#39;Specify the parameter file name as first argument.&#39;</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">()</span>
+    <span class="n">par_file</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="c"># initialize the project, create folders and set derived parameters</span>
+    <span class="n">par</span> <span class="o">=</span> <span class="n">ini_project</span><span class="p">(</span><span class="n">par_file</span><span class="p">)</span>
+
+    <span class="n">paracorr</span><span class="p">(</span><span class="n">par</span><span class="p">)</span>
+    
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MIIC 1.0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2012, Eraldo Pomponi.
+      Last updated on 2017-10-19T15:03:57.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </div>
+  </body>
+</html>

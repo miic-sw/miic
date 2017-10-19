@@ -1,0 +1,173 @@
+.. _basics_correlation_tutorial:
+
+=========================
+Ambient Noise Correlation
+=========================
+
+************
+Introduction
+************
+
+The correlation of ambient vibration records is the fundamental step of
+interferometric seimsic processing. The MIIC `MIIC Software Suite 
+<https://github.com/miic-sw/miic>`_ provides tools to calculate such noise 
+correlation function including various preprocessing steps.
+
+********************
+The Central Function
+********************
+
+The usual processing flow consists of
+ * initializing the project
+ * reading data
+ * setting the combinations to be correlated
+ * preprocessing of data
+ * correlation
+ * storing correlation
+ 
+This functionality is implemented in the :class:`~miic.scripts.paracorr` 
+function. How the correlations are calculated is indicated in a 
+`yaml <http://yaml.org>`_ parameter file described below.
+
+
+**************
+Parameter File
+**************
+
+The present script uses different section of the parameter file. These are the
+*projekt wide parameters* section, the *net* section describing the raw seismic 
+data and the *co* section describing how the noise correlations are calculated.
+
+in the following example these section of the parameter file are shown::
+
+    #### Project wide parameters
+    # lowest level project directory
+    proj_dir : '/home/user/PROJECTS/current_project'
+    # directory for logging information
+    log_subdir : 'log'
+    # folder for figures
+    fig_subdir : 'figures'
+
+
+    #### parameters that are network specific
+    net:
+        # list of stations used in the project
+        # type: list of strings of type 'NET.STATION'
+        stations : ['GR.CLL','GR.CLZ','','GR.RUE']
+        # list of channels
+        # type: list of strings
+        channels : ['BHZ','BHN','BHE']
+        # path to the file that stores the coordinates of the stations
+        # type: string
+        coordinate_file : 'GRSN_coordinates.txt'
+        # file system structure
+        # list of strings and lists
+        fss : ['/home/user/PROJECTS/GRSN_data/','%j',['%STA','.*.','%CHA','.SAC']]
+        # comb is a list combinations to investigate: list of dictionaries
+        # 'sta' holds a list with the two indecies of the stations in the station list
+        # 'cha' holds a list of channel combinations referring to channel list
+        # One station combination can have several channel combinations.
+        # The strings 'all_stations' amd 'all_channels' are replaced. Examples of
+        # valid entries are
+        # comb : [{'sta':[0,1],'cha':[[0,0]]},
+        #         {'sta':[0,2],'cha':[[0,0]]},
+        #         {'sta':[1,2],'cha':[[0,0]]}]
+        # comb : [{'sta':'all_stations','cha':[[0,1]]}]
+        # comb : [{'sta':[0,1],'cha':'all_channels'},
+        #         {'sta':[0,2],'cha'[[0,1]]}]
+        # comb : [{'sta':'all_stations','cha':'all_channels'}]
+        comb : [{'sta':'all_stations','cha':'all_channels'}]
+
+    #### parameters for correlation (emperical Green's function creation)
+    # sub folder where correlations are stored
+    co:
+        # subdirectory of 'proj_dir' to store correlation
+        # type: string
+        subdir : 'corr'
+        # times sequences to read for cliping or muting on stream basis
+        # These should be long enough for the reference (e.g. the standard
+        # deviation) to be rather independent of the parts to remove
+        # type: string
+        read_start : '2017-03-15 00:00:00.0'
+        read_end : '2017-05-18 00:00:00.0'
+        # type: float [seconds]
+        read_len : 86400
+        read_inc : 86400
+
+        # required input sampling rate (data with different sampling rate are not used)
+        # type: float [Hz]
+        sampling_rate : 200
+        # decimation factor (sampling_rate(correlation)=sampling_rate(date)/decimation)
+        # decimation <= 1 mean no decimation
+        # type: int
+        decimation : 10
+        
+        # preprocessing of the original length time series
+        # these function work on an obspy.Stream object given as first argument
+        # and return an obspy.Stream object.
+        preProcessing : [{'function':'miic.core.stream.stream_filter',
+                          'args':{'ftype':'bandpass',
+                                  'filter_option':{'freqmin':0.01,
+                                                   'freqmax':9},
+                                  'parallel':False}},
+                         {'function':'miic.core.stream.stream_mute',
+                          'args':{'taper_len':100,
+                                  'mute_method':'std_factor',
+                                  'mute_value':3}}
+                        ]
+
+        # subdevision of the read sequences for correlation
+        # type: presence of this key 
+        subdivision:
+            # type: float [seconds]
+            corr_inc : 1800
+            corr_len : 3600
+            # recombine these subdivisions
+            # type: boolean
+            recombine_subdivision : True
+            # delete 
+            # type: booblean
+            delete_subdivisions : False
+
+        # parameters for correlation preprocessing
+        # The preprocessing functions work on a ndarray inplace. They can be
+        # selected from miic.core.pxcorr_func
+        corr_args : {'TDpreProcessing':[#{'function':'miic.core.pxcorr_func.detrend',
+                                        # 'args':{'type':'constant'}},
+                                        #{'function':'miic.core.pxcorr_func.TDfilter',
+                                        # 'args':{'type':'bandpass','freqmin':0.01,'freqmax':4}},
+                                        #{'function':'miic.core.pxcorr_func.mute',
+                                        # 'args':{'taper_len':100.,
+                                        #         'threshold':1000, absolute threshold
+                                        #         'std_factor':3,
+                                        #         'filter':{'type':'bandpass','freqmin':2,'freqmax':4},
+                                        #         'extend_gaps':True}},
+                                        #{'function':'miic.core.pxcorr_func.clip',
+                                        # 'args':{'std_factor':3}},
+                                       ],
+                     'FDpreProcessing':[{'function':'miic.core.pxcorr_func.spectralWhitening',
+                                         'args':{'joint_norm':False}},
+                                        {'function':'miic.core.pxcorr_func.FDfilter',
+                                         'args':{'freqs':[0.01,0.02,9,10]}}
+                                        ],
+                     'lengthToSave':800,
+                     'center_correlation':True,      # make sure zero correlation time is in the center
+                     'normalize_correlation':True,
+                     'combinations':[],
+                     'direct_output':{'function':'convert_to_matlab',
+                                      'base_name':'trace'}
+                    }
+        # Method to combine different traces
+        combination_method : 'betweenStations'
+
+        # Component rotation (only possible if 'direct_output' is not in 'corr_args')
+        # type: string ['NO', 'ZNE->ZRT', 'NE->RT']
+        rotation : 'NO'
+
+        
+        
+
+
+The format of the *net.coordinate_file* is described in :func:`~miic.core.miic_utils.lat_lon_ele_load`. 
+*co.corr_args* describes the parallelized part of the correlation calculation. This is detailed in 
+:func:`~miic.core.pxcorr_func.stream_pxcorr`.

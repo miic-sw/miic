@@ -111,14 +111,14 @@ On the other hand we want to report the list of functions  available in the
 <strong>MIIC</strong> library to load data:</p>
 <blockquote>
 <div><ul class="simple">
-<li><a class="reference internal" href="../../modules/alpha_mod.html#miic.core.alpha_mod.stream_read" title="miic.core.alpha_mod.stream_read"><code class="xref py py-class docutils literal"><span class="pre">stream_read</span></code></a> : It handles multiple formats  (GSE2, MSEED, SAC, SEISAN, WAV, Q, SH_ASC) and other proprietary formats (i.e. K-UTec)</li>
-<li><a class="reference internal" href="../../modules/alpha_mod.html#miic.core.alpha_mod.stream_seishub_read" title="miic.core.alpha_mod.stream_seishub_read"><code class="xref py py-class docutils literal"><span class="pre">stream_seishub_read</span></code></a> : This is a specific client for the SeisHub server (<a class="reference external" href="http://www.seishub.org">http://www.seishub.org</a>)</li>
-<li><a class="reference internal" href="../../modules/alpha_mod.html#miic.core.alpha_mod.stream_arklink_read" title="miic.core.alpha_mod.stream_arklink_read"><code class="xref py py-class docutils literal"><span class="pre">stream_arklink_read</span></code></a> : This is a specific client for the ArcLink/WebDC server (e.g. <a class="reference external" href="http://docs.obspy.org/packages/obspy.arclink.html">http://docs.obspy.org/packages/obspy.arclink.html</a>)</li>
-<li><a class="reference internal" href="../../modules/alpha_mod.html#miic.core.alpha_mod.dir_read_stream" title="miic.core.alpha_mod.dir_read_stream"><code class="xref py py-class docutils literal"><span class="pre">dir_read_stream</span></code></a> : This is a function that sequentially reads the content of a directory (i.e. file-by-file) using the funtion  <a class="reference internal" href="../../modules/alpha_mod.html#miic.core.alpha_mod.stream_read" title="miic.core.alpha_mod.stream_read"><code class="xref py py-class docutils literal"><span class="pre">stream_read</span></code></a> stated above and appends all the data to the same data structure <strong>Stream</strong> that is then passed to the successive blocks as input.</li>
+<li><code class="xref py py-class docutils literal"><span class="pre">stream_read</span></code> : It handles multiple formats  (GSE2, MSEED, SAC, SEISAN, WAV, Q, SH_ASC) and other proprietary formats (i.e. K-UTec)</li>
+<li><code class="xref py py-class docutils literal"><span class="pre">stream_seishub_read</span></code> : This is a specific client for the SeisHub server (<a class="reference external" href="http://www.seishub.org">http://www.seishub.org</a>)</li>
+<li><code class="xref py py-class docutils literal"><span class="pre">stream_arklink_read</span></code> : This is a specific client for the ArcLink/WebDC server (e.g. <a class="reference external" href="http://docs.obspy.org/packages/obspy.arclink.html">http://docs.obspy.org/packages/obspy.arclink.html</a>)</li>
+<li><code class="xref py py-class docutils literal"><span class="pre">dir_read_stream</span></code> : This is a function that sequentially reads the content of a directory (i.e. file-by-file) using the funtion  <code class="xref py py-class docutils literal"><span class="pre">stream_read</span></code> stated above and appends all the data to the same data structure <strong>Stream</strong> that is then passed to the successive blocks as input.</li>
 </ul>
 </div></blockquote>
 <p>We will focuse on the first and simplest function
-<a class="reference internal" href="../../modules/alpha_mod.html#miic.core.alpha_mod.stream_read" title="miic.core.alpha_mod.stream_read"><code class="xref py py-class docutils literal"><span class="pre">stream_read</span></code></a> that will provide us the necessary
+<code class="xref py py-class docutils literal"><span class="pre">stream_read</span></code> that will provide us the necessary
 data to explain the successive pre-processing steps.
 Its specific GUI when opened in BC is:</p>
 <blockquote>
@@ -131,8 +131,8 @@ Its specific GUI when opened in BC is:</p>
 contains three traces, one for each components (i.e. Z, N, E).
 From now on we will work on this example stream so that all the computations that we
 will perform can be simply reproduced. It is convenient to show the &#8220;plain&#8221;
-waveforms before going ahead. This is most easiely done by adding a <a class="reference internal" href="../../modules/alpha_mod.html#miic.core.alpha_mod.stream_plot" title="miic.core.alpha_mod.stream_plot"><code class="xref py py-class docutils literal"><span class="pre">stream_plot</span></code></a> block to the canvas and conect the
-<a class="reference internal" href="../../modules/alpha_mod.html#miic.core.alpha_mod.stream_read" title="miic.core.alpha_mod.stream_read"><code class="xref py py-class docutils literal"><span class="pre">stream_read</span></code></a> output stream <em>st</em> to the input variable <em>st</em> of <a class="reference internal" href="../../modules/alpha_mod.html#miic.core.alpha_mod.stream_plot" title="miic.core.alpha_mod.stream_plot"><code class="xref py py-class docutils literal"><span class="pre">stream_plot</span></code></a> to construct a project like:</p>
+waveforms before going ahead. This is most easiely done by adding a <code class="xref py py-class docutils literal"><span class="pre">stream_plot</span></code> block to the canvas and conect the
+<code class="xref py py-class docutils literal"><span class="pre">stream_read</span></code> output stream <em>st</em> to the input variable <em>st</em> of <code class="xref py py-class docutils literal"><span class="pre">stream_plot</span></code> to construct a project like:</p>
 <blockquote>
 <div><div class="align-center figure" id="id2">
 <a class="reference internal image-reference" href="../../_images/stream_plot.jpeg"><img alt="BC project to display a stream" src="../../_images/stream_plot.jpeg" style="width: 60%;" /></a>
@@ -158,7 +158,7 @@ for all the three component while we are interested only in the <em>Z</em>-compo
 It is therefore necessasry to manipulate the stream so that we can obtain the
 desired set of traces to pass to the next blocks.
 This task can be done using the
-<a class="reference internal" href="../../modules/alpha_mod.html#miic.core.alpha_mod.stream_select" title="miic.core.alpha_mod.stream_select"><code class="xref py py-class docutils literal"><span class="pre">stream_select</span></code></a> function. The allows to specify properties (according to the <code class="xref py py-class docutils literal"><span class="pre">obspy.core.stream.select</span></code> method) that a trace in the stream has to fulfill to be passed to the output. This is how to
+<code class="xref py py-class docutils literal"><span class="pre">stream_select</span></code> function. The allows to specify properties (according to the <code class="xref py py-class docutils literal"><span class="pre">obspy.core.stream.select</span></code> method) that a trace in the stream has to fulfill to be passed to the output. This is how to
 select, e.g., the <em>Z</em> component from the example stream:</p>
 <blockquote>
 <div><div class="align-center figure" id="id4">
@@ -181,7 +181,7 @@ will not affect our computation.</p>
 <div class="section" id="remove-the-mean">
 <h2>Remove the mean<a class="headerlink" href="#remove-the-mean" title="Permalink to this headline">¶</a></h2>
 <p>This step can be accompished with the
-<a class="reference internal" href="../../modules/alpha_mod.html#miic.core.alpha_mod.stream_remove_mean" title="miic.core.alpha_mod.stream_remove_mean"><code class="xref py py-class docutils literal"><span class="pre">stream_remove_mean</span></code></a> function. It is a trivial
+<code class="xref py py-class docutils literal"><span class="pre">stream_remove_mean</span></code> function. It is a trivial
 operation that, in case of multiple traces contained in a single <strong>Stream</strong>, it
 is performed <em>trace-by-trace</em>.  No parameter is necessary for its computation
 so the associated GUI is empty.
@@ -317,7 +317,7 @@ proposed normalizatin function:</p>
 of the traces as they are stored in the <strong>Stream</strong> structure, to obtain
 consistent results, it is a good practice to sort the traces with respect to their
 seed-id. For that purpose, the <strong>MIIC</strong> library provides the
-<a class="reference internal" href="../../modules/alpha_mod.html#miic.core.alpha_mod.stream_sort" title="miic.core.alpha_mod.stream_sort"><code class="xref py py-class docutils literal"><span class="pre">stream_sort</span></code></a> funtion. It doesn&#8217;t need parameters
+<code class="xref py py-class docutils literal"><span class="pre">stream_sort</span></code> funtion. It doesn&#8217;t need parameters
 so its GUI is empty.</p>
 </div>
 <div class="section" id="summary">
@@ -354,7 +354,7 @@ step is subject to another tutorial.</p>
     </div>
     <div class="footer" role="contentinfo">
         &copy; Copyright 2012, Eraldo Pomponi.
-      Last updated on 2016-03-02T14:12:35.
+      Last updated on 2017-10-18T17:14:31.
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
     </div>
   </body>

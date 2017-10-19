@@ -523,7 +523,7 @@
     <span class="k">return</span> <span class="n">st</span>
 
 </div>
-<div class="viewcode-block" id="stream_stack_distance_intervals"><a class="viewcode-back" href="../../../modules/autogen/miic.core.stream.stream_stack_distance_intervals.html#miic.core.stream.stream_stack_distance_intervals">[docs]</a><span class="k">def</span> <span class="nf">stream_stack_distance_intervals</span><span class="p">(</span><span class="n">st</span><span class="p">,</span> <span class="n">interval</span><span class="p">):</span>
+<div class="viewcode-block" id="stream_stack_distance_intervals"><a class="viewcode-back" href="../../../modules/autogen/miic.core.stream.stream_stack_distance_intervals.html#miic.core.stream.stream_stack_distance_intervals">[docs]</a><span class="k">def</span> <span class="nf">stream_stack_distance_intervals</span><span class="p">(</span><span class="n">st</span><span class="p">,</span> <span class="n">interval</span><span class="p">,</span> <span class="n">norm_type</span><span class="o">=</span><span class="s">&#39;no&#39;</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Stack average traces in a stream if their distance difference is</span>
 <span class="sd">    smaller than interval.</span>
 
@@ -538,6 +538,11 @@
 <span class="sd">    :type interval: scalar os array like</span>
 <span class="sd">    :param interval: width of bins in case of scalar or smaller edge of</span>
 <span class="sd">        bins if interval is a sequence.</span>
+<span class="sd">    :type norm_type: str</span>
+<span class="sd">    :param norm_type: normalization to be applied within bins before stacking</span>
+<span class="sd">        Possibilities are `no` for no normalization, `max` for normalization </span>
+<span class="sd">        to maximum, `rms` for normaliation to root mean square or `abs_mean`</span>
+<span class="sd">        for normalization to the mean of the absolute value.</span>
 <span class="sd">    :rtype sst: :class:`~obspy.core.stream.Stream`</span>
 <span class="sd">    :return: **sst**: stacked stream</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -559,17 +564,129 @@
             <span class="s">&#39;channel&#39;</span><span class="p">:</span><span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;channel&#39;</span><span class="p">],</span><span class="s">&#39;starttime&#39;</span><span class="p">:</span><span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;starttime&#39;</span><span class="p">],</span><span class="s">&#39;sampling_rate&#39;</span><span class="p">:</span><span class="n">st</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;sampling_rate&#39;</span><span class="p">],</span>
             <span class="s">&#39;sac&#39;</span><span class="p">:{</span><span class="s">&#39;dist&#39;</span><span class="p">:</span><span class="n">ii</span><span class="p">,</span><span class="s">&#39;az&#39;</span><span class="p">:</span><span class="mi">0</span><span class="p">,</span><span class="s">&#39;evla&#39;</span><span class="p">:</span><span class="mf">0.</span><span class="p">,</span><span class="s">&#39;evlo&#39;</span><span class="p">:</span><span class="mf">0.</span><span class="p">,</span><span class="s">&#39;stla&#39;</span><span class="p">:</span><span class="n">ii</span><span class="o">/</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">*</span><span class="mi">6371000</span><span class="p">)</span><span class="o">*</span><span class="mf">180.</span><span class="p">,</span><span class="s">&#39;stlo&#39;</span><span class="p">:</span><span class="mf">0.</span><span class="p">}}))</span>
     <span class="n">count</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">bins</span><span class="p">)</span>
+    <span class="n">weight</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">bins</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">tr</span> <span class="ow">in</span> <span class="n">st</span><span class="p">:</span>
         <span class="n">ind</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">((</span><span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">sac</span><span class="p">[</span><span class="s">&#39;dist&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">bins</span><span class="p">)</span><span class="o">&gt;=</span><span class="mi">0</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span>
-        <span class="n">sst</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;npts&#39;</span><span class="p">]]</span> <span class="o">+=</span> <span class="n">tr</span><span class="o">.</span><span class="n">data</span>
+        <span class="k">if</span> <span class="n">norm_type</span> <span class="o">==</span> <span class="s">&#39;no&#39;</span><span class="p">:</span>
+            <span class="n">norm</span> <span class="o">=</span> <span class="mf">1.</span>
+        <span class="k">elif</span> <span class="n">norm_type</span> <span class="o">==</span> <span class="s">&#39;max&#39;</span><span class="p">:</span>
+            <span class="n">norm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">tr</span><span class="o">.</span><span class="n">data</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="n">norm_type</span> <span class="o">==</span> <span class="s">&#39;rms&#39;</span><span class="p">:</span>
+            <span class="n">norm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">tr</span><span class="o">.</span><span class="n">data</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="n">norm_type</span> <span class="o">==</span> <span class="s">&#39;abs_mean&#39;</span><span class="p">:</span>
+            <span class="n">norm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">tr</span><span class="o">.</span><span class="n">data</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;norm_type </span><span class="si">%s</span><span class="s"> not implemented&#39;</span> <span class="o">%</span> <span class="n">norm_type</span><span class="p">)</span>
+        <span class="n">sst</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s">&#39;npts&#39;</span><span class="p">]]</span> <span class="o">+=</span> <span class="p">(</span><span class="n">tr</span><span class="o">.</span><span class="n">data</span><span class="o">/</span><span class="n">norm</span><span class="p">)</span>
+        <span class="n">weight</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">+=</span> <span class="n">norm</span>
         <span class="n">count</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
     <span class="k">for</span> <span class="n">ind</span><span class="p">,</span> <span class="n">tr</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">sst</span><span class="p">):</span>
-        <span class="n">tr</span><span class="o">.</span><span class="n">data</span> <span class="o">/=</span> <span class="n">count</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span>
+        <span class="n">tr</span><span class="o">.</span><span class="n">data</span> <span class="o">*=</span> <span class="n">weight</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span><span class="o">/</span><span class="p">(</span><span class="n">count</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
     
     <span class="k">return</span> <span class="n">sst</span>
 
-
 </div>
+<span class="k">def</span> <span class="nf">stream_mute</span><span class="p">(</span><span class="n">st</span><span class="p">,</span> <span class="nb">filter</span><span class="o">=</span><span class="p">(),</span> <span class="n">mute_method</span><span class="o">=</span><span class="s">&#39;std_factor&#39;</span><span class="p">,</span> <span class="n">mute_value</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+                <span class="n">taper_len</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span><span class="n">extend_gaps</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Mute parts of data that exceed a threshold</span>
+
+<span class="sd">    To completely surpress the effect of data with high amplitudes e.g. after</span>
+<span class="sd">    aftershocks these parts of the data are muted (set to zero). The respective</span>
+<span class="sd">    parts of the signal are identified as those where the envelope in a given</span>
+<span class="sd">    frequency band exceeds a threshold given directly as absolute number or as </span>
+<span class="sd">    a multiple of the data&#39;s standard deviation. A taper of length `taper_len` </span>
+<span class="sd">    is applied to smooth the edges of muted segments. Setting `extend_gaps` to</span>
+<span class="sd">    Ture will ensure that the taper is applied outside the segments and data</span>
+<span class="sd">    inside these segments will all zero. Edges of the data will be tapered too</span>
+<span class="sd">    in this case.</span>
+<span class="sd">    The function returns a muted copy of the data.</span>
+
+<span class="sd">    :Example:</span>
+<span class="sd">    ``args={&#39;filter&#39;:(1.,6.),&#39;taper_len&#39;:1., &#39;threshold&#39;:1000, &#39;std_factor&#39;:1, &#39;extend_gaps&#39;:True}``</span>
+
+<span class="sd">    :type st: obspy.Stream</span>
+<span class="sd">    :param st: stream with data to be muted</span>
+<span class="sd">    :type filter: tuple</span>
+<span class="sd">    :param filter: freqmin and freqmax of a bandpass filter</span>
+<span class="sd">    :type mute_method: str</span>
+<span class="sd">    :param mute_method: either &#39;std_factor&#39;, &#39;median_factor&#39; or &#39;threshold&#39;</span>
+<span class="sd">        that lead to muting when the (filtered) envelope exceeds the standard</span>
+<span class="sd">        deviation or the median of the absolute value of the data by a certain</span>
+<span class="sd">        factor (mute_value) or when the envelope exceeds a fixed</span>
+<span class="sd">        value (threshold), respectively.</span>
+<span class="sd">    :type mute_value: float</span>
+<span class="sd">    :param mute_value: numerical value corresponding to &#39;mute_method&#39;</span>
+<span class="sd">    :type taper_len: float</span>
+<span class="sd">    :param taper_len: length of taper in seconds</span>
+<span class="sd">    :type extend_gaps: Bool</span>
+<span class="sd">    :param extend_gaps: make sure tapering is done outside the segments to be</span>
+<span class="sd">        muted. This step involves an additional convolution.</span>
+
+<span class="sd">    :rtype: obspy.stream</span>
+<span class="sd">    :return: muted data</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">assert</span> <span class="nb">type</span><span class="p">(</span><span class="n">st</span><span class="p">)</span> <span class="o">==</span> <span class="n">Stream</span><span class="p">,</span> <span class="s">&quot;st is not an obspy stream&quot;</span>
+    <span class="k">assert</span> <span class="n">mute_method</span> <span class="ow">in</span> <span class="p">[</span><span class="s">&#39;std_factor&#39;</span><span class="p">,</span> <span class="s">&#39;median_factor&#39;</span><span class="p">,</span> <span class="s">&#39;threshold&#39;</span><span class="p">],</span> <span class="s">&quot;unsupported mute_type&quot;</span>
+    <span class="k">assert</span> <span class="nb">type</span><span class="p">(</span><span class="n">taper_len</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">float</span> <span class="ow">or</span> <span class="nb">type</span><span class="p">(</span><span class="n">taper_len</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">int</span><span class="p">,</span> \
+                                    <span class="s">&quot;taper_len is not a number&quot;</span>
+    <span class="k">assert</span> <span class="nb">type</span><span class="p">(</span><span class="n">extend_gaps</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">bool</span><span class="p">,</span> <span class="s">&quot;extend_gaps is not a boolean.&quot;</span>
+    <span class="c"># copy the data</span>
+    <span class="n">cst</span> <span class="o">=</span> <span class="n">st</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">cst</span><span class="o">.</span><span class="n">merge</span><span class="p">()</span>
+    <span class="n">cst</span><span class="o">.</span><span class="n">detrend</span><span class="p">(</span><span class="s">&#39;linear&#39;</span><span class="p">)</span>
+    <span class="n">cst</span><span class="o">.</span><span class="n">taper</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="n">taper_len</span><span class="p">,</span><span class="n">max_percentage</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
+
+
+    <span class="k">for</span> <span class="n">ind</span><span class="p">,</span><span class="n">tr</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">cst</span><span class="p">):</span>
+        <span class="c"># return zeros if length of traces is shorter than taper</span>
+        <span class="n">ntap</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">taper_len</span><span class="o">*</span><span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">sampling_rate</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">npts</span><span class="o">&lt;=</span><span class="n">ntap</span><span class="p">:</span>
+            <span class="n">cst</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">tr</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+            <span class="k">continue</span>
+
+        <span class="c"># filter if asked to</span>
+        <span class="n">ftr</span> <span class="o">=</span> <span class="n">tr</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">filter</span><span class="p">:</span>
+            <span class="n">ftr</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="s">&#39;bandpass&#39;</span><span class="p">,</span> <span class="n">freqmin</span><span class="o">=</span><span class="nb">filter</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">freqmax</span><span class="o">=</span><span class="nb">filter</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+        <span class="c"># calculate envelope</span>
+        <span class="c">#D = np.abs(signal.hilbert(C,axis=0))</span>
+        <span class="n">D</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">ftr</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+
+        <span class="c"># calculate threshold</span>
+        <span class="k">if</span> <span class="n">mute_method</span> <span class="o">==</span> <span class="s">&#39;threshold&#39;</span><span class="p">:</span>
+            <span class="n">thres</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">ftr</span><span class="o">.</span><span class="n">data</span><span class="p">)</span> <span class="o">+</span> <span class="n">mute_value</span>
+        <span class="k">elif</span> <span class="n">mute_method</span> <span class="o">==</span> <span class="s">&#39;std_factor&#39;</span><span class="p">:</span>
+            <span class="n">thres</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">ftr</span><span class="o">.</span><span class="n">data</span><span class="p">)</span> <span class="o">*</span> <span class="n">mute_value</span>
+        <span class="k">elif</span> <span class="n">mute_method</span> <span class="o">==</span> <span class="s">&#39;median_factor&#39;</span><span class="p">:</span>
+            <span class="n">thres</span> <span class="o">=</span> <span class="n">mute_value</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">ftr</span><span class="o">.</span><span class="n">data</span><span class="p">))</span>
+
+        <span class="c"># calculate mask</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">tr</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+        <span class="n">mask</span><span class="p">[</span><span class="n">D</span><span class="o">&gt;</span><span class="n">thres</span><span class="p">]</span><span class="o">=</span><span class="mi">0</span>
+        <span class="c"># extend the muted segments to make sure the whole segment is zero after</span>
+        <span class="k">if</span> <span class="n">extend_gaps</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="n">ntap</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">,</span> <span class="s">&quot;length of taper cannot be zero if extend_gaps is True&quot;</span>
+            <span class="n">tap</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">ntap</span><span class="p">)</span><span class="o">/</span><span class="n">ntap</span>
+            <span class="n">mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">convolve</span><span class="p">(</span><span class="n">mask</span><span class="p">,</span><span class="n">tap</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s">&#39;same&#39;</span><span class="p">)</span>
+            <span class="n">nmask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">D</span><span class="p">)</span>
+            <span class="n">nmask</span><span class="p">[</span><span class="n">mask</span><span class="o">&lt;</span><span class="mf">0.999999999</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">nmask</span> <span class="o">=</span> <span class="n">mask</span>
+
+        <span class="c"># apply taper</span>
+        <span class="k">if</span> <span class="n">ntap</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">tap</span> <span class="o">=</span> <span class="mf">2.</span> <span class="o">-</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">ntap</span><span class="p">,</span><span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span><span class="o">/</span><span class="n">ntap</span><span class="o">*</span><span class="mf">2.</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span> <span class="o">+</span> <span class="mf">1.</span><span class="p">)</span>
+            <span class="n">tap</span> <span class="o">/=</span> <span class="n">ntap</span>
+            <span class="n">nmask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">convolve</span><span class="p">(</span><span class="n">nmask</span><span class="p">,</span><span class="n">tap</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s">&#39;same&#39;</span><span class="p">)</span>
+
+        <span class="c"># mute date with tapered mask</span>
+        <span class="n">cst</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span><span class="o">.</span><span class="n">data</span> <span class="o">*=</span> <span class="n">nmask</span>
+    <span class="k">return</span> <span class="n">cst</span>
+
+
 <span class="k">class</span> <span class="nc">_StFilter</span><span class="p">:</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ftype</span><span class="p">,</span> <span class="n">param</span><span class="p">):</span>
@@ -796,7 +913,7 @@
     <span class="k">return</span> <span class="n">tr_padded</span>
 
 </div>
-<span class="n">IDformat</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;%NET&#39;</span><span class="p">,</span><span class="s">&#39;%STA&#39;</span><span class="p">,</span><span class="s">&#39;%LOC&#39;</span><span class="p">,</span><span class="s">&#39;%CHA&#39;</span><span class="p">]</span>
+<span class="n">IDformat</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;%NET&#39;</span><span class="p">,</span><span class="s">&#39;%net&#39;</span><span class="p">,</span><span class="s">&#39;%STA&#39;</span><span class="p">,</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">ta&#39;</span><span class="p">,</span><span class="s">&#39;%LOC&#39;</span><span class="p">,</span><span class="s">&#39;</span><span class="si">%lo</span><span class="s">c&#39;</span><span class="p">,</span><span class="s">&#39;%CHA&#39;</span><span class="p">,</span><span class="s">&#39;</span><span class="si">%c</span><span class="s">ha&#39;</span><span class="p">]</span>
 
 <div class="viewcode-block" id="read_from_filesystem"><a class="viewcode-back" href="../../../modules/autogen/miic.core.stream.read_from_filesystem.html#miic.core.stream.read_from_filesystem">[docs]</a><span class="k">def</span> <span class="nf">read_from_filesystem</span><span class="p">(</span><span class="n">ID</span><span class="p">,</span><span class="n">starttime</span><span class="p">,</span><span class="n">endtime</span><span class="p">,</span><span class="n">fs</span><span class="p">,</span><span class="n">trim</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Function to read data from a filesystem with a give file structure</span>
@@ -827,10 +944,10 @@
 <span class="sd">    one of the following</span>
 <span class="sd">     - %X as defined by datetime.strftime indicating an element of</span>
 <span class="sd">       the time. e.g. %H</span>
-<span class="sd">     - %NET: network name</span>
-<span class="sd">     - %STA: station name</span>
-<span class="sd">     - %CHA: channel name</span>
-<span class="sd">     - %LOC: location</span>
+<span class="sd">     - %NET: network name or %net for lower case network name</span>
+<span class="sd">     - %STA: station name or %sta for lower case</span>
+<span class="sd">     - %CHA: channel name or %cha for lower case</span>
+<span class="sd">     - %LOC: location or %loc for lower case location code</span>
 <span class="sd">     - string with out %</span>
 <span class="sd">    The format strings are replaced either with an element of the starttime</span>
 <span class="sd">    if they correspond to a datetime specifyer or with the respective part</span>
@@ -1010,7 +1127,10 @@
         <span class="n">res</span> <span class="o">=</span> <span class="n">part</span>
     <span class="c"># in case it belongs to the ID replace it with the respective ID-part</span>
     <span class="k">if</span> <span class="n">part</span> <span class="ow">in</span> <span class="n">IDformat</span><span class="p">:</span>
-        <span class="n">res</span> <span class="o">=</span> <span class="n">IDlist</span><span class="p">[</span><span class="n">IDformat</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">part</span><span class="p">)]</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="n">IDformat</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">part</span><span class="p">)</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="n">IDlist</span><span class="p">[</span><span class="n">idx</span><span class="o">/</span><span class="mi">2</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">idx</span><span class="o">%</span><span class="mi">2</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>  <span class="c"># idx is odd and IDformat is lowercase</span>
+            <span class="n">res</span> <span class="o">=</span> <span class="n">res</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
     <span class="c"># otherwise it must be part of the date string</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">res</span> <span class="o">=</span> <span class="n">starttime</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="n">part</span><span class="p">)</span>
@@ -1046,7 +1166,7 @@
     </div>
     <div class="footer" role="contentinfo">
         &copy; Copyright 2012, Eraldo Pomponi.
-      Last updated on 2016-11-28T14:56:38.
+      Last updated on 2017-10-19T15:03:57.
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
     </div>
   </body>

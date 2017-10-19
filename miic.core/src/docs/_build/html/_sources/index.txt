@@ -8,6 +8,7 @@ MIIC Library documentation
    :titlesonly:
  
    modules/core
+   modules/scripts
    
 Tutorials
 =========

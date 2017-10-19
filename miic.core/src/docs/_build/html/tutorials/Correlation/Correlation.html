@@ -1,0 +1,278 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Ambient Noise Correlation &mdash; MIIC 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="MIIC 1.0 documentation" href="../../index.html" />
+    <link rel="up" title="Ambient Noise Correlation" href="../index.html" />
+    <link rel="prev" title="Ambient Noise Correlation" href="../index.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../index.html" title="Ambient Noise Correlation"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">MIIC 1.0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Ambient Noise Correlation</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Ambient Noise Correlation</a><ul>
+<li><a class="reference internal" href="#introduction">Introduction</a></li>
+<li><a class="reference internal" href="#the-central-function">The Central Function</a></li>
+<li><a class="reference internal" href="#parameter-file">Parameter File</a></li>
+</ul>
+</li>
+</ul>
+
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/tutorials/Correlation/Correlation.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="ambient-noise-correlation">
+<span id="basics-correlation-tutorial"></span><h1>Ambient Noise Correlation<a class="headerlink" href="#ambient-noise-correlation" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
+<p>The correlation of ambient vibration records is the fundamental step of
+interferometric seimsic processing. The MIIC <a class="reference external" href="https://github.com/miic-sw/miic">MIIC Software Suite</a> provides tools to calculate such noise
+correlation function including various preprocessing steps.</p>
+</div>
+<div class="section" id="the-central-function">
+<h2>The Central Function<a class="headerlink" href="#the-central-function" title="Permalink to this headline">¶</a></h2>
+<dl class="docutils">
+<dt>The usual processing flow consists of</dt>
+<dd><ul class="first last simple">
+<li>initializing the project</li>
+<li>reading data</li>
+<li>setting the combinations to be correlated</li>
+<li>preprocessing of data</li>
+<li>correlation</li>
+<li>storing correlation</li>
+</ul>
+</dd>
+</dl>
+<p>This functionality is implemented in the <a class="reference internal" href="../../modules/paracorr.html#module-miic.scripts.paracorr" title="miic.scripts.paracorr"><code class="xref py py-class docutils literal"><span class="pre">paracorr</span></code></a>
+function. How the correlations are calculated is indicated in a
+<a class="reference external" href="http://yaml.org">yaml</a> parameter file described below.</p>
+</div>
+<div class="section" id="parameter-file">
+<h2>Parameter File<a class="headerlink" href="#parameter-file" title="Permalink to this headline">¶</a></h2>
+<p>The present script uses different section of the parameter file. These are the
+<em>projekt wide parameters</em> section, the <em>net</em> section describing the raw seismic
+data and the <em>co</em> section describing how the noise correlations are calculated.</p>
+<p>in the following example these section of the parameter file are shown:</p>
+<div class="highlight-python"><div class="highlight"><pre>#### Project wide parameters
+# lowest level project directory
+proj_dir : &#39;/home/user/PROJECTS/current_project&#39;
+# directory for logging information
+log_subdir : &#39;log&#39;
+# folder for figures
+fig_subdir : &#39;figures&#39;
+
+
+#### parameters that are network specific
+net:
+    # list of stations used in the project
+    # type: list of strings of type &#39;NET.STATION&#39;
+    stations : [&#39;GR.CLL&#39;,&#39;GR.CLZ&#39;,&#39;&#39;,&#39;GR.RUE&#39;]
+    # list of channels
+    # type: list of strings
+    channels : [&#39;BHZ&#39;,&#39;BHN&#39;,&#39;BHE&#39;]
+    # path to the file that stores the coordinates of the stations
+    # type: string
+    coordinate_file : &#39;GRSN_coordinates.txt&#39;
+    # file system structure
+    # list of strings and lists
+    fss : [&#39;/home/user/PROJECTS/GRSN_data/&#39;,&#39;%j&#39;,[&#39;%STA&#39;,&#39;.*.&#39;,&#39;%CHA&#39;,&#39;.SAC&#39;]]
+    # comb is a list combinations to investigate: list of dictionaries
+    # &#39;sta&#39; holds a list with the two indecies of the stations in the station list
+    # &#39;cha&#39; holds a list of channel combinations referring to channel list
+    # One station combination can have several channel combinations.
+    # The strings &#39;all_stations&#39; amd &#39;all_channels&#39; are replaced. Examples of
+    # valid entries are
+    # comb : [{&#39;sta&#39;:[0,1],&#39;cha&#39;:[[0,0]]},
+    #         {&#39;sta&#39;:[0,2],&#39;cha&#39;:[[0,0]]},
+    #         {&#39;sta&#39;:[1,2],&#39;cha&#39;:[[0,0]]}]
+    # comb : [{&#39;sta&#39;:&#39;all_stations&#39;,&#39;cha&#39;:[[0,1]]}]
+    # comb : [{&#39;sta&#39;:[0,1],&#39;cha&#39;:&#39;all_channels&#39;},
+    #         {&#39;sta&#39;:[0,2],&#39;cha&#39;[[0,1]]}]
+    # comb : [{&#39;sta&#39;:&#39;all_stations&#39;,&#39;cha&#39;:&#39;all_channels&#39;}]
+    comb : [{&#39;sta&#39;:&#39;all_stations&#39;,&#39;cha&#39;:&#39;all_channels&#39;}]
+
+#### parameters for correlation (emperical Green&#39;s function creation)
+# sub folder where correlations are stored
+co:
+    # subdirectory of &#39;proj_dir&#39; to store correlation
+    # type: string
+    subdir : &#39;corr&#39;
+    # times sequences to read for cliping or muting on stream basis
+    # These should be long enough for the reference (e.g. the standard
+    # deviation) to be rather independent of the parts to remove
+    # type: string
+    read_start : &#39;2017-03-15 00:00:00.0&#39;
+    read_end : &#39;2017-05-18 00:00:00.0&#39;
+    # type: float [seconds]
+    read_len : 86400
+    read_inc : 86400
+
+    # required input sampling rate (data with different sampling rate are not used)
+    # type: float [Hz]
+    sampling_rate : 200
+    # decimation factor (sampling_rate(correlation)=sampling_rate(date)/decimation)
+    # decimation &lt;= 1 mean no decimation
+    # type: int
+    decimation : 10
+
+    # preprocessing of the original length time series
+    # these function work on an obspy.Stream object given as first argument
+    # and return an obspy.Stream object.
+    preProcessing : [{&#39;function&#39;:&#39;miic.core.stream.stream_filter&#39;,
+                      &#39;args&#39;:{&#39;ftype&#39;:&#39;bandpass&#39;,
+                              &#39;filter_option&#39;:{&#39;freqmin&#39;:0.01,
+                                               &#39;freqmax&#39;:9},
+                              &#39;parallel&#39;:False}},
+                     {&#39;function&#39;:&#39;miic.core.stream.stream_mute&#39;,
+                      &#39;args&#39;:{&#39;taper_len&#39;:100,
+                              &#39;mute_method&#39;:&#39;std_factor&#39;,
+                              &#39;mute_value&#39;:3}}
+                    ]
+
+    # subdevision of the read sequences for correlation
+    # type: presence of this key
+    subdivision:
+        # type: float [seconds]
+        corr_inc : 1800
+        corr_len : 3600
+        # recombine these subdivisions
+        # type: boolean
+        recombine_subdivision : True
+        # delete
+        # type: booblean
+        delete_subdivisions : False
+
+    # parameters for correlation preprocessing
+    # The preprocessing functions work on a ndarray inplace. They can be
+    # selected from miic.core.pxcorr_func
+    corr_args : {&#39;TDpreProcessing&#39;:[#{&#39;function&#39;:&#39;miic.core.pxcorr_func.detrend&#39;,
+                                    # &#39;args&#39;:{&#39;type&#39;:&#39;constant&#39;}},
+                                    #{&#39;function&#39;:&#39;miic.core.pxcorr_func.TDfilter&#39;,
+                                    # &#39;args&#39;:{&#39;type&#39;:&#39;bandpass&#39;,&#39;freqmin&#39;:0.01,&#39;freqmax&#39;:4}},
+                                    #{&#39;function&#39;:&#39;miic.core.pxcorr_func.mute&#39;,
+                                    # &#39;args&#39;:{&#39;taper_len&#39;:100.,
+                                    #         &#39;threshold&#39;:1000, absolute threshold
+                                    #         &#39;std_factor&#39;:3,
+                                    #         &#39;filter&#39;:{&#39;type&#39;:&#39;bandpass&#39;,&#39;freqmin&#39;:2,&#39;freqmax&#39;:4},
+                                    #         &#39;extend_gaps&#39;:True}},
+                                    #{&#39;function&#39;:&#39;miic.core.pxcorr_func.clip&#39;,
+                                    # &#39;args&#39;:{&#39;std_factor&#39;:3}},
+                                   ],
+                 &#39;FDpreProcessing&#39;:[{&#39;function&#39;:&#39;miic.core.pxcorr_func.spectralWhitening&#39;,
+                                     &#39;args&#39;:{&#39;joint_norm&#39;:False}},
+                                    {&#39;function&#39;:&#39;miic.core.pxcorr_func.FDfilter&#39;,
+                                     &#39;args&#39;:{&#39;freqs&#39;:[0.01,0.02,9,10]}}
+                                    ],
+                 &#39;lengthToSave&#39;:800,
+                 &#39;center_correlation&#39;:True,      # make sure zero correlation time is in the center
+                 &#39;normalize_correlation&#39;:True,
+                 &#39;combinations&#39;:[],
+                 &#39;direct_output&#39;:{&#39;function&#39;:&#39;convert_to_matlab&#39;,
+                                  &#39;base_name&#39;:&#39;trace&#39;}
+                }
+    # Method to combine different traces
+    combination_method : &#39;betweenStations&#39;
+
+    # Component rotation (only possible if &#39;direct_output&#39; is not in &#39;corr_args&#39;)
+    # type: string [&#39;NO&#39;, &#39;ZNE-&gt;ZRT&#39;, &#39;NE-&gt;RT&#39;]
+    rotation : &#39;NO&#39;
+</pre></div>
+</div>
+<p>The format of the <em>net.coordinate_file</em> is described in <a class="reference internal" href="../../modules/autogen/miic.core.miic_utils.lat_lon_ele_load.html#miic.core.miic_utils.lat_lon_ele_load" title="miic.core.miic_utils.lat_lon_ele_load"><code class="xref py py-func docutils literal"><span class="pre">lat_lon_ele_load()</span></code></a>.
+<em>co.corr_args</em> describes the parallelized part of the correlation calculation. This is detailed in
+<a class="reference internal" href="../../modules/autogen/miic.core.pxcorr_func.stream_pxcorr.html#miic.core.pxcorr_func.stream_pxcorr" title="miic.core.pxcorr_func.stream_pxcorr"><code class="xref py py-func docutils literal"><span class="pre">stream_pxcorr()</span></code></a>.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../index.html" title="Ambient Noise Correlation"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">MIIC 1.0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Ambient Noise Correlation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2012, Eraldo Pomponi.
+      Last updated on 2017-10-19T15:03:57.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </div>
+  </body>
+</html>

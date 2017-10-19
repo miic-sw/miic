@@ -1,0 +1,6 @@
+miic.scripts.paracorr.paracorr
+==============================
+
+.. currentmodule:: miic.scripts.paracorr
+
+.. autofunction:: paracorr

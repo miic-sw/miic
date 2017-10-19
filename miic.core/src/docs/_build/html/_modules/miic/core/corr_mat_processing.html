@@ -1922,16 +1922,13 @@
 
     <span class="c"># calculate relative information</span>
     <span class="k">try</span><span class="p">:</span>
-        <span class="kn">from</span> <span class="nn">obspy.core.util.geodetics</span> <span class="kn">import</span> <span class="n">gps2DistAzimuth</span>
+        <span class="kn">from</span> <span class="nn">obspy.geodetics</span> <span class="kn">import</span> <span class="n">gps2dist_azimuth</span>
     <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="kn">from</span> <span class="nn">obspy.signal.rotate</span> <span class="kn">import</span> <span class="n">gps2DistAzimuth</span>
-        <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
-            <span class="k">print</span> <span class="s">&quot;Missed obspy funciton gps2DistAzimuth&quot;</span>
-            <span class="k">print</span> <span class="s">&quot;Update obspy.core&quot;</span>
-            <span class="k">return</span>
+        <span class="k">print</span> <span class="s">&quot;Missed obspy funciton gps2dist_azimuth&quot;</span>
+        <span class="k">print</span> <span class="s">&quot;Update obspy.&quot;</span>
+        <span class="k">return</span>
 
-    <span class="n">dist</span><span class="p">,</span> <span class="n">az</span><span class="p">,</span> <span class="n">baz</span> <span class="o">=</span> <span class="n">gps2DistAzimuth</span><span class="p">(</span><span class="n">corr_mat</span><span class="p">[</span><span class="s">&#39;stats&#39;</span><span class="p">][</span><span class="s">&#39;stla&#39;</span><span class="p">],</span> \
+    <span class="n">dist</span><span class="p">,</span> <span class="n">az</span><span class="p">,</span> <span class="n">baz</span> <span class="o">=</span> <span class="n">gps2dist_azimuth</span><span class="p">(</span><span class="n">corr_mat</span><span class="p">[</span><span class="s">&#39;stats&#39;</span><span class="p">][</span><span class="s">&#39;stla&#39;</span><span class="p">],</span> \
                                     <span class="n">corr_mat</span><span class="p">[</span><span class="s">&#39;stats&#39;</span><span class="p">][</span><span class="s">&#39;stlo&#39;</span><span class="p">],</span> \
                                     <span class="n">corr_mat</span><span class="p">[</span><span class="s">&#39;stats&#39;</span><span class="p">][</span><span class="s">&#39;evla&#39;</span><span class="p">],</span> \
                                     <span class="n">corr_mat</span><span class="p">[</span><span class="s">&#39;stats&#39;</span><span class="p">][</span><span class="s">&#39;evlo&#39;</span><span class="p">])</span>
@@ -2184,9 +2181,9 @@
 
         <span class="c"># save the matlab variable</span>
 
-        <span class="k">print</span> <span class="s">&#39;saving file </span><span class="si">%s</span><span class="s"> of size </span><span class="si">%d</span><span class="s"> x </span><span class="si">%d</span><span class="s">&#39;</span> <span class="o">%</span> \
-            <span class="p">(</span><span class="n">ofname</span><span class="p">[</span><span class="n">comb_idx</span><span class="p">],</span> <span class="n">corr_mat</span><span class="p">[</span><span class="s">&#39;corr_data&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
-             <span class="n">corr_mat</span><span class="p">[</span><span class="s">&#39;corr_data&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="c">#print &#39;saving file %s of size %d x %d&#39; % \</span>
+        <span class="c">#    (ofname[comb_idx], corr_mat[&#39;corr_data&#39;].shape[0],</span>
+        <span class="c">#     corr_mat[&#39;corr_data&#39;].shape[1])</span>
 
         <span class="n">savemat</span><span class="p">(</span><span class="n">join</span><span class="p">(</span><span class="n">save_dir</span><span class="p">,</span> <span class="n">ofname</span><span class="p">[</span><span class="n">comb_idx</span><span class="p">]),</span> <span class="n">corr_mat</span><span class="p">,</span> <span class="n">oned_as</span><span class="o">=</span><span class="s">&#39;row&#39;</span><span class="p">)</span>
 
@@ -2244,7 +2241,7 @@
     </div>
     <div class="footer" role="contentinfo">
         &copy; Copyright 2012, Eraldo Pomponi.
-      Last updated on 2016-11-28T14:56:38.
+      Last updated on 2017-10-19T15:03:57.
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
     </div>
   </body>

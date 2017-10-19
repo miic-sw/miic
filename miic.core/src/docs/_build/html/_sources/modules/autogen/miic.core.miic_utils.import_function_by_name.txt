@@ -1,0 +1,6 @@
+miic.core.miic_utils.import_function_by_name
+============================================
+
+.. currentmodule:: miic.core.miic_utils
+
+.. autofunction:: import_function_by_name

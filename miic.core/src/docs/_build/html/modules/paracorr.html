@@ -1,0 +1,152 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Paracorr &mdash; MIIC 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="MIIC 1.0 documentation" href="../index.html" />
+    <link rel="up" title="MIIC Scripts" href="scripts.html" />
+    <link rel="next" title="miic.scripts.paracorr.paracorr" href="autogen/miic.scripts.paracorr.paracorr.html" />
+    <link rel="prev" title="MIIC Scripts" href="scripts.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="autogen/miic.scripts.paracorr.paracorr.html" title="miic.scripts.paracorr.paracorr"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="scripts.html" title="MIIC Scripts"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">MIIC 1.0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="scripts.html" accesskey="U">MIIC Scripts</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Paracorr</a><ul>
+<li><a class="reference internal" href="#function">Function</a></li>
+</ul>
+</li>
+</ul>
+
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/modules/paracorr.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="paracorr">
+<h1>Paracorr<a class="headerlink" href="#paracorr" title="Permalink to this headline">¶</a></h1>
+<p>Script to calculate seismic ambient noise correlation functions. Called as a
+python program the script accepts the path to a <a class="reference external" href="http://yaml.org">yaml</a>
+parameter file, reads it and calls the <a class="reference internal" href="autogen/miic.scripts.paracorr.paracorr.html#miic.scripts.paracorr.paracorr" title="miic.scripts.paracorr.paracorr"><code class="xref py py-class docutils literal"><span class="pre">paracorr</span></code></a>
+function with these parameters.</p>
+<p>The structure of the parameter file and the functionality of the script are
+described in the following tutorial <a class="reference internal" href="../tutorials/Correlation/Correlation.html#basics-correlation-tutorial"><span>Ambient Noise correlation</span></a>.</p>
+<p>&#64;author:
+Christoph Sens-Schönfelder</p>
+<p>&#64;copyright:
+The MIIC Development Team (<a class="reference external" href="mailto:sens-schoenfelder&#37;&#52;&#48;gfz-potsdam&#46;de">sens-schoenfelder<span>&#64;</span>gfz-potsdam<span>&#46;</span>de</a>)</p>
+<p>&#64;license:
+GNU Lesser General Public License, Version 3
+(<a class="reference external" href="http://www.gnu.org/copyleft/lesser.html">http://www.gnu.org/copyleft/lesser.html</a>)</p>
+<p>Created on Oct 20, 2017</p>
+<span class="target" id="module-miic.scripts.paracorr"></span><div class="section" id="function">
+<h2>Function<a class="headerlink" href="#function" title="Permalink to this headline">¶</a></h2>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="autogen/miic.scripts.paracorr.paracorr.html#miic.scripts.paracorr.paracorr" title="miic.scripts.paracorr.paracorr"><code class="xref py py-obj docutils literal"><span class="pre">paracorr</span></code></a></td>
+<td>Computation of noise correlation functions</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="autogen/miic.scripts.paracorr.paracorr.html" title="miic.scripts.paracorr.paracorr"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="scripts.html" title="MIIC Scripts"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">MIIC 1.0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="scripts.html" >MIIC Scripts</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2012, Eraldo Pomponi.
+      Last updated on 2017-10-19T14:48:31.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </div>
+  </body>
+</html>

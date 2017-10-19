@@ -91,10 +91,10 @@
 <span class="kn">from</span> <span class="nn">scipy.io</span> <span class="kn">import</span> <span class="n">loadmat</span><span class="p">,</span> <span class="n">savemat</span>
 <span class="kn">import</span> <span class="nn">datetime</span>
 <span class="kn">import</span> <span class="nn">collections</span>
-<span class="kn">from</span> <span class="nn">matplotlib.mlab</span> <span class="kn">import</span> <span class="n">detrend_mean</span><span class="p">,</span> <span class="n">detrend_linear</span>
 <span class="kn">import</span> <span class="nn">time</span>
 <span class="kn">from</span> <span class="nn">cPickle</span> <span class="kn">import</span> <span class="n">Pickler</span>
 <span class="kn">import</span> <span class="nn">shutil</span>
+<span class="kn">import</span> <span class="nn">importlib</span>
 
 
 <span class="c"># Pandas import</span>
@@ -132,7 +132,7 @@
 <span class="c">##############################################################################</span>
 
 
-<div class="viewcode-block" id="create_rnd_array"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.create_rnd_array.html#miic.core.alpha_mod.create_rnd_array">[docs]</a><span class="k">def</span> <span class="nf">create_rnd_array</span><span class="p">(</span><span class="n">nSignal</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">nSample</span><span class="o">=</span><span class="mi">1000</span><span class="p">):</span>
+<div class="viewcode-block" id="create_rnd_array"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.create_rnd_array.html#miic.core.miic_utils.create_rnd_array">[docs]</a><span class="k">def</span> <span class="nf">create_rnd_array</span><span class="p">(</span><span class="n">nSignal</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">nSample</span><span class="o">=</span><span class="mi">1000</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Creates a random normal 2D ndarray.</span>
 
 <span class="sd">    This function creates a 2D random normal array where the number of rows</span>
@@ -162,7 +162,7 @@
                            <span class="n">Item</span><span class="p">(</span><span class="s">&#39;nSample&#39;</span><span class="p">))</span>
                            
 
-<div class="viewcode-block" id="create_range_array"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.create_range_array.html#miic.core.alpha_mod.create_range_array">[docs]</a><span class="k">def</span> <span class="nf">create_range_array</span><span class="p">(</span><span class="n">low</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">high</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">nSamples</span><span class="o">=</span><span class="mi">1000</span><span class="p">):</span>
+<div class="viewcode-block" id="create_range_array"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.create_range_array.html#miic.core.miic_utils.create_range_array">[docs]</a><span class="k">def</span> <span class="nf">create_range_array</span><span class="p">(</span><span class="n">low</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">high</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">nSamples</span><span class="o">=</span><span class="mi">1000</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Creates a 1D ndarray using range.</span>
 
 <span class="sd">    This function creates an 1D array that has ``nSamples`` elements in the</span>
@@ -199,7 +199,7 @@
                            <span class="n">Item</span><span class="p">(</span><span class="s">&#39;nSamples&#39;</span><span class="p">))</span>
 
 
-<div class="viewcode-block" id="dict_sel"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.dict_sel.html#miic.core.alpha_mod.dict_sel">[docs]</a><span class="k">def</span> <span class="nf">dict_sel</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+<div class="viewcode-block" id="dict_sel"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.dict_sel.html#miic.core.miic_utils.dict_sel">[docs]</a><span class="k">def</span> <span class="nf">dict_sel</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Dictionary element selection.</span>
 
 <span class="sd">    Return the value associated with a specified ``key`` in the input</span>
@@ -228,7 +228,7 @@
         <span class="n">trait_view</span> <span class="o">=</span> <span class="n">View</span><span class="p">(</span><span class="n">Item</span><span class="p">(</span><span class="s">&#39;key&#39;</span><span class="p">))</span>
     
 
-<div class="viewcode-block" id="add_prefix"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.add_prefix.html#miic.core.alpha_mod.add_prefix">[docs]</a><span class="k">def</span> <span class="nf">add_prefix</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">):</span>
+<div class="viewcode-block" id="add_prefix"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.add_prefix.html#miic.core.miic_utils.add_prefix">[docs]</a><span class="k">def</span> <span class="nf">add_prefix</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Add a prefix to a read-only string.</span>
 
 <span class="sd">    :type name; string</span>
@@ -251,7 +251,7 @@
                           <span class="n">Item</span><span class="p">(</span><span class="s">&#39;prefix&#39;</span><span class="p">))</span>
 
 
-<div class="viewcode-block" id="merge_str"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.merge_str.html#miic.core.alpha_mod.merge_str">[docs]</a><span class="k">def</span> <span class="nf">merge_str</span><span class="p">(</span><span class="n">str1</span><span class="p">,</span> <span class="n">str2</span><span class="p">):</span>
+<div class="viewcode-block" id="merge_str"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.merge_str.html#miic.core.miic_utils.merge_str">[docs]</a><span class="k">def</span> <span class="nf">merge_str</span><span class="p">(</span><span class="n">str1</span><span class="p">,</span> <span class="n">str2</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Merge two strings.</span>
 
 <span class="sd">    :type str1: string</span>
@@ -274,7 +274,7 @@
                           <span class="n">Item</span><span class="p">(</span><span class="s">&#39;str2&#39;</span><span class="p">))</span>
 
 
-<div class="viewcode-block" id="dir_read"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.dir_read.html#miic.core.alpha_mod.dir_read">[docs]</a><span class="k">def</span> <span class="nf">dir_read</span><span class="p">(</span><span class="n">base_dir</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">,</span> <span class="n">pattern</span><span class="o">=</span><span class="s">&#39;*.webnet&#39;</span><span class="p">,</span> <span class="n">sort_flag</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+<div class="viewcode-block" id="dir_read"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.dir_read.html#miic.core.miic_utils.dir_read">[docs]</a><span class="k">def</span> <span class="nf">dir_read</span><span class="p">(</span><span class="n">base_dir</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">,</span> <span class="n">pattern</span><span class="o">=</span><span class="s">&#39;*.webnet&#39;</span><span class="p">,</span> <span class="n">sort_flag</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Create a list of files in a dir tree which name match a def pattern.</span>
 
 <span class="sd">    :type base_dir: directory</span>
@@ -341,7 +341,7 @@
 
 <span class="n">zerotime</span> <span class="o">=</span> <span class="n">UTCDateTime</span><span class="p">(</span><span class="mi">1971</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
 
-<div class="viewcode-block" id="create_path"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.create_path.html#miic.core.alpha_mod.create_path">[docs]</a><span class="k">def</span> <span class="nf">create_path</span><span class="p">(</span><span class="n">directory</span><span class="p">):</span>
+<div class="viewcode-block" id="create_path"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.create_path.html#miic.core.miic_utils.create_path">[docs]</a><span class="k">def</span> <span class="nf">create_path</span><span class="p">(</span><span class="n">directory</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Create a given path with all preceeding parts.</span>
 
 <span class="sd">    Provided there is write access the function will creates</span>
@@ -361,7 +361,7 @@
     <span class="k">return</span> <span class="mi">0</span>
 
 </div>
-<div class="viewcode-block" id="archive_code"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.archive_code.html#miic.core.alpha_mod.archive_code">[docs]</a><span class="k">def</span> <span class="nf">archive_code</span><span class="p">(</span><span class="n">scriptname</span><span class="p">):</span>
+<div class="viewcode-block" id="archive_code"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.archive_code.html#miic.core.miic_utils.archive_code">[docs]</a><span class="k">def</span> <span class="nf">archive_code</span><span class="p">(</span><span class="n">scriptname</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Read parameters and archive code</span>
 
 <span class="sd">    This is a convenience function that helps to track processing routines and</span>
@@ -398,7 +398,7 @@
     <span class="k">return</span> <span class="n">par</span>
 
 </div>
-<div class="viewcode-block" id="ndarray_to_mat"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.ndarray_to_mat.html#miic.core.alpha_mod.ndarray_to_mat">[docs]</a><span class="k">def</span> <span class="nf">ndarray_to_mat</span><span class="p">(</span><span class="n">nd_array</span><span class="p">,</span> <span class="n">base_dir</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="s">&quot;canvas_mat.mat&quot;</span><span class="p">,</span> \
+<div class="viewcode-block" id="ndarray_to_mat"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.ndarray_to_mat.html#miic.core.miic_utils.ndarray_to_mat">[docs]</a><span class="k">def</span> <span class="nf">ndarray_to_mat</span><span class="p">(</span><span class="n">nd_array</span><span class="p">,</span> <span class="n">base_dir</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="s">&quot;canvas_mat.mat&quot;</span><span class="p">,</span> \
                    <span class="n">mat_var_name</span><span class="o">=</span><span class="s">&#39;corr_data&#39;</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Save an ndarray to a Matlab file.</span>
 
@@ -432,7 +432,7 @@
                           <span class="n">Item</span><span class="p">(</span><span class="s">&#39;mat_var_name&#39;</span><span class="p">))</span>
     
 
-<div class="viewcode-block" id="mat_to_ndarray"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.mat_to_ndarray.html#miic.core.alpha_mod.mat_to_ndarray">[docs]</a><span class="k">def</span> <span class="nf">mat_to_ndarray</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">flatten</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+<div class="viewcode-block" id="mat_to_ndarray"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.mat_to_ndarray.html#miic.core.miic_utils.mat_to_ndarray">[docs]</a><span class="k">def</span> <span class="nf">mat_to_ndarray</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">flatten</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Load a Matlab file into a dictionary.</span>
 
 <span class="sd">    Keys of this dictionary are the names of the variables stored in the file.</span>
@@ -470,7 +470,7 @@
                           <span class="n">Item</span><span class="p">(</span><span class="s">&#39;flatten&#39;</span><span class="p">))</span>
     
 
-<div class="viewcode-block" id="convert_to_matlab"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.convert_to_matlab.html#miic.core.alpha_mod.convert_to_matlab">[docs]</a><span class="k">def</span> <span class="nf">convert_to_matlab</span><span class="p">(</span><span class="n">st</span><span class="p">,</span>
+<div class="viewcode-block" id="convert_to_matlab"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.convert_to_matlab.html#miic.core.miic_utils.convert_to_matlab">[docs]</a><span class="k">def</span> <span class="nf">convert_to_matlab</span><span class="p">(</span><span class="n">st</span><span class="p">,</span>
                       <span class="n">base_name</span><span class="p">,</span>
                       <span class="n">base_dir</span><span class="p">,</span>
                       <span class="n">suffix</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">,</span>
@@ -637,7 +637,7 @@
 <span class="n">X</span> <span class="o">=</span> <span class="bp">None</span>
 
 
-<div class="viewcode-block" id="stack"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.stack.html#miic.core.alpha_mod.stack">[docs]</a><span class="k">def</span> <span class="nf">stack</span><span class="p">(</span><span class="n">vect</span><span class="p">,</span> <span class="n">axis</span><span class="p">):</span>
+<div class="viewcode-block" id="stack"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.stack.html#miic.core.miic_utils.stack">[docs]</a><span class="k">def</span> <span class="nf">stack</span><span class="p">(</span><span class="n">vect</span><span class="p">,</span> <span class="n">axis</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Stacks together arrays of compatible size.</span>
 
 <span class="sd">    This function stacks (pile up) array with compatible size to create a</span>
@@ -696,7 +696,7 @@
                                <span class="n">label</span><span class="o">=</span><span class="s">&#39;along axis 0:columnwise 1:rowwise&#39;</span><span class="p">))</span>
     
 
-<div class="viewcode-block" id="clear_global_X"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.clear_global_X.html#miic.core.alpha_mod.clear_global_X">[docs]</a><span class="k">def</span> <span class="nf">clear_global_X</span><span class="p">():</span>
+<div class="viewcode-block" id="clear_global_X"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.clear_global_X.html#miic.core.miic_utils.clear_global_X">[docs]</a><span class="k">def</span> <span class="nf">clear_global_X</span><span class="p">():</span>
     <span class="sd">&quot;&quot;&quot; Reset the global variable ``X`` to None &quot;&quot;&quot;</span>
     <span class="k">global</span> <span class="n">X</span>
 
@@ -704,7 +704,7 @@
         <span class="n">X</span> <span class="o">=</span> <span class="bp">None</span>
 
 </div>
-<div class="viewcode-block" id="submat_x"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.submat_x.html#miic.core.alpha_mod.submat_x">[docs]</a><span class="k">def</span> <span class="nf">submat_x</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">low_x</span><span class="p">,</span> <span class="n">high_x</span><span class="p">):</span>
+<div class="viewcode-block" id="submat_x"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.submat_x.html#miic.core.miic_utils.submat_x">[docs]</a><span class="k">def</span> <span class="nf">submat_x</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">low_x</span><span class="p">,</span> <span class="n">high_x</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Extract a sub-matrix from a matrix ``X`` along the x-axis (columns) &quot;&quot;&quot;</span>
     <span class="n">subX</span> <span class="o">=</span> <span class="n">X</span><span class="p">[:,</span> <span class="n">low_x</span><span class="p">:</span><span class="n">high_x</span><span class="p">]</span>
     <span class="k">return</span> <span class="n">subX</span>
@@ -719,7 +719,7 @@
                           <span class="n">Item</span><span class="p">(</span><span class="s">&#39;high_x&#39;</span><span class="p">))</span>
     
 
-<div class="viewcode-block" id="submat_y"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.submat_y.html#miic.core.alpha_mod.submat_y">[docs]</a><span class="k">def</span> <span class="nf">submat_y</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">low_y</span><span class="p">,</span> <span class="n">high_y</span><span class="p">):</span>
+<div class="viewcode-block" id="submat_y"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.submat_y.html#miic.core.miic_utils.submat_y">[docs]</a><span class="k">def</span> <span class="nf">submat_y</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">low_y</span><span class="p">,</span> <span class="n">high_y</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Extract a sub-matrix from a matrix ``X`` along the y-axis (rows).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">subY</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="n">low_y</span><span class="p">:</span><span class="n">high_y</span><span class="p">,</span> <span class="p">:]</span>
@@ -735,7 +735,7 @@
                           <span class="n">Item</span><span class="p">(</span><span class="s">&#39;high_y&#39;</span><span class="p">))</span>
     
 
-<div class="viewcode-block" id="nd_mat_center_part"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.nd_mat_center_part.html#miic.core.alpha_mod.nd_mat_center_part">[docs]</a><span class="k">def</span> <span class="nf">nd_mat_center_part</span><span class="p">(</span><span class="n">ndmat</span><span class="p">,</span> <span class="n">win_len</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+<div class="viewcode-block" id="nd_mat_center_part"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.nd_mat_center_part.html#miic.core.miic_utils.nd_mat_center_part">[docs]</a><span class="k">def</span> <span class="nf">nd_mat_center_part</span><span class="p">(</span><span class="n">ndmat</span><span class="p">,</span> <span class="n">win_len</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Extract the &quot;central&quot; part of a matrix.</span>
 
 <span class="sd">    Extract the &quot;central&quot; part of size ``win_len`` from a matrix ``X`` along</span>
@@ -777,7 +777,7 @@
                           <span class="n">Item</span><span class="p">(</span><span class="s">&#39;axis&#39;</span><span class="p">))</span>
 
 
-<div class="viewcode-block" id="matrix_product"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.matrix_product.html#miic.core.alpha_mod.matrix_product">[docs]</a><span class="k">def</span> <span class="nf">matrix_product</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">):</span>
+<div class="viewcode-block" id="matrix_product"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.matrix_product.html#miic.core.miic_utils.matrix_product">[docs]</a><span class="k">def</span> <span class="nf">matrix_product</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Simple matrix product using np.dot &quot;&quot;&quot;</span>
     <span class="n">C</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">C</span>
@@ -788,7 +788,7 @@
         <span class="n">trait_view</span> <span class="o">=</span> <span class="n">View</span><span class="p">()</span>
 
 
-<div class="viewcode-block" id="collapse_to_single_vect"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.collapse_to_single_vect.html#miic.core.alpha_mod.collapse_to_single_vect">[docs]</a><span class="k">def</span> <span class="nf">collapse_to_single_vect</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">axis</span><span class="p">,</span> <span class="n">select_portion</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">first_line</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> \
+<div class="viewcode-block" id="collapse_to_single_vect"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.collapse_to_single_vect.html#miic.core.miic_utils.collapse_to_single_vect">[docs]</a><span class="k">def</span> <span class="nf">collapse_to_single_vect</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">axis</span><span class="p">,</span> <span class="n">select_portion</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">first_line</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> \
                             <span class="n">last_line</span><span class="o">=</span><span class="mi">100</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Collapse a matrix to a single normalized vector along a defined axis.</span>
 
@@ -847,7 +847,7 @@
                           <span class="n">Item</span><span class="p">(</span><span class="s">&#39;last_line&#39;</span><span class="p">,</span> <span class="n">enabled_when</span><span class="o">=</span><span class="s">&#39;select_portion==True&#39;</span><span class="p">))</span>
 
 
-<div class="viewcode-block" id="find_comb"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.find_comb.html#miic.core.alpha_mod.find_comb">[docs]</a><span class="k">def</span> <span class="nf">find_comb</span><span class="p">(</span><span class="n">base_dir</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">,</span> <span class="n">is_mat</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+<div class="viewcode-block" id="find_comb"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.find_comb.html#miic.core.miic_utils.find_comb">[docs]</a><span class="k">def</span> <span class="nf">find_comb</span><span class="p">(</span><span class="n">base_dir</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">,</span> <span class="n">is_mat</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Find all possible combinations written in the filenames</span>
 
 <span class="sd">    Checks all the filenames in a directory to find all possible</span>
@@ -880,7 +880,7 @@
     <span class="k">return</span> <span class="n">cdate</span>
 
 
-<div class="viewcode-block" id="from_str_to_datetime"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.from_str_to_datetime.html#miic.core.alpha_mod.from_str_to_datetime">[docs]</a><span class="k">def</span> <span class="nf">from_str_to_datetime</span><span class="p">(</span><span class="n">str_date</span><span class="p">,</span> <span class="n">datetimefmt</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+<div class="viewcode-block" id="from_str_to_datetime"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.from_str_to_datetime.html#miic.core.miic_utils.from_str_to_datetime">[docs]</a><span class="k">def</span> <span class="nf">from_str_to_datetime</span><span class="p">(</span><span class="n">str_date</span><span class="p">,</span> <span class="n">datetimefmt</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Convert a dash separated string date in a datetime object.&quot;&quot;&quot;</span>
     <span class="n">ctime</span> <span class="o">=</span> <span class="n">str_date</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;-&#39;</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">datetimefmt</span><span class="p">:</span>
@@ -890,7 +890,7 @@
     <span class="k">return</span> <span class="n">cdate</span>
 
 </div>
-<div class="viewcode-block" id="extract_time_vect"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.extract_time_vect.html#miic.core.alpha_mod.extract_time_vect">[docs]</a><span class="k">def</span> <span class="nf">extract_time_vect</span><span class="p">(</span><span class="n">base_dir</span><span class="p">,</span> <span class="n">pattern</span><span class="p">):</span>
+<div class="viewcode-block" id="extract_time_vect"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.extract_time_vect.html#miic.core.miic_utils.extract_time_vect">[docs]</a><span class="k">def</span> <span class="nf">extract_time_vect</span><span class="p">(</span><span class="n">base_dir</span><span class="p">,</span> <span class="n">pattern</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Extract time vector from filenames.</span>
 
 <span class="sd">    Extract the time vector relative to a group of files stored in the same</span>
@@ -908,7 +908,7 @@
     <span class="k">return</span> <span class="n">time_vect</span>
 
 </div>
-<div class="viewcode-block" id="norm1"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.norm1.html#miic.core.alpha_mod.norm1">[docs]</a><span class="k">def</span> <span class="nf">norm1</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">axis</span><span class="p">):</span>
+<div class="viewcode-block" id="norm1"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.norm1.html#miic.core.miic_utils.norm1">[docs]</a><span class="k">def</span> <span class="nf">norm1</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">axis</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Matrix normalization.</span>
 
 <span class="sd">    Normalize each row (column) of a matrix dividing it by the reference array</span>
@@ -925,7 +925,7 @@
     <span class="k">return</span> <span class="n">X</span>
 
 </div>
-<div class="viewcode-block" id="transpose"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.transpose.html#miic.core.alpha_mod.transpose">[docs]</a><span class="k">def</span> <span class="nf">transpose</span><span class="p">(</span><span class="n">X</span><span class="p">):</span>
+<div class="viewcode-block" id="transpose"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.transpose.html#miic.core.miic_utils.transpose">[docs]</a><span class="k">def</span> <span class="nf">transpose</span><span class="p">(</span><span class="n">X</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Transpose the matrix ``X`` &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">X</span><span class="o">.</span><span class="n">T</span>
 
@@ -935,7 +935,7 @@
         <span class="n">trait_view</span> <span class="o">=</span> <span class="n">View</span><span class="p">()</span>
 
 
-<div class="viewcode-block" id="reshape_mat_to_vect"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.reshape_mat_to_vect.html#miic.core.alpha_mod.reshape_mat_to_vect">[docs]</a><span class="k">def</span> <span class="nf">reshape_mat_to_vect</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">axis</span><span class="p">):</span>
+<div class="viewcode-block" id="reshape_mat_to_vect"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.reshape_mat_to_vect.html#miic.core.miic_utils.reshape_mat_to_vect">[docs]</a><span class="k">def</span> <span class="nf">reshape_mat_to_vect</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">axis</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Reshape the matrix elements to obtain a 1D array.</span>
 
 <span class="sd">    If ``axis==0`` the returned 1D array is a row vector of shape [1,X.size]</span>
@@ -959,7 +959,7 @@
                                <span class="n">label</span><span class="o">=</span><span class="s">&#39;axis (0:col, 1:row)&#39;</span><span class="p">))</span>
     
 
-<div class="viewcode-block" id="nd_nan_to_num"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.nd_nan_to_num.html#miic.core.alpha_mod.nd_nan_to_num">[docs]</a><span class="k">def</span> <span class="nf">nd_nan_to_num</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+<div class="viewcode-block" id="nd_nan_to_num"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.nd_nan_to_num.html#miic.core.miic_utils.nd_nan_to_num">[docs]</a><span class="k">def</span> <span class="nf">nd_nan_to_num</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Replace NaNs with 0 and +-Inf with +-large number.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">x_clean</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan_to_num</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
@@ -1014,7 +1014,7 @@
                           <span class="n">Item</span><span class="p">(</span><span class="s">&#39;inc&#39;</span><span class="p">))</span>
 
 
-<div class="viewcode-block" id="combinations"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.combinations.html#miic.core.alpha_mod.combinations">[docs]</a><span class="k">def</span> <span class="nf">combinations</span><span class="p">(</span><span class="n">n_trace</span><span class="p">,</span> <span class="n">std_comb</span><span class="p">,</span><span class="n">k</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+<div class="viewcode-block" id="combinations"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.combinations.html#miic.core.miic_utils.combinations">[docs]</a><span class="k">def</span> <span class="nf">combinations</span><span class="p">(</span><span class="n">n_trace</span><span class="p">,</span> <span class="n">std_comb</span><span class="p">,</span><span class="n">k</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Create the list of combinations.</span>
 
 <span class="sd">    Create the list of possible combinations between a specified number</span>
@@ -1086,7 +1086,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_type_c</span> <span class="o">=</span> <span class="n">combinations</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_trace</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">std_comb</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="comb_with_missed_stations"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.comb_with_missed_stations.html#miic.core.alpha_mod.comb_with_missed_stations">[docs]</a><span class="k">def</span> <span class="nf">comb_with_missed_stations</span><span class="p">(</span><span class="n">n_stations</span><span class="p">,</span> <span class="n">std_comb</span><span class="p">,</span> <span class="n">missed_stations</span><span class="p">):</span>
+<div class="viewcode-block" id="comb_with_missed_stations"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.comb_with_missed_stations.html#miic.core.miic_utils.comb_with_missed_stations">[docs]</a><span class="k">def</span> <span class="nf">comb_with_missed_stations</span><span class="p">(</span><span class="n">n_stations</span><span class="p">,</span> <span class="n">std_comb</span><span class="p">,</span> <span class="n">missed_stations</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Create the list of combinations.</span>
 
 <span class="sd">    Create the list of possible combinations between a specified number</span>
@@ -1124,7 +1124,7 @@
     <span class="k">return</span> <span class="n">comb</span>
 
 </div>
-<div class="viewcode-block" id="nd_save"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.nd_save.html#miic.core.alpha_mod.nd_save">[docs]</a><span class="k">def</span> <span class="nf">nd_save</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">var</span><span class="p">):</span>
+<div class="viewcode-block" id="nd_save"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.nd_save.html#miic.core.miic_utils.nd_save">[docs]</a><span class="k">def</span> <span class="nf">nd_save</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">var</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Save an ndarray in the original NumPy format.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">np</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">var</span><span class="p">)</span>
@@ -1136,7 +1136,7 @@
         <span class="n">trait_view</span> <span class="o">=</span> <span class="n">View</span><span class="p">(</span><span class="n">Item</span><span class="p">(</span><span class="s">&#39;filename&#39;</span><span class="p">))</span>
 
 
-<div class="viewcode-block" id="nd_load"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.nd_load.html#miic.core.alpha_mod.nd_load">[docs]</a><span class="k">def</span> <span class="nf">nd_load</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
+<div class="viewcode-block" id="nd_load"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.nd_load.html#miic.core.miic_utils.nd_load">[docs]</a><span class="k">def</span> <span class="nf">nd_load</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Load an ndarray from a file in NumPy format (.npy)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
@@ -1148,13 +1148,13 @@
         <span class="n">trait_view</span> <span class="o">=</span> <span class="n">View</span><span class="p">(</span><span class="n">Item</span><span class="p">(</span><span class="s">&#39;filename&#39;</span><span class="p">))</span>
 
 
-<div class="viewcode-block" id="nd_toList"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.nd_toList.html#miic.core.alpha_mod.nd_toList">[docs]</a><span class="k">def</span> <span class="nf">nd_toList</span><span class="p">(</span><span class="n">ndv</span><span class="p">):</span>
+<div class="viewcode-block" id="nd_toList"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.nd_toList.html#miic.core.miic_utils.nd_toList">[docs]</a><span class="k">def</span> <span class="nf">nd_toList</span><span class="p">(</span><span class="n">ndv</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Convert a numpz arraz to a list &quot;&quot;&quot;</span>
     <span class="n">list_a</span> <span class="o">=</span> <span class="n">ndv</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
     <span class="k">return</span> <span class="n">list_a</span>
 
 </div>
-<div class="viewcode-block" id="load_matlab_file"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.load_matlab_file.html#miic.core.alpha_mod.load_matlab_file">[docs]</a><span class="k">def</span> <span class="nf">load_matlab_file</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
+<div class="viewcode-block" id="load_matlab_file"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.load_matlab_file.html#miic.core.miic_utils.load_matlab_file">[docs]</a><span class="k">def</span> <span class="nf">load_matlab_file</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Load variables from MatLab file.</span>
 
 <span class="sd">    Load all variables stored in a MatLab (.mat) file and return them</span>
@@ -1179,19 +1179,19 @@
         <span class="n">trait_view</span> <span class="o">=</span> <span class="n">View</span><span class="p">(</span><span class="n">Item</span><span class="p">(</span><span class="s">&#39;filename&#39;</span><span class="p">))</span>
 
 
-<div class="viewcode-block" id="enum_list"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.enum_list.html#miic.core.alpha_mod.enum_list">[docs]</a><span class="k">def</span> <span class="nf">enum_list</span><span class="p">(</span><span class="n">ls</span><span class="p">):</span>
+<div class="viewcode-block" id="enum_list"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.enum_list.html#miic.core.miic_utils.enum_list">[docs]</a><span class="k">def</span> <span class="nf">enum_list</span><span class="p">(</span><span class="n">ls</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Enumerate a list &quot;&quot;&quot;</span>
     <span class="n">ls_enum</span> <span class="o">=</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">ls</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">ls_enum</span>
 
 </div>
-<div class="viewcode-block" id="to_str"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.to_str.html#miic.core.alpha_mod.to_str">[docs]</a><span class="k">def</span> <span class="nf">to_str</span><span class="p">(</span><span class="n">var</span><span class="p">):</span>
+<div class="viewcode-block" id="to_str"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.to_str.html#miic.core.miic_utils.to_str">[docs]</a><span class="k">def</span> <span class="nf">to_str</span><span class="p">(</span><span class="n">var</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Convert a variable to string &quot;&quot;&quot;</span>
     <span class="n">svar</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">var</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">svar</span>
 
 </div>
-<div class="viewcode-block" id="nd_size"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.nd_size.html#miic.core.alpha_mod.nd_size">[docs]</a><span class="k">def</span> <span class="nf">nd_size</span><span class="p">(</span><span class="n">nda</span><span class="p">):</span>
+<div class="viewcode-block" id="nd_size"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.nd_size.html#miic.core.miic_utils.nd_size">[docs]</a><span class="k">def</span> <span class="nf">nd_size</span><span class="p">(</span><span class="n">nda</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Return and print the shape of an ndarray &quot;&quot;&quot;</span>
     <span class="n">row</span><span class="p">,</span> <span class="n">col</span> <span class="o">=</span> <span class="n">nda</span><span class="o">.</span><span class="n">shape</span>
     <span class="k">print</span> <span class="s">&quot;row: </span><span class="si">%d</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">row</span>
@@ -1199,7 +1199,7 @@
     <span class="k">return</span> <span class="n">row</span><span class="p">,</span> <span class="n">col</span>
 
 </div>
-<div class="viewcode-block" id="fold_acausal"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.fold_acausal.html#miic.core.alpha_mod.fold_acausal">[docs]</a><span class="k">def</span> <span class="nf">fold_acausal</span><span class="p">(</span><span class="n">X</span><span class="p">):</span>
+<div class="viewcode-block" id="fold_acausal"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.fold_acausal.html#miic.core.miic_utils.fold_acausal">[docs]</a><span class="k">def</span> <span class="nf">fold_acausal</span><span class="p">(</span><span class="n">X</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Fold the acausal part of an Auto/Cross corr. matrix and mirror it &quot;&quot;&quot;</span>
     <span class="n">X</span><span class="p">[:,</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="mi">2</span><span class="p">:]</span> <span class="o">=</span> <span class="p">(</span><span class="n">X</span><span class="p">[:,</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="mi">2</span><span class="p">:]</span> <span class="o">+</span> \
                              <span class="n">X</span><span class="p">[:,</span> <span class="p">:</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="mi">2</span><span class="p">][:,</span> <span class="p">::</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">/</span> <span class="mi">2</span>
@@ -1212,107 +1212,8 @@
         <span class="n">trait_view</span> <span class="o">=</span> <span class="n">View</span><span class="p">()</span>
 
 
-<div class="viewcode-block" id="demean"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.demean.html#miic.core.alpha_mod.demean">[docs]</a><span class="k">def</span> <span class="nf">demean</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot; Return x minus the mean(x)</span>
 
-<span class="sd">    :type x: 1D :class:`~numpy.ndarray`</span>
-<span class="sd">    :param x: The data</span>
-
-<span class="sd">    :rtype: 1D :class:`~numpy.ndarray`</span>
-<span class="sd">    :return: **x_copy**: Mean removed data</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="n">x_copy</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-
-    <span class="n">x_copy</span> <span class="o">=</span> <span class="n">detrend_mean</span><span class="p">(</span><span class="n">x_copy</span><span class="p">)</span>
-
-    <span class="k">return</span> <span class="n">x_copy</span>
-
-</div>
-<span class="k">if</span> <span class="n">BC_UI</span><span class="p">:</span>
-    <span class="k">class</span> <span class="nc">_demean_view</span><span class="p">(</span><span class="n">HasTraits</span><span class="p">):</span>
-        <span class="n">trait_view</span> <span class="o">=</span> <span class="n">View</span><span class="p">()</span>
-
-
-<div class="viewcode-block" id="stream_demean"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.stream_demean.html#miic.core.alpha_mod.stream_demean">[docs]</a><span class="k">def</span> <span class="nf">stream_demean</span><span class="p">(</span><span class="n">signals</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot; Removes the mean from all Traces in signals</span>
-
-<span class="sd">    :type signals: :class:`~obspy.core.trace.Stream`</span>
-<span class="sd">    :param signals: The container for the Traces that we want to remove their</span>
-<span class="sd">        mean</span>
-
-<span class="sd">    :rtype: :class:`~obspy.core.trace.Stream`</span>
-<span class="sd">    :return: **signals_copy**: The resulting object containing the mean removed</span>
-<span class="sd">        version of all Traces in signals</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">signals</span><span class="p">,</span> <span class="n">Stream</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s">&quot;&#39;signals&#39; must be an obspy Stream object&quot;</span><span class="p">)</span>
-
-    <span class="n">signals_copy</span> <span class="o">=</span> <span class="n">signals</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-
-    <span class="k">for</span> <span class="n">tr</span> <span class="ow">in</span> <span class="n">signals_copy</span><span class="p">:</span>
-        <span class="n">tr</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">demean</span><span class="p">(</span><span class="n">tr</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
-
-    <span class="k">return</span> <span class="n">signals_copy</span>
-
-</div>
-<span class="k">if</span> <span class="n">BC_UI</span><span class="p">:</span>
-    <span class="k">class</span> <span class="nc">_stream_demean_view</span><span class="p">(</span><span class="n">HasTraits</span><span class="p">):</span>
-        <span class="n">trait_view</span> <span class="o">=</span> <span class="n">View</span><span class="p">()</span>
-
-
-<div class="viewcode-block" id="detrend"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.detrend.html#miic.core.alpha_mod.detrend">[docs]</a><span class="k">def</span> <span class="nf">detrend</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot; Return x minus best fit line; &quot;linear&quot; detrending</span>
-
-<span class="sd">    :type x: 1D :class:`~numpy.ndarray`</span>
-<span class="sd">    :param x: The data</span>
-
-<span class="sd">    :rtype: 1D :class:`~numpy.ndarray`</span>
-<span class="sd">    :return: **x_copy**: Trend removed data</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="n">x_copy</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-
-    <span class="n">x_copy</span> <span class="o">=</span> <span class="n">detrend_linear</span><span class="p">(</span><span class="n">x_copy</span><span class="p">)</span>
-
-    <span class="k">return</span> <span class="n">x_copy</span>
-
-</div>
-<span class="k">if</span> <span class="n">BC_UI</span><span class="p">:</span>
-    <span class="k">class</span> <span class="nc">_detrend_view</span><span class="p">(</span><span class="n">HasTraits</span><span class="p">):</span>
-        <span class="n">trait_view</span> <span class="o">=</span> <span class="n">View</span><span class="p">()</span>
-
-
-<div class="viewcode-block" id="stream_detrend"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.stream_detrend.html#miic.core.alpha_mod.stream_detrend">[docs]</a><span class="k">def</span> <span class="nf">stream_detrend</span><span class="p">(</span><span class="n">signals</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot; Removes the trend from all Traces in signals</span>
-
-<span class="sd">    :type signals: :class:`~obspy.core.trace.Stream`</span>
-<span class="sd">    :param signals: The container for the Traces that we want to remove their</span>
-<span class="sd">        trend</span>
-
-<span class="sd">    :rtype: :class:`~obspy.core.trace.Stream`</span>
-<span class="sd">    :return: **signals_copy**: The resulting object containing the trend</span>
-<span class="sd">        removed version of all Traces in signals</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">signals</span><span class="p">,</span> <span class="n">Stream</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s">&quot;&#39;signals&#39; must be an obspy Stream object&quot;</span><span class="p">)</span>
-
-    <span class="n">signals_copy</span> <span class="o">=</span> <span class="n">signals</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-
-    <span class="k">for</span> <span class="n">tr</span> <span class="ow">in</span> <span class="n">signals_copy</span><span class="p">:</span>
-        <span class="n">tr</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">detrend</span><span class="p">(</span><span class="n">tr</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
-
-    <span class="k">return</span> <span class="n">signals_copy</span>
-
-</div>
-<span class="k">if</span> <span class="n">BC_UI</span><span class="p">:</span>
-    <span class="k">class</span> <span class="nc">_stream_detrend_view</span><span class="p">(</span><span class="n">HasTraits</span><span class="p">):</span>
-        <span class="n">trait_view</span> <span class="o">=</span> <span class="n">View</span><span class="p">()</span>
-
-
-<div class="viewcode-block" id="lat_lon_ele_load"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.lat_lon_ele_load.html#miic.core.alpha_mod.lat_lon_ele_load">[docs]</a><span class="k">def</span> <span class="nf">lat_lon_ele_load</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
+<div class="viewcode-block" id="lat_lon_ele_load"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.lat_lon_ele_load.html#miic.core.miic_utils.lat_lon_ele_load">[docs]</a><span class="k">def</span> <span class="nf">lat_lon_ele_load</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Load lat lon and ele from a tab delimited file.</span>
 
 <span class="sd">    This function load lat, lon and ele from a tab delimited file into a</span>
@@ -1340,7 +1241,7 @@
         <span class="n">trait_view</span> <span class="o">=</span> <span class="n">View</span><span class="p">(</span><span class="n">Item</span><span class="p">(</span><span class="s">&#39;filename&#39;</span><span class="p">))</span>
 
 
-<div class="viewcode-block" id="trace_calc_az_baz_dist"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.trace_calc_az_baz_dist.html#miic.core.alpha_mod.trace_calc_az_baz_dist">[docs]</a><span class="k">def</span> <span class="nf">trace_calc_az_baz_dist</span><span class="p">(</span><span class="n">tr1</span><span class="p">,</span> <span class="n">tr2</span><span class="p">):</span>
+<div class="viewcode-block" id="trace_calc_az_baz_dist"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.trace_calc_az_baz_dist.html#miic.core.miic_utils.trace_calc_az_baz_dist">[docs]</a><span class="k">def</span> <span class="nf">trace_calc_az_baz_dist</span><span class="p">(</span><span class="n">tr1</span><span class="p">,</span> <span class="n">tr2</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Return azimut, back azimut and distance between tr1 and tr2</span>
 <span class="sd">    This funtions calculates the azimut, back azimut and distance between tr1</span>
 <span class="sd">    and tr2 if both have geo information in their stats dictonary.</span>
@@ -1368,19 +1269,16 @@
         <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s">&quot;tr2 must be an obspy Trace object.&quot;</span><span class="p">)</span>
 
     <span class="k">try</span><span class="p">:</span>
-        <span class="kn">from</span> <span class="nn">obspy.core.util.geodetics</span> <span class="kn">import</span> <span class="n">gps2DistAzimuth</span>
+        <span class="kn">from</span> <span class="nn">obspy.geodetics</span> <span class="kn">import</span> <span class="n">gps2dist_azimuth</span> 
     <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="kn">from</span> <span class="nn">obspy.signal.rotate</span> <span class="kn">import</span> <span class="n">gps2DistAzimuth</span>
-        <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
-            <span class="k">print</span> <span class="s">&quot;Missed obspy funciton gps2DistAzimuth&quot;</span>
-            <span class="k">print</span> <span class="s">&quot;Update obspy.core&quot;</span>
-            <span class="k">return</span>
+        <span class="k">print</span> <span class="s">&quot;Missed obspy funciton gps2dist_azimuth&quot;</span>
+        <span class="k">print</span> <span class="s">&quot;Update obspy.&quot;</span>
+        <span class="k">return</span>
 
-    <span class="n">dist</span><span class="p">,</span> <span class="n">az</span><span class="p">,</span> <span class="n">baz</span> <span class="o">=</span> <span class="n">gps2DistAzimuth</span><span class="p">(</span><span class="n">tr1</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">sac</span><span class="o">.</span><span class="n">stla</span><span class="p">,</span> \
-                                    <span class="n">tr1</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">sac</span><span class="o">.</span><span class="n">stlo</span><span class="p">,</span> \
-                                    <span class="n">tr2</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">sac</span><span class="o">.</span><span class="n">stla</span><span class="p">,</span> \
-                                    <span class="n">tr2</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">sac</span><span class="o">.</span><span class="n">stlo</span><span class="p">)</span>
+    <span class="n">dist</span><span class="p">,</span> <span class="n">az</span><span class="p">,</span> <span class="n">baz</span> <span class="o">=</span> <span class="n">gps2dist_azimuth</span><span class="p">(</span><span class="n">tr1</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">sac</span><span class="o">.</span><span class="n">stla</span><span class="p">,</span> \
+                                     <span class="n">tr1</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">sac</span><span class="o">.</span><span class="n">stlo</span><span class="p">,</span> \
+                                     <span class="n">tr2</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">sac</span><span class="o">.</span><span class="n">stla</span><span class="p">,</span> \
+                                     <span class="n">tr2</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">sac</span><span class="o">.</span><span class="n">stlo</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">az</span><span class="p">,</span> <span class="n">baz</span><span class="p">,</span> <span class="n">dist</span>
 
@@ -1390,7 +1288,7 @@
         <span class="n">trait_view</span> <span class="o">=</span> <span class="n">View</span><span class="p">()</span>
 
 
-<div class="viewcode-block" id="nextpow2"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.nextpow2.html#miic.core.alpha_mod.nextpow2">[docs]</a><span class="k">def</span> <span class="nf">nextpow2</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+<div class="viewcode-block" id="nextpow2"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.nextpow2.html#miic.core.miic_utils.nextpow2">[docs]</a><span class="k">def</span> <span class="nf">nextpow2</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Return the smalest integer number larger than ``n`` that is a power</span>
 <span class="sd">    of 2.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -1433,7 +1331,7 @@
         <span class="n">trait_view</span> <span class="o">=</span> <span class="n">View</span><span class="p">(</span><span class="n">Item</span><span class="p">(</span><span class="s">&#39;item_pos&#39;</span><span class="p">))</span>
     
 
-<div class="viewcode-block" id="select_var_from_dict"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.select_var_from_dict.html#miic.core.alpha_mod.select_var_from_dict">[docs]</a><span class="k">def</span> <span class="nf">select_var_from_dict</span><span class="p">(</span><span class="n">dictionary</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+<div class="viewcode-block" id="select_var_from_dict"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.select_var_from_dict.html#miic.core.miic_utils.select_var_from_dict">[docs]</a><span class="k">def</span> <span class="nf">select_var_from_dict</span><span class="p">(</span><span class="n">dictionary</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Select variable from dictionary.</span>
 
 <span class="sd">    Select a variable (value) associated to the key ``key``</span>
@@ -1465,7 +1363,7 @@
         <span class="n">trait_view</span> <span class="o">=</span> <span class="n">View</span><span class="p">(</span><span class="n">Item</span><span class="p">(</span><span class="s">&#39;key&#39;</span><span class="p">))</span>
 
 
-<div class="viewcode-block" id="add_var_to_dict"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.add_var_to_dict.html#miic.core.alpha_mod.add_var_to_dict">[docs]</a><span class="k">def</span> <span class="nf">add_var_to_dict</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">variable</span><span class="p">,</span> <span class="n">dictionary</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<div class="viewcode-block" id="add_var_to_dict"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.add_var_to_dict.html#miic.core.miic_utils.add_var_to_dict">[docs]</a><span class="k">def</span> <span class="nf">add_var_to_dict</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">variable</span><span class="p">,</span> <span class="n">dictionary</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Add a variable to a dictionary.</span>
 
 <span class="sd">    Add a variable to a dictionary as value associated to the key ``key``.</span>
@@ -1504,7 +1402,7 @@
         <span class="n">trait_view</span> <span class="o">=</span> <span class="n">View</span><span class="p">(</span><span class="n">Item</span><span class="p">(</span><span class="s">&#39;string&#39;</span><span class="p">))</span>
 
 
-<div class="viewcode-block" id="print_keys_from_dict"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.print_keys_from_dict.html#miic.core.alpha_mod.print_keys_from_dict">[docs]</a><span class="k">def</span> <span class="nf">print_keys_from_dict</span><span class="p">(</span><span class="n">dictionary</span><span class="p">):</span>
+<div class="viewcode-block" id="print_keys_from_dict"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.print_keys_from_dict.html#miic.core.miic_utils.print_keys_from_dict">[docs]</a><span class="k">def</span> <span class="nf">print_keys_from_dict</span><span class="p">(</span><span class="n">dictionary</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Print the keys present in a dictionary.</span>
 
 <span class="sd">    Print the keys present in dictionary ``dictionary`` and return the list</span>
@@ -1537,7 +1435,7 @@
         <span class="n">trait_view</span> <span class="o">=</span> <span class="n">View</span><span class="p">()</span>
 
 
-<div class="viewcode-block" id="save_dict_to_matlab_file"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.save_dict_to_matlab_file.html#miic.core.alpha_mod.save_dict_to_matlab_file">[docs]</a><span class="k">def</span> <span class="nf">save_dict_to_matlab_file</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">dictionary</span><span class="p">):</span>
+<div class="viewcode-block" id="save_dict_to_matlab_file"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.save_dict_to_matlab_file.html#miic.core.miic_utils.save_dict_to_matlab_file">[docs]</a><span class="k">def</span> <span class="nf">save_dict_to_matlab_file</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">dictionary</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Save a dictionary to a matlab file.</span>
 
 <span class="sd">    Save values stored in a dictionary as variables having the name of the key</span>
@@ -1549,7 +1447,7 @@
 <span class="sd">    :param filename: name of the matlab file to be created</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">print</span> <span class="s">&#39;saving to </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">filename</span>
+    <span class="c">#print &#39;saving to %s&#39; % filename</span>
     <span class="n">savemat</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">dictionary</span><span class="p">,</span> <span class="n">oned_as</span><span class="o">=</span><span class="s">&#39;row&#39;</span><span class="p">)</span>
 
     <span class="k">return</span>
@@ -1561,7 +1459,7 @@
         <span class="n">trait_view</span> <span class="o">=</span> <span class="n">View</span><span class="p">(</span><span class="n">Item</span><span class="p">(</span><span class="s">&#39;filename&#39;</span><span class="p">))</span>
 
 
-<div class="viewcode-block" id="convert_time"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.convert_time.html#miic.core.alpha_mod.convert_time">[docs]</a><span class="k">def</span> <span class="nf">convert_time</span><span class="p">(</span><span class="n">time_vect</span><span class="p">):</span>
+<div class="viewcode-block" id="convert_time"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.convert_time.html#miic.core.miic_utils.convert_time">[docs]</a><span class="k">def</span> <span class="nf">convert_time</span><span class="p">(</span><span class="n">time_vect</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Convert a list/array of timestaps in a array of datetime.datetime obj</span>
 
 <span class="sd">    This fucntion does the conversion of a list/array of string in a list/array</span>
@@ -1618,7 +1516,7 @@
         <span class="n">trait_view</span> <span class="o">=</span> <span class="n">View</span><span class="p">()</span>
 
 
-<div class="viewcode-block" id="convert_time_to_string"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.convert_time_to_string.html#miic.core.alpha_mod.convert_time_to_string">[docs]</a><span class="k">def</span> <span class="nf">convert_time_to_string</span><span class="p">(</span><span class="n">time_vect</span><span class="p">):</span>
+<div class="viewcode-block" id="convert_time_to_string"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.convert_time_to_string.html#miic.core.miic_utils.convert_time_to_string">[docs]</a><span class="k">def</span> <span class="nf">convert_time_to_string</span><span class="p">(</span><span class="n">time_vect</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Convert a list/array of datetime.datetime obj to an array of strings</span>
 
 <span class="sd">    This fucntion does the conversion of a list/array of</span>
@@ -1651,7 +1549,29 @@
         <span class="n">trait_view</span> <span class="o">=</span> <span class="n">View</span><span class="p">()</span>
 
 
-<div class="viewcode-block" id="serial_date_from_datetime"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.serial_date_from_datetime.html#miic.core.alpha_mod.serial_date_from_datetime">[docs]</a><span class="k">def</span> <span class="nf">serial_date_from_datetime</span><span class="p">(</span><span class="n">dt</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">correlation_subdir_name</span><span class="p">(</span><span class="n">date</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Create the path name to a sub folder with YEAR/JDAY format</span>
+
+<span class="sd">    The path will have the following structure:</span>
+<span class="sd">    YEAR/JDAY</span>
+<span class="sd">    </span>
+<span class="sd">    :type date: datetime.datetime or obspy.UTCDateTime</span>
+<span class="sd">    :param date: date of the data</span>
+<span class="sd">    </span>
+<span class="sd">    :rtype: str</span>
+<span class="sd">    :return: name of subpath</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">date</span><span class="p">,</span><span class="n">UTCDateTime</span><span class="p">):</span>
+        <span class="n">date</span> <span class="o">=</span> <span class="n">date</span><span class="o">.</span><span class="n">datetime</span>
+
+    <span class="n">subpath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">date</span><span class="o">.</span><span class="n">year</span><span class="p">),</span><span class="s">&quot;</span><span class="si">%03d</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">date</span><span class="o">.</span><span class="n">timetuple</span><span class="p">()</span><span class="o">.</span><span class="n">tm_yday</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">subpath</span>
+
+
+
+<div class="viewcode-block" id="serial_date_from_datetime"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.serial_date_from_datetime.html#miic.core.miic_utils.serial_date_from_datetime">[docs]</a><span class="k">def</span> <span class="nf">serial_date_from_datetime</span><span class="p">(</span><span class="n">dt</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Converts a datetime.datetime object into a number as toordinal but</span>
 <span class="sd">    including seconds.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -1661,7 +1581,7 @@
     <span class="k">return</span> <span class="n">sd</span>
 
 </div>
-<div class="viewcode-block" id="flatten"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.flatten.html#miic.core.alpha_mod.flatten">[docs]</a><span class="k">def</span> <span class="nf">flatten</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+<div class="viewcode-block" id="flatten"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.flatten.html#miic.core.miic_utils.flatten">[docs]</a><span class="k">def</span> <span class="nf">flatten</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Return the flattened version of the input array x</span>
 
 <span class="sd">    This funciton works with all :class:`~collections.Iterable` that can be</span>
@@ -1694,7 +1614,7 @@
         <span class="n">trait_view</span> <span class="o">=</span> <span class="n">View</span><span class="p">()</span>
 
 
-<div class="viewcode-block" id="flatten_recarray"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.flatten_recarray.html#miic.core.alpha_mod.flatten_recarray">[docs]</a><span class="k">def</span> <span class="nf">flatten_recarray</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+<div class="viewcode-block" id="flatten_recarray"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.flatten_recarray.html#miic.core.miic_utils.flatten_recarray">[docs]</a><span class="k">def</span> <span class="nf">flatten_recarray</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Flatten a recarray</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">flat_dict</span> <span class="o">=</span> <span class="p">{}</span>
@@ -1711,7 +1631,7 @@
     <span class="k">return</span> <span class="n">x</span>
 
 </div>
-<div class="viewcode-block" id="save_dv"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.save_dv.html#miic.core.alpha_mod.save_dv">[docs]</a><span class="k">def</span> <span class="nf">save_dv</span><span class="p">(</span><span class="n">dv</span><span class="p">,</span> <span class="n">suffix</span><span class="p">,</span> <span class="n">save_dir</span><span class="p">,</span> <span class="n">pattern</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">):</span>
+<div class="viewcode-block" id="save_dv"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.save_dv.html#miic.core.miic_utils.save_dv">[docs]</a><span class="k">def</span> <span class="nf">save_dv</span><span class="p">(</span><span class="n">dv</span><span class="p">,</span> <span class="n">suffix</span><span class="p">,</span> <span class="n">save_dir</span><span class="p">,</span> <span class="n">pattern</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Save dv dictionary</span>
 
 <span class="sd">    Note: Masked array have to be considered with care because masked</span>
@@ -1846,7 +1766,7 @@
     <span class="k">return</span> <span class="n">is_incomplete</span><span class="p">,</span> <span class="n">missed_keys</span><span class="p">,</span> <span class="n">wrong_classes</span>
 
 
-<div class="viewcode-block" id="corr_check"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.corr_check.html#miic.core.alpha_mod.corr_check">[docs]</a><span class="k">def</span> <span class="nf">corr_check</span><span class="p">(</span><span class="n">corr_fun_struct</span><span class="p">):</span>
+<div class="viewcode-block" id="corr_check"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.corr_check.html#miic.core.miic_utils.corr_check">[docs]</a><span class="k">def</span> <span class="nf">corr_check</span><span class="p">(</span><span class="n">corr_fun_struct</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Correlation function dictionary check</span>
 
 <span class="sd">    This function test if the a loaded correlation function dictionary</span>
@@ -1966,7 +1886,7 @@
     <span class="k">return</span> <span class="n">ret_dict</span>
 
 
-<div class="viewcode-block" id="corr_mat_check"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.corr_mat_check.html#miic.core.alpha_mod.corr_mat_check">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_check</span><span class="p">(</span><span class="n">corr_mat_struct</span><span class="p">):</span>
+<div class="viewcode-block" id="corr_mat_check"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.corr_mat_check.html#miic.core.miic_utils.corr_mat_check">[docs]</a><span class="k">def</span> <span class="nf">corr_mat_check</span><span class="p">(</span><span class="n">corr_mat_struct</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Correlation matrix dictionary check</span>
 
 <span class="sd">    This function test if the a loaded correlation matrix dictionary</span>
@@ -2038,7 +1958,7 @@
     <span class="k">return</span> <span class="n">ret_dict</span>
 
 </div>
-<div class="viewcode-block" id="dv_check"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.dv_check.html#miic.core.alpha_mod.dv_check">[docs]</a><span class="k">def</span> <span class="nf">dv_check</span><span class="p">(</span><span class="n">dv_dict</span><span class="p">):</span>
+<div class="viewcode-block" id="dv_check"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.dv_check.html#miic.core.miic_utils.dv_check">[docs]</a><span class="k">def</span> <span class="nf">dv_check</span><span class="p">(</span><span class="n">dv_dict</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Velocity change dictionary check</span>
 
 <span class="sd">    This function test if a loaded velocity change dictionary</span>
@@ -2174,7 +2094,7 @@
     <span class="k">return</span> <span class="n">ret_dict</span>
 
 
-<div class="viewcode-block" id="create_panel"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.create_panel.html#miic.core.alpha_mod.create_panel">[docs]</a><span class="k">def</span> <span class="nf">create_panel</span><span class="p">(</span><span class="n">df_list</span><span class="p">,</span> <span class="n">df_names</span><span class="p">):</span>
+<div class="viewcode-block" id="create_panel"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.create_panel.html#miic.core.miic_utils.create_panel">[docs]</a><span class="k">def</span> <span class="nf">create_panel</span><span class="p">(</span><span class="n">df_list</span><span class="p">,</span> <span class="n">df_names</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Create a Panel given a list of DataFrame and a list of names</span>
 
 <span class="sd">    This function creates a :py:class:`~pandas.Panel` putting together a list</span>
@@ -2210,7 +2130,7 @@
     <span class="k">return</span> <span class="n">dp</span>
 
 </div>
-<div class="viewcode-block" id="dv_dataframe_weight"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.dv_dataframe_weight.html#miic.core.alpha_mod.dv_dataframe_weight">[docs]</a><span class="k">def</span> <span class="nf">dv_dataframe_weight</span><span class="p">(</span><span class="n">dv</span><span class="p">,</span> <span class="n">corr</span><span class="p">):</span>
+<div class="viewcode-block" id="dv_dataframe_weight"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.dv_dataframe_weight.html#miic.core.miic_utils.dv_dataframe_weight">[docs]</a><span class="k">def</span> <span class="nf">dv_dataframe_weight</span><span class="p">(</span><span class="n">dv</span><span class="p">,</span> <span class="n">corr</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Multiply column-by-column two DataFrame</span>
 
 <span class="sd">    This funciton multiplies column-by-column two</span>
@@ -2383,7 +2303,7 @@
     <span class="k">return</span> <span class="n">x</span>
 
 
-<div class="viewcode-block" id="create_date_obj"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.create_date_obj.html#miic.core.alpha_mod.create_date_obj">[docs]</a><span class="k">def</span> <span class="nf">create_date_obj</span><span class="p">(</span><span class="n">year</span><span class="p">,</span> <span class="n">month</span><span class="p">,</span> <span class="n">day</span><span class="p">):</span>
+<div class="viewcode-block" id="create_date_obj"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.create_date_obj.html#miic.core.miic_utils.create_date_obj">[docs]</a><span class="k">def</span> <span class="nf">create_date_obj</span><span class="p">(</span><span class="n">year</span><span class="p">,</span> <span class="n">month</span><span class="p">,</span> <span class="n">day</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Creates a datetime object &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="p">(</span><span class="n">year</span><span class="p">,</span> <span class="n">month</span><span class="p">,</span> <span class="n">day</span><span class="p">)</span>
 
@@ -2399,7 +2319,7 @@
                           <span class="n">Item</span><span class="p">(</span><span class="s">&#39;day&#39;</span><span class="p">))</span>
 
 
-<div class="viewcode-block" id="load_pickled_Series_DataFrame_Panel"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.load_pickled_Series_DataFrame_Panel.html#miic.core.alpha_mod.load_pickled_Series_DataFrame_Panel">[docs]</a><span class="k">def</span> <span class="nf">load_pickled_Series_DataFrame_Panel</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
+<div class="viewcode-block" id="load_pickled_Series_DataFrame_Panel"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.load_pickled_Series_DataFrame_Panel.html#miic.core.miic_utils.load_pickled_Series_DataFrame_Panel">[docs]</a><span class="k">def</span> <span class="nf">load_pickled_Series_DataFrame_Panel</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Load a pickled DataFrame (ref. pandas prj) &quot;&quot;&quot;</span>
     <span class="n">df</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">lib</span><span class="o">.</span><span class="n">npyio</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">df</span>
@@ -2411,7 +2331,7 @@
         <span class="n">trait_view</span> <span class="o">=</span> <span class="n">View</span><span class="p">(</span><span class="n">Item</span><span class="p">(</span><span class="s">&#39;filename&#39;</span><span class="p">))</span>
 
 
-<div class="viewcode-block" id="get_values_DataFrame"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.get_values_DataFrame.html#miic.core.alpha_mod.get_values_DataFrame">[docs]</a><span class="k">def</span> <span class="nf">get_values_DataFrame</span><span class="p">(</span><span class="n">df</span><span class="p">):</span>
+<div class="viewcode-block" id="get_values_DataFrame"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.get_values_DataFrame.html#miic.core.miic_utils.get_values_DataFrame">[docs]</a><span class="k">def</span> <span class="nf">get_values_DataFrame</span><span class="p">(</span><span class="n">df</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Get the values out of DataFrame (ref. pandas prj) &quot;&quot;&quot;</span>
     <span class="n">values</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">values</span>
     <span class="n">index</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">index</span>
@@ -2424,6 +2344,28 @@
         <span class="n">trait_view</span> <span class="o">=</span> <span class="n">View</span><span class="p">()</span>
 
 
+<div class="viewcode-block" id="import_function_by_name"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.import_function_by_name.html#miic.core.miic_utils.import_function_by_name">[docs]</a><span class="k">def</span> <span class="nf">import_function_by_name</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Import a function of a given name.</span>
+<span class="sd">    </span>
+<span class="sd">    Import a function given its name as string and return it.</span>
+<span class="sd">    Example for func_name: obspy.core.read</span>
+<span class="sd">    </span>
+<span class="sd">    :type func_name: string</span>
+<span class="sd">    :param func_name: name of function to import</span>
+<span class="sd">    :rtype: object</span>
+<span class="sd">    :return: function</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="k">assert</span> <span class="nb">type</span><span class="p">(</span><span class="n">func</span><span class="p">)</span><span class="o">==</span><span class="nb">str</span><span class="p">,</span> <span class="s">&quot;func is not a string&quot;</span>
+    <span class="k">assert</span> <span class="s">&#39;.&#39;</span> <span class="ow">in</span> <span class="n">func</span><span class="p">,</span> <span class="s">&quot;func must name the function including its module: </span><span class="si">%s</span><span class="s">&quot;</span>\
+                         <span class="o">%</span> <span class="n">func</span>
+    <span class="n">modname</span> <span class="o">=</span> <span class="n">func</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="o">*</span><span class="n">func</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="s">&#39;.&#39;</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">funcname</span> <span class="o">=</span> <span class="n">func</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="o">*</span><span class="n">func</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="s">&#39;.&#39;</span><span class="p">):]</span>
+    <span class="n">mod</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">import_module</span><span class="p">(</span><span class="n">modname</span><span class="p">)</span>
+    <span class="n">function</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">mod</span><span class="p">,</span> <span class="n">funcname</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">function</span>
+
+</div>
 <span class="k">def</span> <span class="nf">find_stations_name</span><span class="p">(</span><span class="n">comb</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Extract the ordered list of stations from a set of traces id &quot;&quot;&quot;</span>
 
@@ -2439,7 +2381,7 @@
     <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">stations_list</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="from_comb_to_stations_list"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.from_comb_to_stations_list.html#miic.core.alpha_mod.from_comb_to_stations_list">[docs]</a><span class="k">def</span> <span class="nf">from_comb_to_stations_list</span><span class="p">(</span><span class="n">comb</span><span class="p">,</span> <span class="n">full_stations_list</span><span class="p">):</span>
+<div class="viewcode-block" id="from_comb_to_stations_list"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.from_comb_to_stations_list.html#miic.core.miic_utils.from_comb_to_stations_list">[docs]</a><span class="k">def</span> <span class="nf">from_comb_to_stations_list</span><span class="p">(</span><span class="n">comb</span><span class="p">,</span> <span class="n">full_stations_list</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Extract the list of stations involved in a series of combinations &quot;&quot;&quot;</span>
 
     <span class="n">stat_list</span> <span class="o">=</span> <span class="nb">set</span><span class="p">([])</span>
@@ -2452,7 +2394,7 @@
     <span class="k">return</span> <span class="n">stat_list</span>
 
 </div>
-<div class="viewcode-block" id="from_str_comb_to_list"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.from_str_comb_to_list.html#miic.core.alpha_mod.from_str_comb_to_list">[docs]</a><span class="k">def</span> <span class="nf">from_str_comb_to_list</span><span class="p">(</span><span class="n">str_comb</span><span class="p">,</span> <span class="n">full_stations_list</span><span class="p">):</span>
+<div class="viewcode-block" id="from_str_comb_to_list"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.from_str_comb_to_list.html#miic.core.miic_utils.from_str_comb_to_list">[docs]</a><span class="k">def</span> <span class="nf">from_str_comb_to_list</span><span class="p">(</span><span class="n">str_comb</span><span class="p">,</span> <span class="n">full_stations_list</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; From a list of str combinations to a list of tuples</span>
 
 <span class="sd">    This function transform a list of combinations in the form</span>
@@ -2523,7 +2465,7 @@
     <span class="k">return</span> <span class="n">stations_info</span>
 
 
-<div class="viewcode-block" id="from_single_pattern_to_panel"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.from_single_pattern_to_panel.html#miic.core.alpha_mod.from_single_pattern_to_panel">[docs]</a><span class="k">def</span> <span class="nf">from_single_pattern_to_panel</span><span class="p">(</span><span class="n">load_dir</span><span class="o">=</span><span class="s">&#39;.&#39;</span><span class="p">,</span> <span class="n">save_dir</span><span class="o">=</span><span class="s">&#39;./save&#39;</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="mf">10.0</span><span class="p">,</span> \
+<div class="viewcode-block" id="from_single_pattern_to_panel"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.from_single_pattern_to_panel.html#miic.core.miic_utils.from_single_pattern_to_panel">[docs]</a><span class="k">def</span> <span class="nf">from_single_pattern_to_panel</span><span class="p">(</span><span class="n">load_dir</span><span class="o">=</span><span class="s">&#39;.&#39;</span><span class="p">,</span> <span class="n">save_dir</span><span class="o">=</span><span class="s">&#39;./save&#39;</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="mf">10.0</span><span class="p">,</span> \
                                  <span class="n">suffix</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">,</span> <span class="n">old_style</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Create :class:`pandas.Panel` object recombining all corr and dv curves.</span>
 
@@ -2700,7 +2642,7 @@
 <span class="c">##############################################################################</span>
 
 
-<div class="viewcode-block" id="trimmed_std"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.trimmed_std.html#miic.core.alpha_mod.trimmed_std">[docs]</a><span class="k">def</span> <span class="nf">trimmed_std</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">percentile</span><span class="p">):</span>
+<div class="viewcode-block" id="trimmed_std"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.trimmed_std.html#miic.core.miic_utils.trimmed_std">[docs]</a><span class="k">def</span> <span class="nf">trimmed_std</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">percentile</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Trimmed standard deviation.&quot;&quot;&quot;</span>
     <span class="c"># data = np.array(data)</span>
     <span class="n">data</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
@@ -2710,27 +2652,27 @@
     <span class="k">return</span> <span class="n">data</span><span class="p">[</span><span class="n">low</span><span class="p">:</span><span class="n">high</span><span class="p">]</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">ddof</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 
 </div>
-<div class="viewcode-block" id="ref_sine"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.ref_sine.html#miic.core.alpha_mod.ref_sine">[docs]</a><span class="k">def</span> <span class="nf">ref_sine</span><span class="p">(</span><span class="n">n_points</span><span class="p">):</span>
+<div class="viewcode-block" id="ref_sine"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.ref_sine.html#miic.core.miic_utils.ref_sine">[docs]</a><span class="k">def</span> <span class="nf">ref_sine</span><span class="p">(</span><span class="n">n_points</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Reference sine waveform.&quot;&quot;&quot;</span>
     <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">20</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="n">n_points</span><span class="p">)</span>
     <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">y</span>
 
 </div>
-<div class="viewcode-block" id="print_input"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.print_input.html#miic.core.alpha_mod.print_input">[docs]</a><span class="k">def</span> <span class="nf">print_input</span><span class="p">(</span><span class="n">input_str</span><span class="p">):</span>
+<div class="viewcode-block" id="print_input"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.print_input.html#miic.core.miic_utils.print_input">[docs]</a><span class="k">def</span> <span class="nf">print_input</span><span class="p">(</span><span class="n">input_str</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Print its input.&quot;&quot;&quot;</span>
     <span class="k">print</span> <span class="n">input_str</span>
     <span class="k">return</span>
 
 </div>
-<div class="viewcode-block" id="print_tuples"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.print_tuples.html#miic.core.alpha_mod.print_tuples">[docs]</a><span class="k">def</span> <span class="nf">print_tuples</span><span class="p">(</span><span class="n">iterable</span><span class="p">):</span>
+<div class="viewcode-block" id="print_tuples"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.print_tuples.html#miic.core.miic_utils.print_tuples">[docs]</a><span class="k">def</span> <span class="nf">print_tuples</span><span class="p">(</span><span class="n">iterable</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Print tuples.&quot;&quot;&quot;</span>
     <span class="k">for</span> <span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span> <span class="ow">in</span> <span class="n">iterable</span><span class="p">:</span>
         <span class="k">print</span> <span class="s">&quot;(</span><span class="si">%(key)s</span><span class="s">,</span><span class="si">%(value)s</span><span class="s">)&quot;</span> <span class="o">%</span> <span class="p">{</span><span class="s">&#39;key&#39;</span><span class="p">:</span> <span class="n">key</span><span class="p">,</span> <span class="s">&#39;value&#39;</span><span class="p">:</span> <span class="n">value</span><span class="p">}</span>
     <span class="k">return</span>
 
 </div>
-<div class="viewcode-block" id="print_tuple"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.print_tuple.html#miic.core.alpha_mod.print_tuple">[docs]</a><span class="k">def</span> <span class="nf">print_tuple</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+<div class="viewcode-block" id="print_tuple"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.print_tuple.html#miic.core.miic_utils.print_tuple">[docs]</a><span class="k">def</span> <span class="nf">print_tuple</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Print a tuple.&quot;&quot;&quot;</span>
     <span class="k">print</span> <span class="s">&quot;(</span><span class="si">%(key)s</span><span class="s">,</span><span class="si">%(value)s</span><span class="s">)&quot;</span> <span class="o">%</span> <span class="p">{</span><span class="s">&#39;key&#39;</span><span class="p">:</span> <span class="n">key</span><span class="p">,</span> <span class="s">&#39;value&#39;</span><span class="p">:</span> <span class="n">value</span><span class="p">}</span>
     <span class="k">return</span>
@@ -2758,7 +2700,7 @@
     </div>
     <div class="footer" role="contentinfo">
         &copy; Copyright 2012, Eraldo Pomponi.
-      Last updated on 2016-11-28T14:56:38.
+      Last updated on 2017-10-19T15:03:57.
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
     </div>
   </body>
