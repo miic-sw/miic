@@ -44,7 +44,7 @@ from obspy.seishub import Client as Client_seis
 
 # Local imports
 # from miic.core.wt_fun import WT_Denoise
-from miic.core.miic_utils import stream_detrend, stream_demean, dir_read
+from miic.core.miic_utils import dir_read
 
 # #############################################################################
 # Exceptions                                                                 #

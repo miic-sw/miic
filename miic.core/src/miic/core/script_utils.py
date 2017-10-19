@@ -7,9 +7,12 @@ Created on Wed Feb 22 09:33:04 2017
 
 import os
 import yaml
-from miic.core.miic_utils import create_path
+import shutil
+import importlib
+from miic.core.miic_utils import create_path, import_function_by_name
 import miic.core.pxcorr_func as px
 from copy import deepcopy
+from obspy import UTCDateTime
 
 
 def ini_project(par_file):
@@ -31,22 +34,32 @@ def ini_project(par_file):
             par = yaml.safe_load(f)
         except yaml.YAMLError as exc:
             raise(exc)
+
+    par.update({'execution_start':'%s' % UTCDateTime()})
+
     create_path(par['proj_dir'])
     par.update({'log_dir':os.path.join(par['proj_dir'],par['log_subdir'])})
     par.update({'fig_dir':os.path.join(par['proj_dir'],par['fig_subdir'])})
     create_path(par['log_dir'])
     create_path(par['fig_dir'])
-    
     par['co'].update({'res_dir': os.path.join(par['proj_dir'],
                                              par['co']['subdir'])})
     create_path(par['co']['res_dir'])
     
+    # copy parameter file to log dir
+    shutil.copy(par_file,os.path.join(par['log_dir'],'%s_parfile.txt' % par['execution_start']))
+
+    # replace function names for preprocessing with functions
+    if 'preProcessing' in par['co'].keys():
+        for procStep in par['co']['preProcessing']:
+            procStep['function'] = import_function_by_name(procStep['function'])
+
     # create corr_args
     # replace function name by function itself
     for func in par['co']['corr_args']['TDpreProcessing']:
-        func['function'] = getattr(px, func['function'])
+        func['function'] = import_function_by_name(func['function'])
     for func in par['co']['corr_args']['FDpreProcessing']:
-        func['function'] = getattr(px, func['function'])
+        func['function'] = import_function_by_name(func['function'])
     if 'direct_output' in par['co']['corr_args']:
         par['co']['corr_args']['direct_output'].update({'base_dir': par['co']['res_dir']})
     return par

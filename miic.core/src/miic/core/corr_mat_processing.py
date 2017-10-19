@@ -2115,9 +2115,9 @@ def corr_mat_create_from_traces(base_dir, save_dir, corr_length=0,
 
         # save the matlab variable
 
-        print 'saving file %s of size %d x %d' % \
-            (ofname[comb_idx], corr_mat['corr_data'].shape[0],
-             corr_mat['corr_data'].shape[1])
+        #print 'saving file %s of size %d x %d' % \
+        #    (ofname[comb_idx], corr_mat['corr_data'].shape[0],
+        #     corr_mat['corr_data'].shape[1])
 
         savemat(join(save_dir, ofname[comb_idx]), corr_mat, oned_as='row')
 

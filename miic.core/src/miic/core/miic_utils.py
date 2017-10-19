@@ -28,6 +28,7 @@ import collections
 import time
 from cPickle import Pickler
 import shutil
+import importlib
 
 
 # Pandas import
@@ -1380,7 +1381,7 @@ def save_dict_to_matlab_file(filename, dictionary):
     :param filename: name of the matlab file to be created
     """
 
-    print 'saving to %s' % filename
+    #print 'saving to %s' % filename
     savemat(filename, dictionary, oned_as='row')
 
     return
@@ -2275,6 +2276,28 @@ def get_values_DataFrame(df):
 if BC_UI:
     class _get_values_DataFrame_view(HasTraits):
         trait_view = View()
+
+
+def import_function_by_name(func):
+    """Import a function of a given name.
+
+    Import a function given its name as string and return it.
+    Example for func_name: obspy.core.read
+
+    :type func_name: string
+    :param func_name: name of function to import
+    :rtype: object
+    :return: function
+    """
+
+    assert type(func)==str, "func is not a string"
+    assert '.' in func, "func must name the function including its module: %s"\
+                         % func
+    modname = func[:-1*func[::-1].index('.')-1]
+    funcname = func[-1*func[::-1].index('.'):]
+    mod = importlib.import_module(modname)
+    function = getattr(mod, funcname)
+    return function
 
 
 def find_stations_name(comb):

@@ -528,23 +528,21 @@ def stream_mute(st, filter=(), mute_method='std_factor', mute_value=3,
     To completely surpress the effect of data with high amplitudes e.g. after
     aftershocks these parts of the data are muted (set to zero). The respective
     parts of the signal are identified as those where the envelope in a given
-    frequency exceeds a threshold given directly as absolute number or as a
-    multiple of the data's standard deviation. A taper of length `taper_len` is
-    applied to smooth the edges of muted segments. Setting `extend_gaps` to
+    frequency band exceeds a threshold given directly as absolute number or as 
+    a multiple of the data's standard deviation. A taper of length `taper_len` 
+    is applied to smooth the edges of muted segments. Setting `extend_gaps` to
     Ture will ensure that the taper is applied outside the segments and data
     inside these segments will all zero. Edges of the data will be tapered too
     in this case.
     The function returns a muted copy of the data.
 
     :Example:
-    ``args={'filter':{'type':'bandpass', 'freqmin':1., 'freqmax':6.},'taper_len':1., 'threshold':1000, 'std_factor':1, 'extend_gaps':True}``
+    ``args={'filter':(1.,6.),'taper_len':1., 'threshold':1000, 'std_factor':1, 'extend_gaps':True}``
 
     :type st: obspy.Stream
     :param st: stream with data to be muted
-    :type filter: dict
-    :param filter: Necessary arguments for the respective filter
-        that will be passed on. (e.g. ``freqmin=1.0``, ``freqmax=20.0`` for
-        ``"bandpass"``)
+    :type filter: tuple
+    :param filter: freqmin and freqmax of a bandpass filter
     :type mute_method: str
     :param mute_method: either 'std_factor', 'median_factor' or 'threshold'
         that lead to muting when the (filtered) envelope exceeds the standard
