@@ -34,7 +34,7 @@ except ImportError:
     pass
     
 # Obspy imports
-from obspy.signal.invsim import cosTaper
+from obspy.signal.invsim import cosine_taper
 from obspy.core import trace, stream
 
 
@@ -984,7 +984,7 @@ def corr_mat_taper_center(corr_mat, width, slope_frac=0.05):
 
     # calculate inverse taper
     taper = np.zeros(length + 1)
-    tap = cosTaper(slope_length * 2, p=1)
+    tap = cosine_taper(slope_length * 2, p=1)
     taper[0:slope_length] = tap[slope_length:]
     taper[-slope_length:] = tap[:slope_length]
 
