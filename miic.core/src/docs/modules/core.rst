@@ -8,7 +8,6 @@ MIIC Library Reference
     :maxdepth: 1
     :titlesonly:
     
-    Testing module (not fully documented) miic.core.alpha_mod <alpha_mod>
     ndarray_sigproc
     miic_utils
 
@@ -40,5 +39,4 @@ MIIC Library Reference
     :maxdepth: 1
     :titlesonly:
     
-    plot_mod
     plot_fun
