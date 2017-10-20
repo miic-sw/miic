@@ -568,10 +568,10 @@ def stream_mute(st, filter=(), mute_method='std_factor', mute_value=3,
     assert type(extend_gaps) is bool, "extend_gaps is not a boolean."
     # copy the data
     cst = st.copy()
-    cst.merge()
+    cst = cst.split()
     cst.detrend('linear')
     cst.taper(max_length=taper_len,max_percentage=0.1)
-
+    cst.merge()
 
     for ind,tr in enumerate(cst):
         # return zeros if length of traces is shorter than taper
@@ -692,6 +692,9 @@ def stream_filter(st, ftype, filter_option, parallel=True, processes=None):
     fparam = dict([(kw_filed, filter_option[kw_filed]) \
                 for kw_filed in filter_option])
 
+    # take care of masked traces
+    st = st.split()
+
     if not parallel:
         st.filter(ftype, **fparam)
     else:
@@ -707,7 +710,7 @@ def stream_filter(st, ftype, filter_option, parallel=True, processes=None):
         p.join()
 
     # Change the name to help blockcanvas readability
-    st_filtered = st
+    st_filtered = st.merge()
     return st_filtered
 
 
