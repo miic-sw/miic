@@ -8,7 +8,8 @@ MIIC Scripts
     :maxdepth: 1
     :titlesonly:
     
-    paracorr
+    calculate_noise_correlations
+    measure_velocity_change
 
 .. rubric:: Correlation specific
 

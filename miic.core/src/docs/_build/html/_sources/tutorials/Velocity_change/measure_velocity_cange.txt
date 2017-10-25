@@ -1,0 +1,11 @@
+.. _measure_velocity_change_tutorial
+
+=======================
+Measure Velocity change
+=======================
+
+************
+Introduction
+************
+
+After the computation of noise correaltion functions these are available for further analysis for example to estimate changes of the seismic velocity. This is implemented in the :download:`calculate_noise_correlations module <../../../miic/scripts/calculate_noise_correlations.py>`. It uses the :func:`~miic.scripts.measure_velocity_change`

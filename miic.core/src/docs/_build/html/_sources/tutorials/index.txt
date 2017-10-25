@@ -1,11 +1,12 @@
-=========================
-Ambient Noise Correlation
-=========================
+============
+MIIC Scripts
+============
 
 .. toctree::
    :maxdepth: 1
 
    Correlation/Correlation
-   ..CorrelationFunction1/CorrelationFunction1
-   ..CorrelationFunction2/CorrelationFunction2
-   ..Loops/Loops
+   Velocity_change/measure_velocity_change
+   .. CorrelationFunction1/CorrelationFunction1
+   .. CorrelationFunction2/CorrelationFunction2
+   .. Loops/Loops

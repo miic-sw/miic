@@ -1,0 +1,6 @@
+miic.scripts.calculate_noise_correlations.paracorr
+==================================================
+
+.. currentmodule:: miic.scripts.calculate_noise_correlations
+
+.. autofunction:: paracorr

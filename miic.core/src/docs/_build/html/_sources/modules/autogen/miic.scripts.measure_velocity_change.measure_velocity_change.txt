@@ -1,0 +1,6 @@
+miic.scripts.measure_velocity_change.measure_velocity_change
+============================================================
+
+.. currentmodule:: miic.scripts.measure_velocity_change
+
+.. autofunction:: measure_velocity_change

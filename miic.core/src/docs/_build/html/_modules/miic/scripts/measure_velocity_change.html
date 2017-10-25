@@ -1,0 +1,191 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>miic.scripts.measure_velocity_change &mdash; MIIC 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="top" title="MIIC 1.0 documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MIIC 1.0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for miic.scripts.measure_velocity_change</h1><div class="highlight"><pre>
+<span class="c"># coding: utf-8</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">datetime</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
+
+<span class="kn">from</span> <span class="nn">miic.core.miic_utils</span> <span class="kn">import</span> <span class="n">save_dv</span><span class="p">,</span> <span class="n">dir_read</span><span class="p">,</span> <span class="n">mat_to_ndarray</span><span class="p">,</span> <span class="n">datetime_list</span>
+<span class="kn">from</span> <span class="nn">miic.core.script_utils</span> <span class="kn">import</span> <span class="n">ini_project</span><span class="p">,</span> <span class="n">read_parameter_file</span><span class="p">,</span> <span class="n">create_path</span>
+<span class="kn">from</span> <span class="nn">miic.core.corr_mat_processing</span> <span class="kn">import</span> <span class="n">corr_mat_filter</span><span class="p">,</span> <span class="n">corr_mat_correct_stretch</span><span class="p">,</span> <span class="n">corr_mat_stretch</span><span class="p">,</span> <span class="n">corr_mat_normalize</span><span class="p">,</span> <span class="n">corr_mat_extract_trace</span><span class="p">,</span> <span class="n">corr_mat_resample</span><span class="p">,</span> <span class="n">corr_mat_trim</span>
+<span class="kn">import</span> <span class="nn">miic.core.plot_fun</span> <span class="kn">as</span> <span class="nn">pf</span>
+
+
+
+
+
+<div class="viewcode-block" id="measure_velocity_change"><a class="viewcode-back" href="../../../modules/autogen/miic.scripts.measure_velocity_change.measure_velocity_change.html#miic.scripts.measure_velocity_change.measure_velocity_change">[docs]</a><span class="k">def</span> <span class="nf">measure_velocity_change</span><span class="p">(</span><span class="n">par</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Estimate velocity changes.</span>
+<span class="sd">    </span>
+<span class="sd">    This function estimates the velocity changes from noise correlation functions.</span>
+<span class="sd">    </span>
+<span class="sd">    :type par: dict</span>
+<span class="sd">    :param par: project parameters</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="c"># set up the logger</span>
+    <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s">&#39;measure_velocity_change&#39;</span><span class="p">)</span>
+    <span class="n">hdlr</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">FileHandler</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">par</span><span class="p">[</span><span class="s">&#39;log_dir&#39;</span><span class="p">],</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">_measure_velocity_change.log&#39;</span> <span class="o">%</span> <span class="p">(</span>
+                        <span class="n">par</span><span class="p">[</span><span class="s">&#39;execution_start&#39;</span><span class="p">])))</span>
+    <span class="n">formatter</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">Formatter</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%(asctime)s</span><span class="s"> </span><span class="si">%(levelname)s</span><span class="s"> </span><span class="si">%(message)s</span><span class="s">&#39;</span><span class="p">)</span>
+    <span class="n">hdlr</span><span class="o">.</span><span class="n">setFormatter</span><span class="p">(</span><span class="n">formatter</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">addHandler</span><span class="p">(</span><span class="n">hdlr</span><span class="p">)</span> 
+    <span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">)</span>
+    
+    <span class="c"># create lists of times windows for analyzing changes</span>
+    <span class="n">start_time_list</span> <span class="o">=</span> <span class="n">datetime_list</span><span class="p">(</span><span class="n">par</span><span class="p">[</span><span class="s">&#39;dv&#39;</span><span class="p">][</span><span class="s">&#39;start_date&#39;</span><span class="p">],</span> <span class="n">par</span><span class="p">[</span><span class="s">&#39;dv&#39;</span><span class="p">][</span><span class="s">&#39;end_date&#39;</span><span class="p">],</span>
+                                    <span class="n">par</span><span class="p">[</span><span class="s">&#39;dv&#39;</span><span class="p">][</span><span class="s">&#39;date_inc&#39;</span><span class="p">])</span>
+    <span class="n">end_time_list</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">start_time_list</span><span class="p">)</span>
+    <span class="n">wl</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="n">par</span><span class="p">[</span><span class="s">&#39;dv&#39;</span><span class="p">][</span><span class="s">&#39;win_len&#39;</span><span class="p">])</span>
+    <span class="n">end_time_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="o">+</span><span class="n">wl</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">end_time_list</span><span class="p">]</span>
+
+    <span class="c"># available correlations</span>
+    <span class="n">fnames</span> <span class="o">=</span> <span class="n">dir_read</span><span class="p">(</span><span class="n">par</span><span class="p">[</span><span class="s">&#39;co&#39;</span><span class="p">][</span><span class="s">&#39;res_dir&#39;</span><span class="p">],</span><span class="s">&#39;mat__*.mat&#39;</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">fname</span> <span class="ow">in</span> <span class="n">fnames</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;Working on combination </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">fname</span><span class="p">)</span>
+            <span class="n">mat</span> <span class="o">=</span> <span class="n">mat_to_ndarray</span><span class="p">(</span><span class="n">fname</span><span class="p">)</span>
+            <span class="c"># normalize the matrix to maxima</span>
+            <span class="n">mat</span> <span class="o">=</span> <span class="n">corr_mat_normalize</span><span class="p">(</span><span class="n">mat</span><span class="p">,</span><span class="n">normtype</span><span class="o">=</span><span class="s">&#39;absmax&#39;</span><span class="p">)</span>
+            <span class="c"># resample the correlation matrix</span>
+            <span class="n">mat</span> <span class="o">=</span> <span class="n">corr_mat_resample</span><span class="p">(</span><span class="n">mat</span><span class="p">,</span> <span class="n">start_time_list</span><span class="p">,</span><span class="n">end_time_list</span><span class="p">)</span>
+            <span class="c"># filter the matrices</span>
+            <span class="n">mat</span> <span class="o">=</span> <span class="n">corr_mat_filter</span><span class="p">(</span><span class="n">mat</span><span class="p">,[</span><span class="n">par</span><span class="p">[</span><span class="s">&#39;dv&#39;</span><span class="p">][</span><span class="s">&#39;freq_min&#39;</span><span class="p">],</span> <span class="n">par</span><span class="p">[</span><span class="s">&#39;dv&#39;</span><span class="p">][</span><span class="s">&#39;freq_max&#39;</span><span class="p">]])</span>
+            <span class="c"># make a trimmed copy for plotting</span>
+            <span class="n">tmat</span> <span class="o">=</span> <span class="n">corr_mat_trim</span><span class="p">(</span><span class="n">mat</span><span class="p">,</span><span class="o">-</span><span class="p">(</span><span class="n">par</span><span class="p">[</span><span class="s">&#39;dv&#39;</span><span class="p">][</span><span class="s">&#39;tw_start&#39;</span><span class="p">]</span><span class="o">+</span><span class="n">par</span><span class="p">[</span><span class="s">&#39;dv&#39;</span><span class="p">][</span><span class="s">&#39;tw_len&#39;</span><span class="p">]),</span>
+                                 <span class="p">(</span><span class="n">par</span><span class="p">[</span><span class="s">&#39;dv&#39;</span><span class="p">][</span><span class="s">&#39;tw_start&#39;</span><span class="p">]</span><span class="o">+</span><span class="n">par</span><span class="p">[</span><span class="s">&#39;dv&#39;</span><span class="p">][</span><span class="s">&#39;tw_len&#39;</span><span class="p">]))</span>
+
+            <span class="n">tw</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">par</span><span class="p">[</span><span class="s">&#39;dv&#39;</span><span class="p">][</span><span class="s">&#39;tw_start&#39;</span><span class="p">]</span><span class="o">*</span><span class="n">tmat</span><span class="p">[</span><span class="s">&#39;stats&#39;</span><span class="p">][</span><span class="s">&#39;sampling_rate&#39;</span><span class="p">],(</span><span class="n">par</span><span class="p">[</span><span class="s">&#39;dv&#39;</span><span class="p">][</span><span class="s">&#39;tw_start&#39;</span><span class="p">]</span><span class="o">+</span><span class="n">par</span><span class="p">[</span><span class="s">&#39;dv&#39;</span><span class="p">][</span><span class="s">&#39;tw_len&#39;</span><span class="p">])</span><span class="o">*</span><span class="n">tmat</span><span class="p">[</span><span class="s">&#39;stats&#39;</span><span class="p">][</span><span class="s">&#39;sampling_rate&#39;</span><span class="p">],</span><span class="mi">1</span><span class="p">)]</span>
+
+            <span class="c"># extract initial reference trace (mean excluding very different traces)</span>
+            <span class="n">tr</span> <span class="o">=</span> <span class="n">corr_mat_extract_trace</span><span class="p">(</span><span class="n">tmat</span><span class="p">,</span><span class="n">method</span><span class="o">=</span><span class="s">&#39;mean&#39;</span><span class="p">)</span>
+            <span class="n">tw</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">par</span><span class="p">[</span><span class="s">&#39;dv&#39;</span><span class="p">][</span><span class="s">&#39;tw_start&#39;</span><span class="p">]</span><span class="o">*</span><span class="n">tmat</span><span class="p">[</span><span class="s">&#39;stats&#39;</span><span class="p">][</span><span class="s">&#39;sampling_rate&#39;</span><span class="p">],(</span><span class="n">par</span><span class="p">[</span><span class="s">&#39;dv&#39;</span><span class="p">][</span><span class="s">&#39;tw_start&#39;</span><span class="p">]</span><span class="o">+</span><span class="n">par</span><span class="p">[</span><span class="s">&#39;dv&#39;</span><span class="p">][</span><span class="s">&#39;tw_len&#39;</span><span class="p">])</span><span class="o">*</span><span class="n">tmat</span><span class="p">[</span><span class="s">&#39;stats&#39;</span><span class="p">][</span><span class="s">&#39;sampling_rate&#39;</span><span class="p">],</span><span class="mi">1</span><span class="p">)]</span>
+            <span class="c"># initial time shift estimation            </span>
+            <span class="n">dv</span> <span class="o">=</span> <span class="n">corr_mat_stretch</span><span class="p">(</span><span class="n">tmat</span><span class="p">,</span><span class="n">ref_trc</span><span class="o">=</span><span class="n">tr</span><span class="p">[</span><span class="s">&#39;corr_trace&#39;</span><span class="p">],</span><span class="n">return_sim_mat</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span><span class="n">stretch_steps</span><span class="o">=</span><span class="n">par</span><span class="p">[</span><span class="s">&#39;dv&#39;</span><span class="p">][</span><span class="s">&#39;stretch_steps&#39;</span><span class="p">],</span><span class="n">stretch_range</span><span class="o">=</span><span class="n">par</span><span class="p">[</span><span class="s">&#39;dv&#39;</span><span class="p">][</span><span class="s">&#39;stretch_range&#39;</span><span class="p">],</span><span class="n">tw</span><span class="o">=</span><span class="n">tw</span><span class="p">)</span>
+            <span class="c"># correct the traces for the shift and re-create a better reference</span>
+            <span class="n">cmat</span> <span class="o">=</span> <span class="n">corr_mat_correct_stretch</span><span class="p">(</span><span class="n">mat</span><span class="p">,</span><span class="n">dv</span><span class="p">)</span>
+            <span class="c"># make a trimmed copy</span>
+            <span class="n">tcmat</span> <span class="o">=</span> <span class="n">corr_mat_trim</span><span class="p">(</span><span class="n">cmat</span><span class="p">,</span><span class="o">-</span><span class="p">(</span><span class="n">par</span><span class="p">[</span><span class="s">&#39;dv&#39;</span><span class="p">][</span><span class="s">&#39;tw_start&#39;</span><span class="p">]</span><span class="o">+</span><span class="n">par</span><span class="p">[</span><span class="s">&#39;dv&#39;</span><span class="p">][</span><span class="s">&#39;tw_len&#39;</span><span class="p">]),</span>
+                                 <span class="p">(</span><span class="n">par</span><span class="p">[</span><span class="s">&#39;dv&#39;</span><span class="p">][</span><span class="s">&#39;tw_start&#39;</span><span class="p">]</span><span class="o">+</span><span class="n">par</span><span class="p">[</span><span class="s">&#39;dv&#39;</span><span class="p">][</span><span class="s">&#39;tw_len&#39;</span><span class="p">]))</span>
+            <span class="c"># extract the final reference trace (mean excluding very different traces)</span>
+            <span class="n">tr</span> <span class="o">=</span> <span class="n">corr_mat_extract_trace</span><span class="p">(</span><span class="n">tcmat</span><span class="p">,</span><span class="n">method</span><span class="o">=</span><span class="s">&#39;mean&#39;</span><span class="p">)</span>
+            <span class="c"># obtain an improved time shift measurement</span>
+            <span class="n">dv</span> <span class="o">=</span> <span class="n">corr_mat_stretch</span><span class="p">(</span><span class="n">tmat</span><span class="p">,</span><span class="n">ref_trc</span><span class="o">=</span><span class="n">tr</span><span class="p">[</span><span class="s">&#39;corr_trace&#39;</span><span class="p">],</span><span class="n">return_sim_mat</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span><span class="n">stretch_steps</span><span class="o">=</span><span class="n">par</span><span class="p">[</span><span class="s">&#39;dv&#39;</span><span class="p">][</span><span class="s">&#39;stretch_steps&#39;</span><span class="p">],</span><span class="n">stretch_range</span><span class="o">=</span><span class="n">par</span><span class="p">[</span><span class="s">&#39;dv&#39;</span><span class="p">][</span><span class="s">&#39;stretch_range&#39;</span><span class="p">],</span><span class="n">tw</span><span class="o">=</span><span class="n">tw</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">par</span><span class="p">[</span><span class="s">&#39;dv&#39;</span><span class="p">][</span><span class="s">&#39;plot_vel_change&#39;</span><span class="p">]:</span>
+                <span class="n">filename</span> <span class="o">=</span> <span class="n">mat</span><span class="p">[</span><span class="s">&#39;stats&#39;</span><span class="p">][</span><span class="s">&#39;station&#39;</span><span class="p">]</span><span class="o">+</span><span class="s">&#39;_&#39;</span><span class="o">+</span><span class="n">mat</span><span class="p">[</span><span class="s">&#39;stats&#39;</span><span class="p">][</span><span class="s">&#39;channel&#39;</span><span class="p">]</span>
+                <span class="n">pf</span><span class="o">.</span><span class="n">plot_dv</span><span class="p">(</span><span class="n">dv</span><span class="p">,</span><span class="n">save_dir</span><span class="o">=</span><span class="n">par</span><span class="p">[</span><span class="s">&#39;dv&#39;</span><span class="p">][</span><span class="s">&#39;fig_dir&#39;</span><span class="p">],</span><span class="n">figure_file_name</span><span class="o">=</span><span class="n">filename</span><span class="p">,</span><span class="n">normalize_simmat</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span><span class="n">sim_mat_Clim</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mf">1.</span><span class="p">])</span>
+            <span class="n">save_dv</span><span class="p">(</span><span class="n">dv</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">,</span> <span class="n">save_dir</span><span class="o">=</span><span class="n">par</span><span class="p">[</span><span class="s">&#39;dv&#39;</span><span class="p">][</span><span class="s">&#39;res_dir&#39;</span><span class="p">])</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&#39;Error processing </span><span class="si">%s</span><span class="s">: </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">fname</span><span class="p">,</span><span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">()[</span><span class="mi">0</span><span class="p">]))</span>
+    <span class="k">return</span> <span class="mi">0</span>
+    
+ </div>
+<span class="k">if</span> <span class="n">__name__</span><span class="o">==</span><span class="s">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">print</span> <span class="s">&#39;Specify the project parameter file as first and second arguments.&#39;</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">()</span>
+    <span class="n">par_file</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="c"># initialize the project, create folders and set derived parameters</span>
+    <span class="n">par</span> <span class="o">=</span> <span class="n">ini_project</span><span class="p">(</span><span class="n">par_file</span><span class="p">)</span>
+    <span class="c"># create output directories</span>
+    <span class="n">create_path</span><span class="p">(</span><span class="n">par</span><span class="p">[</span><span class="s">&#39;dv&#39;</span><span class="p">][</span><span class="s">&#39;fig_dir&#39;</span><span class="p">])</span>
+    <span class="n">create_path</span><span class="p">(</span><span class="n">par</span><span class="p">[</span><span class="s">&#39;dv&#39;</span><span class="p">][</span><span class="s">&#39;res_dir&#39;</span><span class="p">])</span>
+
+    <span class="n">measure_velocity_change</span><span class="p">(</span><span class="n">par</span><span class="p">)</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MIIC 1.0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2012, Eraldo Pomponi.
+      Last updated on 2017-10-25T20:10:34.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </div>
+  </body>
+</html>

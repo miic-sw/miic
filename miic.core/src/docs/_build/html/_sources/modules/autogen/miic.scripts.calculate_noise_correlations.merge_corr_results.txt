@@ -1,0 +1,6 @@
+miic.scripts.calculate_noise_correlations.merge_corr_results
+============================================================
+
+.. currentmodule:: miic.scripts.calculate_noise_correlations
+
+.. autofunction:: merge_corr_results
