@@ -566,59 +566,62 @@ def stream_mute(st, filter=(), mute_method='std_factor', mute_value=3,
     assert type(taper_len) is float or type(taper_len) is int, \
                                     "taper_len is not a number"
     assert type(extend_gaps) is bool, "extend_gaps is not a boolean."
+
     # copy the data
-    cst = st.copy()
-    cst = cst.split()
-    cst.detrend('linear')
-    cst.taper(max_length=taper_len,max_percentage=0.1)
-    cst.merge()
+    tst = st.copy()
+    mst = Stream()
+    for ltr in tst:
+        cst = ltr.split()
+        cst.detrend('linear')
+        cst.taper(max_length=taper_len,max_percentage=0.1)
+        for ind,tr in enumerate(cst):
+            # return zeros if length of traces is shorter than taper
+            ntap = int(taper_len*tr.stats.sampling_rate)
+            if tr.stats.npts<=ntap:
+                cst[ind].data = np.zeros_like(tr.data)
+                continue
 
-    for ind,tr in enumerate(cst):
-        # return zeros if length of traces is shorter than taper
-        ntap = int(taper_len*tr.stats.sampling_rate)
-        if tr.stats.npts<=ntap:
-            cst[ind].data = np.zeros_like(tr.data)
-            continue
+            # filter if asked to
+            ftr = tr.copy()
+            if filter:
+                ftr.filter('bandpass', freqmin=filter[0], freqmax=filter[1])
 
-        # filter if asked to
-        ftr = tr.copy()
-        if filter:
-            ftr.filter('bandpass', freqmin=filter[0], freqmax=filter[1])
+            # calculate envelope
+            #D = np.abs(signal.hilbert(C,axis=0))
+            D = np.abs(ftr.data)
 
-        # calculate envelope
-        #D = np.abs(signal.hilbert(C,axis=0))
-        D = np.abs(ftr.data)
+            # calculate threshold
+            if mute_method == 'threshold':
+                thres = np.zeros_like(ftr.data) + mute_value
+            elif mute_method == 'std_factor':
+                thres = np.std(ftr.data) * mute_value
+            elif mute_method == 'median_factor':
+                thres = mute_value * np.median(np.abs(ftr.data))
 
-        # calculate threshold
-        if mute_method == 'threshold':
-            thres = np.zeros_like(ftr.data) + mute_value
-        elif mute_method == 'std_factor':
-            thres = np.std(ftr.data) * mute_value
-        elif mute_method == 'median_factor':
-            thres = mute_value * np.median(np.abs(ftr.data))
+            # calculate mask
+            mask = np.ones_like(tr.data)
+            mask[D>thres]=0
+            # extend the muted segments to make sure the whole segment is zero after
+            if extend_gaps:
+                assert ntap != 0, "length of taper cannot be zero if extend_gaps is True"
+                tap = np.ones(ntap)/ntap
+                mask = np.convolve(mask,tap, mode='same')
+                nmask = np.ones_like(D)
+                nmask[mask<0.999999999] = 0
+            else:
+                nmask = mask
 
-        # calculate mask
-        mask = np.ones_like(tr.data)
-        mask[D>thres]=0
-        # extend the muted segments to make sure the whole segment is zero after
-        if extend_gaps:
-            assert ntap != 0, "length of taper cannot be zero if extend_gaps is True"
-            tap = np.ones(ntap)/ntap
-            mask = np.convolve(mask,tap, mode='same')
-            nmask = np.ones_like(D)
-            nmask[mask<0.999999999] = 0
-        else:
-            nmask = mask
+            # apply taper
+            if ntap > 0:
+                tap = 2. - (np.cos(np.arange(ntap,dtype=float)/ntap*2.*np.pi) + 1.)
+                tap /= ntap
+                nmask = np.convolve(nmask,tap, mode='same')
 
-        # apply taper
-        if ntap > 0:
-            tap = 2. - (np.cos(np.arange(ntap,dtype=float)/ntap*2.*np.pi) + 1.)
-            tap /= ntap
-            nmask = np.convolve(nmask,tap, mode='same')
-
-        # mute date with tapered mask
-        cst[ind].data *= nmask
-    return cst
+            # mute date with tapered mask
+            cst[ind].data *= nmask
+        cst.merge()
+        mst += cst
+    return mst
 
 
 class _StFilter:
@@ -692,11 +695,15 @@ def stream_filter(st, ftype, filter_option, parallel=True, processes=None):
     fparam = dict([(kw_filed, filter_option[kw_filed]) \
                 for kw_filed in filter_option])
 
-    # take care of masked traces
-    st = st.split()
-
     if not parallel:
-        st.filter(ftype, **fparam)
+        # take care of masked traces and keep their order in the stream
+        fst = Stream()
+        for tr in st:
+            sptr = tr.split()
+            sptr.filter(ftype, **fparam)
+            sptr.merge()
+            fst += sptr
+        st = fst
     else:
         if processes == 0:
             processes = None
@@ -710,7 +717,7 @@ def stream_filter(st, ftype, filter_option, parallel=True, processes=None):
         p.join()
 
     # Change the name to help blockcanvas readability
-    st_filtered = st.merge()
+    st_filtered = st
     return st_filtered
 
 
