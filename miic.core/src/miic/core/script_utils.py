@@ -15,6 +15,17 @@ from copy import deepcopy
 from obspy import UTCDateTime
 
 
+def read_parameter_file(par_file):
+    """Read yaml parameter file.
+    """
+    with open(par_file,'rb') as f:
+        try:
+            par = yaml.safe_load(f)
+        except yaml.YAMLError as exc:
+            raise(exc)
+    return par
+
+
 def ini_project(par_file):
     """Initialize a project of network synchrinization
     
@@ -29,11 +40,7 @@ def ini_project(par_file):
     :return: parameters
     """
 
-    with open(par_file,'rb') as f:
-        try:
-            par = yaml.safe_load(f)
-        except yaml.YAMLError as exc:
-            raise(exc)
+    par = read_parameter_file(par_file)
 
     par.update({'execution_start':'%s' % UTCDateTime()})
 
@@ -44,8 +51,12 @@ def ini_project(par_file):
     create_path(par['fig_dir'])
     par['co'].update({'res_dir': os.path.join(par['proj_dir'],
                                              par['co']['subdir'])})
-    create_path(par['co']['res_dir'])
-    
+    par['co'].update({'fig_dir': os.path.join(par['fig_dir'],
+                                             par['co']['subdir'])})
+    par['dv'].update({'res_dir': os.path.join(par['proj_dir'],
+                                             par['dv']['subdir'])})
+    par['dv'].update({'fig_dir': os.path.join(par['fig_dir'],
+                                             par['dv']['subdir'])})
     # copy parameter file to log dir
     shutil.copy(par_file,os.path.join(par['log_dir'],'%s_parfile.txt' % par['execution_start']))
 

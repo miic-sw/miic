@@ -30,7 +30,7 @@ except ImportError:
 
 # Obspy imports
 from obspy.core import Stream
-from obspy.signal.invsim import cosTaper
+from obspy.signal.invsim import cosine_taper
 
 ##############################################################################
 # Exceptions                                                                 #
@@ -266,7 +266,7 @@ def spect_norm(x):
 
     x_copy = x.copy()
 
-    x_copy *= cosTaper(len(x_copy), 0.01)
+    x_copy *= cosine_taper(len(x_copy), 0.01)
 
     FFT = fft(x_copy)
 
@@ -286,7 +286,7 @@ class _StSpectNorm:
     def __call__(self, tr):
         try:
             if tr.stats.npts > 1:
-                tr.data *= cosTaper(tr.stats.npts, 0.01)
+                tr.data *= cosine_taper(tr.stats.npts, 0.01)
                 FFT = fft(tr.data)
                 tr.data = ifft(FFT / abs(FFT)).real
         except ValueError:
