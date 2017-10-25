@@ -2278,6 +2278,26 @@ if BC_UI:
         trait_view = View()
 
 
+def get_valid_traces(st):
+    """Retun only valid traces of a stream.
+
+    Remove traces that are 100% masked from a stream. This happens when 
+    a masked trace is trimmed within a gap. The function works in place.
+
+    :type st: obspy.Stream
+    :param st: stream to work on
+
+    """
+
+    assert type(st) == Stream, "Input st is not an obspy.Stream."
+
+    for tr in st:
+        if isinstance(tr.data,np.ma.MaskedArray):
+            if tr.data.mask.all():
+                st.remove(tr)
+    return
+
+
 def import_function_by_name(func):
     """Import a function of a given name.
 
