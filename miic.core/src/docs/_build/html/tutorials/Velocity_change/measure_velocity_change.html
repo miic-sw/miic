@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
     <link rel="top" title="MIIC 1.0 documentation" href="../../index.html" />
-    <link rel="up" title="MIIC Scripts" href="../index.html" />
+    <link rel="up" title="MIIC Tutorials" href="../index.html" />
     <link rel="prev" title="Ambient Noise Correlation" href="../Correlation/Correlation.html" /> 
   </head>
   <body role="document">
@@ -41,7 +41,7 @@
           <a href="../Correlation/Correlation.html" title="Ambient Noise Correlation"
              accesskey="P">previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="../../index.html">MIIC 1.0 documentation</a> &raquo;</li>
-          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">MIIC Scripts</a> &raquo;</li> 
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">MIIC Tutorials</a> &raquo;</li> 
       </ul>
     </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
@@ -50,6 +50,8 @@
   <ul>
 <li><a class="reference internal" href="#">Measure Velocity change</a><ul>
 <li><a class="reference internal" href="#introduction">Introduction</a></li>
+<li><a class="reference internal" href="#implementation-in-a-script">Implementation in a script</a></li>
+<li><a class="reference internal" href="#parameter-file">Parameter File</a></li>
 </ul>
 </li>
 </ul>
@@ -83,10 +85,46 @@
           <div class="body" role="main">
             
   <div class="section" id="measure-velocity-change">
-<h1>Measure Velocity change<a class="headerlink" href="#measure-velocity-change" title="Permalink to this headline">¶</a></h1>
+<span id="measure-velocity-change-tutorial"></span><h1>Measure Velocity change<a class="headerlink" href="#measure-velocity-change" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="introduction">
 <h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
-<p>After the computation of noise correaltion functions these are available for further analysis for example to estimate changes of the seismic velocity. This is implemented in the <a class="reference download internal" href="../../_downloads/calculate_noise_correlations.py"><code class="xref download docutils literal"><span class="pre">calculate_noise_correlations</span> <span class="pre">module</span></code></a>. It uses the <a class="reference internal" href="../../modules/measure_velocity_change.html#module-miic.scripts.measure_velocity_change" title="miic.scripts.measure_velocity_change"><code class="xref py py-func docutils literal"><span class="pre">measure_velocity_change()</span></code></a></p>
+<p>After the computation of noise correaltion functions and their rearrangement in correlation matrices (described here: <a class="reference internal" href="../Correlation/Correlation.html#basics-correlation-tutorial"><span>Ambient Noise Correlation</span></a>) these are available for further analysis for example to estimate changes of the seismic velocity.</p>
+</div>
+<div class="section" id="implementation-in-a-script">
+<h2>Implementation in a script<a class="headerlink" href="#implementation-in-a-script" title="Permalink to this headline">¶</a></h2>
+<p>The measurement of velocity changes is implemented in the <code class="docutils literal"><span class="pre">miic.scripts.measure_velocity_change</span></code> module which can be executed as python script and (<a class="reference download internal" href="../../_downloads/measure_velocity_change.py"><code class="xref download docutils literal"><span class="pre">downloaded</span> <span class="pre">here</span></code></a>). The script accepts a <a class="reference external" href="http://yaml.org">yaml</a> <a class="reference download internal" href="../../_downloads/monitoring_project.yaml"><code class="xref download docutils literal"><span class="pre">parameter</span> <span class="pre">file</span></code></a>. This parameter file has different sections. The general <em>project wide parameter</em> and the ones relevant for the computation of the noise correlation functions are described in <a class="reference internal" href="../Correlation/Correlation.html#basics-correlation-tutorial"><span>Ambient Noise Correlation</span></a> tutorial.</p>
+<p>The measurment of the velocity changes works in an iterative way with the stretching method. An initial reference trace is calculated by stacking all availabe correlation functions. With respect to this reference initial measurement of velocity changes is obtained with tht stretching method. To obtain a new reference that does not suffer from incoherent stacking as a consequence of changeing velocity, the correlation functions are corrected for the initially measured velocity changes by appropriate stretching before stacking. Against this final reference a final measurement of velocity changes is performed. The results can be visualized and are saved by the script.</p>
+</div>
+<div class="section" id="parameter-file">
+<h2>Parameter File<a class="headerlink" href="#parameter-file" title="Permalink to this headline">¶</a></h2>
+<p>The <code class="docutils literal"><span class="pre">miic.scripts.measure_velocity_change</span></code> script used the <code class="docutils literal"><span class="pre">dv</span></code> section of the parameter file with the following entries:</p>
+<div class="highlight-python"><div class="highlight"><pre>#### parameters for the estimation of time differences
+dv:
+    # subfolder for storage of time difference results
+    subdir : &#39;vel_change&#39;
+
+    # Plotting
+    plot_vel_change : True
+
+    ### Definition of calender time windows for the time difference measurements
+    start_date : &#39;2015-05-01 00:00:00.0&#39;   # %Y-%m-%dT%H:%M:%S.%fZ&#39;
+    end_date : &#39;2016-01-01 00:00:00.0&#39;
+    win_len : 86400                         # length of window in which EGFs are stacked
+    date_inc : 86400                        # increment of measurements
+
+    ### Frequencies
+    freq_min : 0.1
+    freq_max : 0.5
+
+    ### Definition of lapse time window
+    tw_start : 20     # lapse time of first sample [s]
+    tw_len : 60       # length of window [s]
+
+    ### Range to try stretching
+    stretch_range : 0.03
+    stretch_steps : 1000
+</pre></div>
+</div>
 </div>
 </div>
 
@@ -109,12 +147,12 @@
           <a href="../Correlation/Correlation.html" title="Ambient Noise Correlation"
              >previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="../../index.html">MIIC 1.0 documentation</a> &raquo;</li>
-          <li class="nav-item nav-item-1"><a href="../index.html" >MIIC Scripts</a> &raquo;</li> 
+          <li class="nav-item nav-item-1"><a href="../index.html" >MIIC Tutorials</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &copy; Copyright 2012, Eraldo Pomponi.
-      Last updated on 2017-10-25T17:19:43.
+      Last updated on 2017-10-27T15:44:54.
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
     </div>
   </body>

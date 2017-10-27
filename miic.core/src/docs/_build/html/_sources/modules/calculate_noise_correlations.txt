@@ -1,25 +1,27 @@
 Calculate Noise Correlation Functions
 =====================================
-Script to calculate seismic ambient noise correlation functions. Called as a
+:download:`Script <../../miic/scripts/calculate_noise_correlations.py>` to calculate seismic ambient noise correlation functions. Called as a
 python program the script accepts the path to a `yaml <http://yaml.org>`_
 parameter file, reads it and calls the :class:`~miic.scripts.calculate_noise_correlations.paracorr`
-function with these parameters.
+function with these parameters. This computation is implemented for parallel execution for example using ``mpirun -n 4 python calculate_noise_correlations.py monitoring_parameters``.
+
+After calculation of correlation functions those are rearranged into correlation matrices (one for each combination) that contain the whole study period by calling the :func:`~miic.scripts.calculate_noise_correlations.merge_corr_results`.
 
 The structure of the parameter file and the functionality of the script are
-described in the following tutorial :ref:`basics_correlation_tutorial`. 
+described in the :ref:`basics_correlation_tutorial` tutorial. 
 
 
-@author:
-Christoph Sens-Schönfelder
+.. @author:
+.. Christoph Sens-Schönfelder
 
-@copyright:
-The MIIC Development Team (sens-schoenfelder@gfz-potsdam.de)
+.. @copyright:
+.. The MIIC Development Team (sens-schoenfelder@gfz-potsdam.de)
 
-@license:
-GNU Lesser General Public License, Version 3
-(http://www.gnu.org/copyleft/lesser.html)
+.. @license:
+.. GNU Lesser General Public License, Version 3
+.. (http://www.gnu.org/copyleft/lesser.html)
 
-Created on Oct 20, 2017
+.. Created on Oct 20, 2017
 
 .. currentmodule:: miic.scripts.calculate_noise_correlations
 .. automodule:: miic.scripts.calculate_noise_correlations

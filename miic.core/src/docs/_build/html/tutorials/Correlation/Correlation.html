@@ -24,8 +24,9 @@
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
     <link rel="top" title="MIIC 1.0 documentation" href="../../index.html" />
-    <link rel="up" title="Ambient Noise Correlation" href="../index.html" />
-    <link rel="prev" title="Ambient Noise Correlation" href="../index.html" /> 
+    <link rel="up" title="MIIC Tutorials" href="../index.html" />
+    <link rel="next" title="Measure Velocity change" href="../Velocity_change/measure_velocity_change.html" />
+    <link rel="prev" title="MIIC Tutorials" href="../index.html" /> 
   </head>
   <body role="document">
     <div class="related" role="navigation" aria-label="related navigation">
@@ -38,10 +39,13 @@
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="../index.html" title="Ambient Noise Correlation"
+          <a href="../Velocity_change/measure_velocity_change.html" title="Measure Velocity change"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="../index.html" title="MIIC Tutorials"
              accesskey="P">previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="../../index.html">MIIC 1.0 documentation</a> &raquo;</li>
-          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Ambient Noise Correlation</a> &raquo;</li> 
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">MIIC Tutorials</a> &raquo;</li> 
       </ul>
     </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
@@ -51,6 +55,7 @@
 <li><a class="reference internal" href="#">Ambient Noise Correlation</a><ul>
 <li><a class="reference internal" href="#introduction">Introduction</a></li>
 <li><a class="reference internal" href="#the-central-functionality">The Central Functionality</a></li>
+<li><a class="reference internal" href="#implementation-in-a-script">Implementation in a Script</a></li>
 <li><a class="reference internal" href="#parameter-file">Parameter File</a></li>
 </ul>
 </li>
@@ -106,13 +111,16 @@ correlation function including various preprocessing steps.</p>
 </ul>
 </dd>
 </dl>
-<p>This functionality is implemented in the <a class="reference internal" href="../../modules/autogen/miic.scripts.calculate_noise_correlations.paracorr.html#miic.scripts.calculate_noise_correlations.paracorr" title="miic.scripts.calculate_noise_correlations.paracorr"><code class="xref py py-func docutils literal"><span class="pre">paracorr()</span></code></a>
-function. How the correlations are calculated is indicated in a
-<a class="reference external" href="http://yaml.org">yaml</a> parameter file described below. The function <a class="reference internal" href="../../modules/autogen/miic.scripts.calculate_noise_correlations.paracorr.html#miic.scripts.calculate_noise_correlations.paracorr" title="miic.scripts.calculate_noise_correlations.paracorr"><code class="xref py py-func docutils literal"><span class="pre">paracorr()</span></code></a> is embedded in a <a class="reference download internal" href="../../_downloads/calculate_noise_correlations.py"><code class="xref download docutils literal"><span class="pre">module</span></code></a> which can be called as a programm using <code class="docutils literal"><span class="pre">python</span> <span class="pre">calculate_noise_correlations.py</span> <span class="pre">monitoring_project.yaml</span></code> where the argument is the parameter file. In this case <code class="docutils literal"><span class="pre">calculate_noise_correlations</span></code> also combines the correlations form different times into single files for further analysis by calling <a class="reference internal" href="../../modules/autogen/miic.scripts.calculate_noise_correlations.merge_corr_results.html#miic.scripts.calculate_noise_correlations.merge_corr_results" title="miic.scripts.calculate_noise_correlations.merge_corr_results"><code class="xref py py-func docutils literal"><span class="pre">merge_corr_results()</span></code></a></p>
+<p>This functionality is implemented in the <a class="reference internal" href="../../modules/autogen/miic.scripts.calculate_noise_correlations.paracorr.html#miic.scripts.calculate_noise_correlations.paracorr" title="miic.scripts.calculate_noise_correlations.paracorr"><code class="xref py py-func docutils literal"><span class="pre">paracorr()</span></code></a> function. As the computation of corrlation functions works cronologically the correlation functions for every station combination are distributed over several output files written during the computation. For the later processing that usually operates on all correlation function of a single station combination the correlation functions are to be rearranged. This can be done with the <code class="xref py py-func docutils literal"><span class="pre">merge_corr_results()</span></code> function.</p>
+</div>
+<div class="section" id="implementation-in-a-script">
+<h2>Implementation in a Script<a class="headerlink" href="#implementation-in-a-script" title="Permalink to this headline">¶</a></h2>
+<p>Both the computation of noise correlation functions and the rearrangement is implemented in the module <code class="docutils literal"><span class="pre">miic.scripts.calculate_noise_correlations</span></code> that can be executed as a script <a class="reference download internal" href="../../_downloads/calculate_noise_correlations.py"><code class="xref download docutils literal"><span class="pre">(download</span> <span class="pre">here)</span></code></a>. Since the computation of correlation functions is implemented for parallel execution using <code class="docutils literal"><span class="pre">mpi4py</span></code> the script should be executed using <code class="docutils literal"><span class="pre">mpirun</span> <span class="pre">-n</span> <span class="pre">4</span> <span class="pre">python</span> <span class="pre">calculate_noise_correlations.py</span> <span class="pre">monitoring_parameters.yaml</span></code> or another suitable call depending on the job submission system.</p>
+<p>The parameters for <a class="reference internal" href="../../modules/autogen/miic.scripts.calculate_noise_correlations.paracorr.html#miic.scripts.calculate_noise_correlations.paracorr" title="miic.scripts.calculate_noise_correlations.paracorr"><code class="xref py py-func docutils literal"><span class="pre">paracorr()</span></code></a> and <a class="reference internal" href="../../modules/autogen/miic.scripts.calculate_noise_correlations.merge_corr_results.html#miic.scripts.calculate_noise_correlations.merge_corr_results" title="miic.scripts.calculate_noise_correlations.merge_corr_results"><code class="xref py py-func docutils literal"><span class="pre">merge_corr_results()</span></code></a> are read from a <a class="reference external" href="http://yaml.org">yaml</a> parameter file described below. The name of the parameter file is to be given as command line argument when <code class="docutils literal"><span class="pre">calculate_noise_correlations.py</span></code> is executed as a python programm.</p>
 </div>
 <div class="section" id="parameter-file">
 <h2>Parameter File<a class="headerlink" href="#parameter-file" title="Permalink to this headline">¶</a></h2>
-<p>The present script uses different section of the <a class="reference download internal" href="../../_downloads/monitoring_project.yaml"><code class="xref download docutils literal"><span class="pre">parameter</span> <span class="pre">file</span></code></a>. There is a general section <em>projekt wide parameters</em> describing parameters relevant for all processing setps:</p>
+<p>The present script uses different section of the <a class="reference download internal" href="../../_downloads/monitoring_project.yaml"><code class="xref download docutils literal"><span class="pre">parameter</span> <span class="pre">file</span></code></a>. There is a general section of <em>projekt wide parameters</em> describing parameters relevant for all processing setps:</p>
 <div class="highlight-python"><div class="highlight"><pre>#### Project wide parameters
 # lowest level project directory
 proj_dir : &#39;monitoring_project&#39;
@@ -226,7 +234,7 @@ co:
     rotation : &#39;NO&#39;
 </pre></div>
 </div>
-<p>Once the correlation are computed they can be analysed for potential changes of the seismic velocity as described in <span class="xref std std-ref">measure_velocity_change_tutorial</span>.</p>
+<p>Once the correlation are computed they can be analysed for potential changes of the seismic velocity as described in <a class="reference internal" href="../Velocity_change/measure_velocity_change.html#measure-velocity-change-tutorial"><span>Measure Velocity change</span></a>.</p>
 </div>
 </div>
 
@@ -246,15 +254,18 @@ co:
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="../index.html" title="Ambient Noise Correlation"
+          <a href="../Velocity_change/measure_velocity_change.html" title="Measure Velocity change"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="../index.html" title="MIIC Tutorials"
              >previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="../../index.html">MIIC 1.0 documentation</a> &raquo;</li>
-          <li class="nav-item nav-item-1"><a href="../index.html" >Ambient Noise Correlation</a> &raquo;</li> 
+          <li class="nav-item nav-item-1"><a href="../index.html" >MIIC Tutorials</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &copy; Copyright 2012, Eraldo Pomponi.
-      Last updated on 2017-10-25T17:03:55.
+      Last updated on 2017-10-27T15:27:06.
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
     </div>
   </body>

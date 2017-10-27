@@ -25,16 +25,21 @@ The usual processing flow consists of
  * correlation
  * storing correlation
  
-This functionality is implemented in the :func:`~miic.scripts.calculate_noise_correlations.paracorr` 
-function. How the correlations are calculated is indicated in a 
-`yaml <http://yaml.org>`_ parameter file described below. The function :func:`~miic.scripts.calculate_noise_correlations.paracorr` is embedded in a :download:`module <../../../miic/scripts/calculate_noise_correlations.py>` which can be called as a programm using ``python calculate_noise_correlations.py monitoring_project.yaml`` where the argument is the parameter file. In this case ``calculate_noise_correlations`` also combines the correlations form different times into single files for further analysis by calling :func:`~miic.scripts.calculate_noise_correlations.merge_corr_results`
+This functionality is implemented in the :func:`~miic.scripts.calculate_noise_correlations.paracorr` function. As the computation of corrlation functions works cronologically the correlation functions for every station combination are distributed over several output files written during the computation. For the later processing that usually operates on all correlation function of a single station combination the correlation functions are to be rearranged. This can be done with the :func:`~miic.scripts.calculate_noise_correlations.paracorr.merge_corr_results` function.
 
+**************************
+Implementation in a Script
+**************************
+
+Both the computation of noise correlation functions and the rearrangement is implemented in the module ``miic.scripts.calculate_noise_correlations`` that can be executed as a script :download:`(download here) <../../../miic/scripts/calculate_noise_correlations.py>`. Since the computation of correlation functions is implemented for parallel execution using ``mpi4py`` the script should be executed using ``mpirun -n 4 python calculate_noise_correlations.py monitoring_parameters.yaml`` or another suitable call depending on the job submission system.
+
+The parameters for :func:`~miic.scripts.calculate_noise_correlations.paracorr` and :func:`~miic.scripts.calculate_noise_correlations.merge_corr_results` are read from a `yaml <http://yaml.org>`_ parameter file described below. The name of the parameter file is to be given as command line argument when ``calculate_noise_correlations.py`` is executed as a python programm. 
 
 **************
 Parameter File
 **************
 
-The present script uses different section of the :download:`parameter file <../../../miic/scripts/monitoring_project.yaml>`. There is a general section *projekt wide parameters* describing parameters relevant for all processing setps::
+The present script uses different section of the :download:`parameter file <../../../miic/scripts/monitoring_project.yaml>`. There is a general section of *projekt wide parameters* describing parameters relevant for all processing setps::
 
     #### Project wide parameters
     # lowest level project directory

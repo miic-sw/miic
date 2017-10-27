@@ -1,6 +1,6 @@
-============
-MIIC Scripts
-============
+==============
+MIIC Tutorials
+==============
 
 .. toctree::
    :maxdepth: 1
