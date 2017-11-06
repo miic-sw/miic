@@ -34,7 +34,7 @@ except ImportError:
 
 # Obspy import
 from obspy.core import Stream, Trace, Stats, UTCDateTime
-from obspy.signal.invsim import cosTaper
+from obspy.signal.invsim import cosine_taper
 
 # Local import
 from miic.core.miic_utils import trace_calc_az_baz_dist
@@ -349,7 +349,7 @@ def deconvolve_traces(signal, divisor, eps, freq=[], residual=False):
     
     # prepare divisor
     divisor.detrend(type='constant')
-    taper = cosTaper(divisor.stats['npts'],p=0.05)
+    taper = cosine_taper(divisor.stats['npts'],p=0.05)
     divisor.data *= taper
 
     divisor.trim(starttime=divisor.stats['starttime'],endtime=divisor.stats['starttime']+
@@ -374,7 +374,7 @@ def deconvolve_traces(signal, divisor, eps, freq=[], residual=False):
         
         # prepare nuerator
         tr.detrend('constant')
-        taper = cosTaper(tr.stats['npts'])
+        taper = cosine_taper(tr.stats['npts'])
         tr.trim(starttime=tr.stats['starttime'], endtime=tr.stats['starttime']+
                 (trlen-1)*delta,pad=True,fill_value=0,nearest_sample=False)
         tr.data *= taper

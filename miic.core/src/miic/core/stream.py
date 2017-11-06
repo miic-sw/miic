@@ -520,6 +520,60 @@ def stream_stack_distance_intervals(st, interval, norm_type='no'):
     return sst
 
 
+
+
+
+def stream_clip(st, filter=(), clip_method='std_factor', clip_value=3):
+    """
+    Clip parts of data that exceed a threshold
+
+    Set amplitudes exeeding a certatin threshold to this threshold.
+    The threshold for clipping is estimated according to `clip_method`.
+
+    :type st: obspy.Stream
+    :param st: stream with data to be cliped
+    :type clip_method: str
+    :param mute_method: either 'std_factor', 'median_factor' or 'threshold'
+        that lead to clipping when the absolute value of the data exceeds the
+        standard deviation or the median of the absolute value of the data by
+        a certain factor (clip_value) or when the envelope exceeds a fixed
+        value (threshold), respectively.
+    :type clip_value: float
+    :param clip_value: numerical value corresponding to 'clip_method'
+
+    :rtype: obspy.stream
+    :return: muted data
+    """
+
+    assert type(st) == Stream, "st is not an obspy stream"
+    assert clip_method in ['std_factor', 'median_factor', 'threshold'], "unsupported clip_method"
+
+    # copy the data
+    tst = st.copy()
+    mst = Stream()
+    for ltr in tst:
+        cst = ltr.split()
+        for ind,tr in enumerate(cst):
+
+            # calculate threshold
+            if clip_method == 'threshold':
+                thres = np.zeros_like(tr.data) + clip_value
+            elif clip_method == 'std_factor':
+                thres = np.std(tr.data) * clip_value
+            elif clip_method == 'median_factor':
+                thres = clip_value * np.median(np.abs(tr.data))
+
+            cind = tr.data > thres
+            cst[ind].data[cind] = thres
+            cind = tr.data < -thres
+            cst[ind].data[cind] = -thres
+
+        cst.merge()
+        mst += cst
+    return mst
+
+
+
 def stream_mute(st, filter=(), mute_method='std_factor', mute_value=3,
                 taper_len=5,extend_gaps=True):
     """
