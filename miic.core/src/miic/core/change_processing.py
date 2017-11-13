@@ -80,7 +80,8 @@ def dt_baseline(dt_dict):
     correct times are constant. Here we estimate the most common time shift and
     assume that it characterises periods with correctly working clocks.
     """
-    hh = np.histogram(dt_dict['value'],bins=np.squeeze(dt_dict['second_axis']))
+    ind = ~np.isnan(dt_dict['value'])
+    hh = np.histogram(dt_dict['value'][ind],bins=np.squeeze(dt_dict['second_axis']))
     dt_bl = hh[1][np.argmax(hh[0])]
     return dt_bl
 
@@ -107,30 +108,35 @@ def dv_combine(dv_list, method='average_sim_mat'):
     return res_dv
     
     
-def dv_combine_multi_ref(dv_list,max_shift=0.01):
+def dv_combine_multi_ref(dv_list,max_shift=0.01,method='shift'):
     """Combine a list of change measuments with different reference traces
     
     Combine a list of change dictionaries obtained from different references
     into a single one. The similarity matricies are simply averaged after they
     have been shifted to account for the offset between the different
     references. The offset between the references is estimated as the shift
-    between the two correlation matrices that results in the maximum sum of
-    element wise products (correlation). The first measurement in the list is
-    not shifted. If the input list of measurements is longer than two, the 
-    individual shifts (with respect to the anshifted first measurment) is
-    estimated from least squares inversion of the shifts between all
-    measurements.
+    between the two correlation matrices with two possible methods: maximum of
+    the summed product of shifted similarity matrices (`shift`) or the median
+    of the difference between the estimated changes (`diff`). The first
+    measurement in the list is not shifted. If the input list of measurements
+    is longer than two, the individual shifts (with respect to the unshifted
+    first measurment) is estimated from least squares inversion of the shifts
+    between all measurements.
     
     :type dv_list: list dict
     :param dv_list: list of velociy change dictionaries to be combined
     :type max_shift: float
     :param max_shift: maximum shift to be tested beween different measuremants
+    :param method: str
+    :param method: method to estimate the offset between two measurements
     
     :type: dict
     :return: combined dv_dict
     """
     
-    assert type(dv_list) == type([]), "dv_list is not a list"    
+    assert type(dv_list) == type([]), "dv_list is not a list"
+    assert method in ['shift','diff'], "method has to be either 'shift' or "\
+                "'diff'."
     #stps should be at mostas large as the lagest second axis maller than max_shftp    
     
     
@@ -142,7 +148,7 @@ def dv_combine_multi_ref(dv_list,max_shift=0.01):
     for ind1,dv1 in enumerate(dv_list):
         for ind2,dv2 in enumerate(dv_list):
             if ind2 > ind1:
-                shift.append(_dv_shift(dv1,dv2,steps))
+                shift.append(_dv_shift(dv1,dv2,steps,method))
                 if ind1 > 0:   # assume hat first refrence is not shifed
                     G[cnt,ind1-1] = 1
                 G[cnt,ind2-1] = -1
@@ -156,18 +162,25 @@ def dv_combine_multi_ref(dv_list,max_shift=0.01):
             dv_list[ind]['sim_mat'][:,-np.min([0.,offset[ind]]):np.min([ns,ns-offset[ind]])]
     cdv['sim_mat'] /= len(dv_list)
     cdv['value'] = np.argmax(cdv['sim_mat'],axis=1)
-    cdv['corr'] = [cdv['sim_mat'][ind,cdv['value'][ind]] for ind in range(len(cdv['sim_mat'][:,cdv['value']]))]
+    cdv['corr'] = np.max(cdv['sim_mat'],axis=1)
     cdv['value']= cdv['second_axis'][cdv['value']]
 
     return cdv
 
 
-def _dv_shift(dv1,dv2,steps):
-    c = []
-    shi_range = np.arange(-steps,steps)
-    for shi in shi_range:
-        c.append(np.nansum(dv2['sim_mat'][:,steps+shi:-steps+shi]*dv1['sim_mat'][:,steps:-steps]))
-    shift = shi_range[np.argmax(c)]
+def _dv_shift(dv1,dv2,steps,method):
+    if method == 'shift':
+        c = []
+        shi_range = np.arange(-steps,steps)
+        for shi in shi_range:
+            c.append(np.nansum(dv2['sim_mat'][:,steps+shi:-steps+shi]*dv1['sim_mat'][:,steps:-steps]))
+        shift = shi_range[np.argmax(c)]
+    elif method == 'diff':
+        shift_val = np.median(dv2['value'] - dv1['value'])
+        shiftn = np.argmin(np.abs(shift_val-dv1['second_axis']))
+        shiftz = np.argmin(np.abs(-dv1['second_axis']))
+        shift = shiftn - shiftz
+
     return shift
     
 
