@@ -6,8 +6,8 @@ Created on Wed Jun  8 15:11:53 2016
 """
 import numpy as np
 from copy import deepcopy
-from datetime import datetime, timedelta
-from scipy.optimize import fmin, minimize
+from datetime import datetime
+from scipy.optimize import fmin
 import pdb
 
 from miic.core.miic_utils import serial_date_from_datetime, convert_time
@@ -499,17 +499,56 @@ def _print_model_par(model_par):
         print '%s:' % type
         for par in model_par[type].keys():
             if par not in ['to_vari','units']:
-                print '\t%s = %e %s' % (par,model_par[type][par],
+                print '\t%s = %s %s' % (par,str(model_par[type][par]),
                                         model_par[type]['units'][par])
         print '\tfitted parameters: %s\n' % str(model_par[type]['to_vari'])
+
+def substract_model(dv):
+    """ Substract the modelled change from the data.
+    """
+    assert 'model_value' in dv, "You need to calculate a model first"
+    if 'sim_mat' in dv:
+        tmp_sim_mat = np.zeros_like(dv['sim_mat'])
+        la = len(dv['second_axis'])
+        cent = np.argmin(np.abs(dv['second_axis']))
+        for ind in range(len(dv['time'])):
+            shift = np.argmin(np.abs(dv['second_axis']-dv['model_value'][ind])) - cent
+            tmp_sim_mat[ind,max((0,-shift)):min((la,la-shift))] = \
+            dv['sim_mat'][ind,max((0,shift)):min((la,la+shift))]
+        dv['sim_mat'] = tmp_sim_mat
+    dv['value'] -= dv['model_value']
+    dv['model_value'] *= 0.
+
     
 class Change:
     def __init__(self):
         print 'init'
         self.dv = {}
+
+    def copy(self):
+        return deepcopy(self)
     
     def set_dv(self, dv):
         self.dv = dv
+
+    def set_excitation(self, excitation):
+        t = excitation.stats['starttime']
+        st = float(t.toordinal())*86400+float(t.hour)*3600+ \
+                    float(t.minute)*60 + float(t.second)
+        dt = excitation.stats['delta']
+        exc_time = np.arange(st,st+dt*excitation.stats['npts'],dt)
+        exc_time = [st+dt*ind for ind in range(excitation.stats['npts'])]
+        # set time of first measurement to zero
+        exc_time = np.array(exc_time)# - dv_time[0]
+        self.excitation = excitation
+        self.excitation_time = exc_time
+            
+    def model_forward(self, misfit_function=_misfit_int_corr):
+        self.dv = model_forward(self.dv, self.model_par, self.excitation,
+                                misfit_function)
+    
+    def substract_model(self):
+        substract_model(self.dv)
     
     def set_start_model(self, type):
         """
@@ -568,16 +607,36 @@ class Change:
                                                                'tau_max_scale':'log10(d)/input'}}})
             elif this_type == 'state_model':
                 self.start_model.update({'state_model':{'sensitivity':1.,
-                                                        'tau_min':0.01,
-                                                        'tau_max':1000,
+                                                        'tau_min':-2,
+                                                        'tau_max':3,
                                                         'Ntau':100,
                                                         'to_vari':['sensitivity','tau_max'],
                                                         'units':{'sensitivity':'1/input',
                                                                  'tau_min':'log10(d)',
                                                                  'tau_max':'log10(d)',
                                                                  'Ntau':'1'}}})
-    def fit_model(self, excitation=[],
-                  misfit_function=_misfit_int_corr):
+            elif this_type == 'flat_state_model':
+                self.start_model.update({'flat_state_model':{'sensitivity':1.,
+                                                        'tau_min':-2,
+                                                        'tau_max':3,
+                                                        'Ntau':100,
+                                                        'to_vari':['sensitivity','tau_max'],
+                                                        'units':{'sensitivity':'1/input',
+                                                                 'tau_min':'log10(d)',
+                                                                 'tau_max':'log10(d)',
+                                                                 'Ntau':'1'}}})
+            elif this_type == 'strain_rate_model':
+                self.start_model.update({'strain_rate_model':{'sensitivity':1.,
+                                                        'tau_min':-2,
+                                                        'tau_max':3,
+                                                        'Ntau':100,
+                                                        'to_vari':['sensitivity','tau_max'],
+                                                        'units':{'sensitivity':'1/input',
+                                                                 'tau_min':'log10(d)',
+                                                                 'tau_max':'log10(d)',
+                                                                 'Ntau':'1'}}})
+                                                                 
+    def fit_model(self, misfit_function=_misfit_int_corr):
         """
         'excitation' is supposed to be a obspy.trace
         """
@@ -592,8 +651,11 @@ class Change:
         dv_time = np.array(dv_time)
         
         # create time vector for excitation
-        mod_with_exc = ['const_exp','var_exp','const_log','var_log']
+        mod_with_exc = ['const_exp','var_exp','const_log','var_log',
+                        'state_model','flat_state_model','strain_rate_model']
         if any(x in self.start_model['type'] for x in mod_with_exc):
+            assert hasattr(self,'excitation'), 'Attach an excitation first'
+            """
             t = excitation.stats['starttime']
             st = float(t.toordinal())*86400+float(t.hour)*3600+ \
                     float(t.minute)*60 + float(t.second)
@@ -601,8 +663,9 @@ class Change:
             exc_time = np.arange(st,st+dt*excitation.stats['npts'],dt)
             exc_time = [st+dt*ind for ind in range(excitation.stats['npts'])]
             # set time of first measurement to zero
-            exc_time = np.array(exc_time) - dv_time[0]
-            exc = excitation.data
+            """
+            exc_time = self.excitation_time - dv_time[0]
+            exc = self.excitation.data
         else:
             exc_time = []
             exc = []
@@ -640,6 +703,37 @@ class Change:
         print 'Model misfit: %e\n' % self.dv['model_misfit'] 
     
 
+def model_forward(dv,model_par,excitation=[],misfit_function=_misfit_int_corr):
+    # create time vector for dv measurements
+    #pdb.set_trace()
+    tdv = deepcopy(dv)
+    dv_time = [(float(t.toordinal())*86400+float(t.hour)*3600+float(t.minute)*60\
+              +float(t.second)) for t in convert_time(tdv['time'])]
+    dv_time = np.array(dv_time)
+    
+    if excitation:
+        t = excitation.stats['starttime']
+        st = float(t.toordinal())*86400+float(t.hour)*3600+ \
+                   float(t.minute)*60 + float(t.second)
+        dt = excitation.stats['delta']
+        exc_time = np.arange(st,st+dt*excitation.stats['npts'],dt)
+        exc_time = [st+dt*ind for ind in range(excitation.stats['npts'])]
+        # set time of first measurement to zero
+        exc_time = np.array(exc_time) - dv_time[0]
+        exc = excitation.data  
+    else:
+        exc = []
+        exc_time = []
+    dv_time -= dv_time[0]
+    tdv['model_value'] = _forward(dv_time, exc_time, exc, model_par)
+    tdv['model_corr'] = _model_correlation(tdv, tdv['model_value'])
+    tdv['misfit_function'] = '%s' % misfit_function
+    mf = (_modelvec_from_dict(model_par), tdv, dv_time, exc_time,
+          exc,model_par)
+    tdv['model_misfit'] = mf
+    return tdv
+
+
 def _forward(dv_time, exc_time, exc, model_par):
     """ Model stretching due to changes using different components
     
@@ -673,14 +767,35 @@ def _forward(dv_time, exc_time, exc, model_par):
                                 model_par['var_log']['tau_min'],
                                 model_par['var_log']['tau_max_scale'])
     if 'state_model' in model_par['type']:
-        mdv += _forward_state_model(dv_time, exc_time, exc,
-                                    model_par['state_model']['sensitivity'],
-                                    model_par['state_model']['tau_min'],
-                                    model_par['state_model']['tau_max'],
-                                    model_par['state_model']['Ntau'])
+        #pdb.set_trace()
+        mdv += _forward_state_model_fd(dv_time, exc_time, exc,
+                                       model_par['state_model']['exc_scale'],
+                                       model_par['state_model']['sensitivity'],
+                                       np.logspace(model_par['state_model']['tau_min'],
+                                                   model_par['state_model']['tau_max'],
+                                                   model_par['state_model']['Ntau']),
+                                       model_par['state_model']['p0'])
+    if 'flat_state_model' in model_par['type']:
+        #pdb.set_trace()
+        mdv += _forward_flat_state_model_fd(dv_time, exc_time, exc,
+                                       model_par['flat_state_model']['exc_scale'],
+                                       model_par['flat_state_model']['sensitivity'],
+                                       np.logspace(model_par['flat_state_model']['tau_min'],
+                                                   model_par['flat_state_model']['tau_max'],
+                                                   model_par['flat_state_model']['Ntau']),
+                                       model_par['flat_state_model']['p0'])
+    if 'strain_rate_model' in model_par['type']:
+        #pdb.set_trace()        
+        mdv += _forward_rate_model(dv_time, exc_time, exc,
+                                       model_par['strain_rate_model']['exc_scale'],
+                                       model_par['strain_rate_model']['sensitivity'],
+                                       np.logspace(model_par['strain_rate_model']['tau_min'],
+                                                   model_par['strain_rate_model']['tau_max'],
+                                                   model_par['strain_rate_model']['Ntau']),
+                                       model_par['strain_rate_model']['p0'])
     return mdv
 
-import matplotlib.pyplot as plt
+
 def _forward_state_model(dv_time, exc_time, exc, sensitivity, taus, p0):
     """Roel's and Jack's analytic solution to the state model.
     
@@ -688,7 +803,7 @@ def _forward_state_model(dv_time, exc_time, exc, sensitivity, taus, p0):
     tau in seconds
     """
     # int 2 - alpha t
-    pdb.set_trace()
+    #pdb.set_trace()
     tim = exc_time - exc_time[0]
     t_scale = exc_time[0]
     dt = np.diff(exc_time)/t_scale
@@ -702,36 +817,134 @@ def _forward_state_model(dv_time, exc_time, exc, sensitivity, taus, p0):
             p0[ind] = exc[0]/(1./tau/t_scale + exc[0])
         emFt = np.exp(tim/tau) * eA
         p[:,ind] = 1 - 1./emFt * (1 - p0[ind] + 1/tau/t_scale * np.cumsum(emFt*dt))
-    pdb.set_trace()   
-    print 'sfewrfqF'
+
+"""
+def _forward_flat_state_model_fd(dv_time, exc_time, exc, exc_scale, sensitivity, taus, p0):
+    texc = deepcopy(exc)*exc_scale
+    p = np.zeros((len(exc_time),len(taus)))
+    alp = 1./taus
+    for ind,al in enumerate(alp):
+        if p0[ind] < 0:
+            p0[ind] = texc[0]/(1+texc[0])
+    p[0,:] = p0
+    dt = np.diff(exc_time)
+    pequi = texc/(1+texc)
+    for ind,tdt in enumerate(dt):
+        p[ind+1,:] = pequi[ind] + (p[ind,:] - pequi[ind])*np.exp(-alp*(1.+texc[ind])*tdt)
+    #p /= np.tile(np.atleast_2d(alp),(len(exc),1))    
+    import pdb
+    import matplotlib.pyplot as plt
+    #p *= np.tile(alp,())
+    #plt.imshow(np.log(p),aspect='auto')
+    #plt.colorbar()
+    #plt.show()
+    #pdb.set_trace()
+    #p /= np.tile(alp,(len(texc),1))
+    model = np.sum(p,axis=1)
+    model = np.interp(dv_time-dv_time[0],exc_time,model)
+    model -= model[0]
+    model /= np.max(np.abs(model))
+    model *= sensitivity
+    #plt.imshow(p,aspect='auto')
+    #plt.show()
+    return model
+"""
 
 
-def _forward_state_model_fd(dv_time, exc_time, exc, sensitivity, taus, p0):
+def _forward_flat_state_model_fd(dv_time, exc_time, exc, exc_scale, sensitivity, taus, p0):
+    texc = deepcopy(exc)*exc_scale
+    p = np.zeros((len(exc_time),len(taus)))
+    alp = 1./taus
+    for ind,al in enumerate(alp):
+        if p0[ind] < 0:
+            p0[ind] = texc[0]/(1+texc[0])
+    p[0,:] = p0
+    dt = np.diff(exc_time)
+    pequi = texc/(1+texc)
+    for ind,tdt in enumerate(dt):
+        p[ind+1,:] = pequi[ind] + (p[ind,:] - pequi[ind])*np.exp(-alp*tdt)
+        
+    p /= np.tile(alp**1.,(len(texc),1))
+
+    #import pdb
+    #import matplotlib.pyplot as plt
+    #plt.imshow(np.log(p),aspect='auto')
+    #plt.colorbar()
+    #plt.colorbar()
+    #plt.show()
+    #pdb.set_trace()
+    model = np.sum(p,axis=1)
+    model = np.interp(dv_time-dv_time[0],exc_time,model)
+    model -= model[0]
+    model /= np.max(np.abs(model))
+    model *= sensitivity
+    #plt.imshow(p,aspect='auto')
+    #plt.show()
+    return model
+    
+    
+def _forward_rate_model(dv_time, exc_time, exc, exc_scale, sensitivity, taus, p0):
+    texc = deepcopy(exc)*exc_scale
+    p = np.zeros((len(exc_time),len(taus)))
+    alp = 1./taus
+    for ind,al in enumerate(alp):
+        if p0[ind] < 0:
+            p0[ind] = texc[0]/(1+texc[0])
+    p[0,:] = p0
+    dt = np.diff(exc_time)
+    pequi = texc/(1+texc)
+    import pdb
+    pdb.set_trace()
+    for ind,tdt in enumerate(dt):
+        p[ind+1,:] = p[ind,:] - p[ind,:]*(1.-np.exp(-texc[ind]*alp*tdt)) + (p[ind,:] - p0)*(1.-np.exp(-alp*tdt))
+    import matplotlib.pyplot as plt
+    plt.imshow(np.log(p))
+    plt.show()    
+    #p /= np.tile(alp**0.7,(len(texc),1))
+
+    #import pdb
+    #import matplotlib.pyplot as plt
+    #plt.imshow(np.log(p),aspect='auto')
+    #plt.colorbar()
+    #plt.colorbar()
+    #plt.show()
+    #pdb.set_trace()
+    model = np.sum(p,axis=1)
+    model = np.interp(dv_time-dv_time[0],exc_time,model)
+    model -= model[0]
+    model /= np.max(np.abs(model))
+    model *= sensitivity
+    #plt.imshow(p,aspect='auto')
+    #plt.show()
+    return model    
+
+
+def _forward_state_model_fd(dv_time, exc_time, exc, exc_scale, sensitivity, taus, p0):
     """numerical fd solution to the state model.
     
     units: exc_time in seconds
     tau in seconds
     """
     # int 2 - alpha t
+    #pdb.set_trace()
+    texc = deepcopy(exc)*exc_scale
     p = np.zeros((len(exc_time),len(taus)))
     alp = 1./taus
-    for ind,tau in enumerate(taus):
+    for ind,al in enumerate(alp):
         if p0[ind] < 0:
-            p0[ind] = exc[0]*tau/(1 + tau * exc[0])
+            p0[ind] = texc[0]/(al+texc[0])
     p[0,:] = p0
     dt = np.diff(exc_time)
-    #dt = np.concatenate((dt,np.array([dt[-1]])))
     for ind,tdt in enumerate(dt):
-        if ind == 3530:
-            print 'sdf'
-            pdb.set_trace()
-        pequi = exc[ind]/(alp+exc[ind])
-        p[ind+1,:] = pequi + (p[ind,:] - pequi)*np.exp(-(alp+exc[ind])*tdt)
+        pequi = texc[ind]/(alp+texc[ind])
+        p[ind+1,:] = pequi + (p[ind,:] - pequi)*np.exp(-(alp+texc[ind])*tdt)
     model = np.sum(p,axis=1)
-    model = np.interp(dv_time,exc_time,model)
-
-    pdb.set_trace()   
-    print 'sfewrfqF'
+    model = np.interp(dv_time-dv_time[0],exc_time,model)
+    model -= model[0]
+    model /= np.abs(np.max(model))
+    model *= sensitivity
+    #plt.imshow(p,aspect='auto')
+    #plt.show()
     return model
     
 
