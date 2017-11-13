@@ -288,11 +288,19 @@ def create_path(directory):
     :return: 0
     """
 
-    if not os.path.exists(directory):
-        os.makedirs(directory)
+    if not os.path.exists(directory) :
+        # Use try in case another parallel process has made it in that time
+        try :
+            os.makedirs(directory)
+        except OSError as e :
+            if e[0]==17 :
+                pass
+            else :
+                raise OSError(e)
     else:
         assert os.path.isdir(directory), "%s exists but is not a directory" % subpath
     return 0
+
 
 
 def archive_code(scriptname):
