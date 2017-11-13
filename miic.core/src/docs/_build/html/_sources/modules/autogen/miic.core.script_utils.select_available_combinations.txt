@@ -1,0 +1,6 @@
+miic.core.script_utils.select_available_combinations
+====================================================
+
+.. currentmodule:: miic.core.script_utils
+
+.. autofunction:: select_available_combinations

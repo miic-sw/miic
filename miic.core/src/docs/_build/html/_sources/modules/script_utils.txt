@@ -1,0 +1,18 @@
+Script Utilities
+================
+Set of utility functions for running scripts.
+
+.. currentmodule:: miic.core.script_utils
+.. automodule:: miic.core.script_utils
+        
+    .. comment to end block
+    
+    General Use
+    -----------
+    .. autosummary::
+       :toctree: autogen
+       :nosignatures:
+       
+       ~combine_station_channels
+       ~select_available_combinations
+

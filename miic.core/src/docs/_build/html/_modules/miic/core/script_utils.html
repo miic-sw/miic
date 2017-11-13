@@ -1,0 +1,272 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>miic.core.script_utils &mdash; MIIC 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="top" title="MIIC 1.0 documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MIIC 1.0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for miic.core.script_utils</h1><div class="highlight"><pre>
+<span class="c"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Created on Wed Feb 22 09:33:04 2017</span>
+
+<span class="sd">@author: chris</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">yaml</span>
+<span class="kn">import</span> <span class="nn">shutil</span>
+<span class="kn">import</span> <span class="nn">importlib</span>
+<span class="kn">from</span> <span class="nn">miic.core.miic_utils</span> <span class="kn">import</span> <span class="n">create_path</span><span class="p">,</span> <span class="n">import_function_by_name</span>
+<span class="kn">import</span> <span class="nn">miic.core.pxcorr_func</span> <span class="kn">as</span> <span class="nn">px</span>
+<span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
+<span class="kn">from</span> <span class="nn">obspy</span> <span class="kn">import</span> <span class="n">UTCDateTime</span>
+
+
+<span class="k">def</span> <span class="nf">read_parameter_file</span><span class="p">(</span><span class="n">par_file</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Read yaml parameter file.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">par_file</span><span class="p">,</span><span class="s">&#39;rb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">par</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">safe_load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">yaml</span><span class="o">.</span><span class="n">YAMLError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+            <span class="k">raise</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">par</span>
+
+
+<span class="k">def</span> <span class="nf">ini_project</span><span class="p">(</span><span class="n">par_file</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Initialize a project of network synchrinization</span>
+<span class="sd">    </span>
+<span class="sd">    Read the yaml parameter file, and complete its content, i.e. combine</span>
+<span class="sd">    subdirectory names. Some project relevant directories are created and</span>
+<span class="sd">    directory names completed. The list of combinations is filled if not given</span>
+<span class="sd">    explicitly. The parameter dictionary is returned.</span>
+<span class="sd">    </span>
+<span class="sd">    :type par_file: str</span>
+<span class="sd">    :param par_file: path of the yaml parameter file</span>
+<span class="sd">    :rtype: dict</span>
+<span class="sd">    :return: parameters</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">par</span> <span class="o">=</span> <span class="n">read_parameter_file</span><span class="p">(</span><span class="n">par_file</span><span class="p">)</span>
+
+    <span class="n">par</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s">&#39;execution_start&#39;</span><span class="p">:</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">UTCDateTime</span><span class="p">()})</span>
+
+    <span class="n">create_path</span><span class="p">(</span><span class="n">par</span><span class="p">[</span><span class="s">&#39;proj_dir&#39;</span><span class="p">])</span>
+    <span class="n">par</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s">&#39;log_dir&#39;</span><span class="p">:</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">par</span><span class="p">[</span><span class="s">&#39;proj_dir&#39;</span><span class="p">],</span><span class="n">par</span><span class="p">[</span><span class="s">&#39;log_subdir&#39;</span><span class="p">])})</span>
+    <span class="n">par</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s">&#39;fig_dir&#39;</span><span class="p">:</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">par</span><span class="p">[</span><span class="s">&#39;proj_dir&#39;</span><span class="p">],</span><span class="n">par</span><span class="p">[</span><span class="s">&#39;fig_subdir&#39;</span><span class="p">])})</span>
+    <span class="n">create_path</span><span class="p">(</span><span class="n">par</span><span class="p">[</span><span class="s">&#39;log_dir&#39;</span><span class="p">])</span>
+    <span class="n">create_path</span><span class="p">(</span><span class="n">par</span><span class="p">[</span><span class="s">&#39;fig_dir&#39;</span><span class="p">])</span>
+    <span class="n">par</span><span class="p">[</span><span class="s">&#39;co&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s">&#39;res_dir&#39;</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">par</span><span class="p">[</span><span class="s">&#39;proj_dir&#39;</span><span class="p">],</span>
+                                             <span class="n">par</span><span class="p">[</span><span class="s">&#39;co&#39;</span><span class="p">][</span><span class="s">&#39;subdir&#39;</span><span class="p">])})</span>
+    <span class="n">par</span><span class="p">[</span><span class="s">&#39;co&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s">&#39;fig_dir&#39;</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">par</span><span class="p">[</span><span class="s">&#39;fig_dir&#39;</span><span class="p">],</span>
+                                             <span class="n">par</span><span class="p">[</span><span class="s">&#39;co&#39;</span><span class="p">][</span><span class="s">&#39;subdir&#39;</span><span class="p">])})</span>
+    <span class="n">par</span><span class="p">[</span><span class="s">&#39;dv&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s">&#39;res_dir&#39;</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">par</span><span class="p">[</span><span class="s">&#39;proj_dir&#39;</span><span class="p">],</span>
+                                             <span class="n">par</span><span class="p">[</span><span class="s">&#39;dv&#39;</span><span class="p">][</span><span class="s">&#39;subdir&#39;</span><span class="p">])})</span>
+    <span class="n">par</span><span class="p">[</span><span class="s">&#39;dv&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s">&#39;fig_dir&#39;</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">par</span><span class="p">[</span><span class="s">&#39;fig_dir&#39;</span><span class="p">],</span>
+                                             <span class="n">par</span><span class="p">[</span><span class="s">&#39;dv&#39;</span><span class="p">][</span><span class="s">&#39;subdir&#39;</span><span class="p">])})</span>
+    <span class="c"># copy parameter file to log dir</span>
+    <span class="n">shutil</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">par_file</span><span class="p">,</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">par</span><span class="p">[</span><span class="s">&#39;log_dir&#39;</span><span class="p">],</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">_parfile.txt&#39;</span> <span class="o">%</span> <span class="n">par</span><span class="p">[</span><span class="s">&#39;execution_start&#39;</span><span class="p">]))</span>
+
+    <span class="c"># replace function names for preprocessing with functions</span>
+    <span class="k">if</span> <span class="s">&#39;preProcessing&#39;</span> <span class="ow">in</span> <span class="n">par</span><span class="p">[</span><span class="s">&#39;co&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">procStep</span> <span class="ow">in</span> <span class="n">par</span><span class="p">[</span><span class="s">&#39;co&#39;</span><span class="p">][</span><span class="s">&#39;preProcessing&#39;</span><span class="p">]:</span>
+            <span class="n">procStep</span><span class="p">[</span><span class="s">&#39;function&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">import_function_by_name</span><span class="p">(</span><span class="n">procStep</span><span class="p">[</span><span class="s">&#39;function&#39;</span><span class="p">])</span>
+
+    <span class="c"># create corr_args</span>
+    <span class="c"># replace function name by function itself</span>
+    <span class="k">for</span> <span class="n">func</span> <span class="ow">in</span> <span class="n">par</span><span class="p">[</span><span class="s">&#39;co&#39;</span><span class="p">][</span><span class="s">&#39;corr_args&#39;</span><span class="p">][</span><span class="s">&#39;TDpreProcessing&#39;</span><span class="p">]:</span>
+        <span class="n">func</span><span class="p">[</span><span class="s">&#39;function&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">import_function_by_name</span><span class="p">(</span><span class="n">func</span><span class="p">[</span><span class="s">&#39;function&#39;</span><span class="p">])</span>
+    <span class="k">for</span> <span class="n">func</span> <span class="ow">in</span> <span class="n">par</span><span class="p">[</span><span class="s">&#39;co&#39;</span><span class="p">][</span><span class="s">&#39;corr_args&#39;</span><span class="p">][</span><span class="s">&#39;FDpreProcessing&#39;</span><span class="p">]:</span>
+        <span class="n">func</span><span class="p">[</span><span class="s">&#39;function&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">import_function_by_name</span><span class="p">(</span><span class="n">func</span><span class="p">[</span><span class="s">&#39;function&#39;</span><span class="p">])</span>
+    <span class="k">if</span> <span class="s">&#39;direct_output&#39;</span> <span class="ow">in</span> <span class="n">par</span><span class="p">[</span><span class="s">&#39;co&#39;</span><span class="p">][</span><span class="s">&#39;corr_args&#39;</span><span class="p">]:</span>
+        <span class="n">par</span><span class="p">[</span><span class="s">&#39;co&#39;</span><span class="p">][</span><span class="s">&#39;corr_args&#39;</span><span class="p">][</span><span class="s">&#39;direct_output&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s">&#39;base_dir&#39;</span><span class="p">:</span> <span class="n">par</span><span class="p">[</span><span class="s">&#39;co&#39;</span><span class="p">][</span><span class="s">&#39;res_dir&#39;</span><span class="p">]})</span>
+    <span class="k">return</span> <span class="n">par</span>
+
+
+
+<span class="k">def</span> <span class="nf">correlation_subdir_name</span><span class="p">(</span><span class="n">date</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Create the path to a sub folder for the correlation traces.</span>
+
+<span class="sd">    The path will have the following structure:</span>
+<span class="sd">    YEAR/JDAY</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">date</span><span class="p">,</span><span class="n">UTCDateTime</span><span class="p">):</span>
+        <span class="n">date</span> <span class="o">=</span> <span class="n">date</span><span class="o">.</span><span class="n">datetime</span>
+
+    <span class="n">subpath</span> <span class="o">=</span> <span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">date</span><span class="o">.</span><span class="n">year</span><span class="p">),</span><span class="s">&quot;</span><span class="si">%03d</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">date</span><span class="o">.</span><span class="n">timetuple</span><span class="p">()</span><span class="o">.</span><span class="n">tm_yday</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">subpath</span>
+
+
+<div class="viewcode-block" id="combine_station_channels"><a class="viewcode-back" href="../../../modules/autogen/miic.core.script_utils.combine_station_channels.html#miic.core.script_utils.combine_station_channels">[docs]</a><span class="k">def</span> <span class="nf">combine_station_channels</span><span class="p">(</span><span class="n">stations</span><span class="p">,</span><span class="n">channels</span><span class="p">,</span><span class="n">method</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Create a list of combination</span>
+
+<span class="sd">    Combine stations given in a list of NET.STATION parts of the seedID</span>
+<span class="sd">    and a list of channel names using a given method.</span>
+<span class="sd">    </span>
+<span class="sd">    :type stations: list with items of the form &#39;NET.STATION&#39;</span>
+<span class="sd">    :param stations: stations to be used if present</span>
+<span class="sd">    :type channel: list with the channel names</span>
+<span class="sd">    :param channels: channels to be used if present</span>
+<span class="sd">    :type method: string</span>
+<span class="sd">    :param method: Determines which traces of the strem are combined.</span>
+<span class="sd">    </span>
+<span class="sd">        ``&#39;betweenStations&#39;``: Traces are combined if either their station or</span>
+<span class="sd">            their network names are different including all possible channel</span>
+<span class="sd">            combinations.</span>
+<span class="sd">        ``&#39;betweenComponents&#39;``: Traces are combined if their components (last</span>
+<span class="sd">            letter of channel name) names are different and their station and</span>
+<span class="sd">            network names are identical (single station cross-correlation).</span>
+<span class="sd">        ``&#39;autoComponents&#39;``: Traces are combined only with themselves. </span>
+<span class="sd">        </span>
+<span class="sd">        ``&#39;allSimpleCombinations&#39;``: All Traces are combined once (onle one of</span>
+<span class="sd">            (0,1) and (1,0))</span>
+<span class="sd">        ``&#39;allCombinations&#39;``: All traces are combined in both orders ((0,1)</span>
+<span class="sd">            and (1,0))</span>
+<span class="sd">    :rtype: list</span>
+<span class="sd">    :return: list containing two list [[IDs of first trace],[IDs of second trace]]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">stations</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">stations</span><span class="p">))</span>
+    <span class="n">channels</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">channels</span><span class="p">))</span>
+    <span class="n">first</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">second</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s">&#39;betweenStations&#39;</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">stations</span><span class="p">)):</span>
+            <span class="k">for</span> <span class="n">jj</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ii</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">stations</span><span class="p">)):</span>
+                <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">channels</span><span class="p">)):</span>
+                    <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">channels</span><span class="p">)):</span>
+                        <span class="n">first</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">..</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">stations</span><span class="p">[</span><span class="n">ii</span><span class="p">],</span><span class="n">channels</span><span class="p">[</span><span class="n">k</span><span class="p">]))</span>
+                        <span class="n">second</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">..</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">stations</span><span class="p">[</span><span class="n">jj</span><span class="p">],</span><span class="n">channels</span><span class="p">[</span><span class="n">l</span><span class="p">]))</span>
+    <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s">&#39;betweenComponents&#39;</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">stations</span><span class="p">)):</span>
+            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">channels</span><span class="p">)):</span>
+                <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">k</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">channels</span><span class="p">)):</span>
+                    <span class="n">first</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">..</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">stations</span><span class="p">[</span><span class="n">ii</span><span class="p">],</span><span class="n">channels</span><span class="p">[</span><span class="n">k</span><span class="p">]))</span>
+                    <span class="n">second</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">..</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">stations</span><span class="p">[</span><span class="n">ii</span><span class="p">],</span><span class="n">channels</span><span class="p">[</span><span class="n">l</span><span class="p">]))</span>
+    <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s">&#39;autoComponents&#39;</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">stations</span><span class="p">)):</span>
+            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">channels</span><span class="p">)):</span>
+                <span class="n">first</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">..</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">stations</span><span class="p">[</span><span class="n">ii</span><span class="p">],</span><span class="n">channels</span><span class="p">[</span><span class="n">k</span><span class="p">]))</span>
+                <span class="n">second</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">..</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">stations</span><span class="p">[</span><span class="n">ii</span><span class="p">],</span><span class="n">channels</span><span class="p">[</span><span class="n">k</span><span class="p">]))</span>
+    <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s">&#39;allSimpleCombinations&#39;</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">stations</span><span class="p">)):</span>
+            <span class="k">for</span> <span class="n">jj</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ii</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">stations</span><span class="p">)):</span>
+                <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">channels</span><span class="p">)):</span>
+                    <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">channels</span><span class="p">)):</span>
+                        <span class="n">first</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">..</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">stations</span><span class="p">[</span><span class="n">ii</span><span class="p">],</span><span class="n">channels</span><span class="p">[</span><span class="n">k</span><span class="p">]))</span>
+                        <span class="n">second</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">..</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">stations</span><span class="p">[</span><span class="n">jj</span><span class="p">],</span><span class="n">channels</span><span class="p">[</span><span class="n">l</span><span class="p">]))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;Method has to be one of (&#39;betweenStations&#39;, &quot;</span>
+                         <span class="s">&quot;&#39;betweenComponents&#39;, &#39;autoComponents&#39;,&quot;</span>
+                         <span class="s">&quot;&#39;allSimpleCombinations&#39;).&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">first</span><span class="p">,</span> <span class="n">second</span><span class="p">]</span>
+
+</div>
+<div class="viewcode-block" id="select_available_combinations"><a class="viewcode-back" href="../../../modules/autogen/miic.core.script_utils.select_available_combinations.html#miic.core.script_utils.select_available_combinations">[docs]</a><span class="k">def</span> <span class="nf">select_available_combinations</span><span class="p">(</span><span class="n">st</span><span class="p">,</span><span class="n">comb_list</span><span class="p">):</span>
+   <span class="sd">&quot;&quot;&quot;Estimate available subset of combinations</span>
+<span class="sd">   &quot;&quot;&quot;</span>
+   <span class="n">stations</span> <span class="o">=</span> <span class="p">[]</span>
+   <span class="n">combis</span> <span class="o">=</span> <span class="p">[]</span>
+   <span class="k">for</span> <span class="n">tr</span> <span class="ow">in</span> <span class="n">st</span><span class="p">:</span>
+       <span class="n">stations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">.</span><span class="si">%s</span><span class="s">..</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span><span class="p">(</span><span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">network</span><span class="p">,</span><span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">station</span><span class="p">,</span><span class="n">tr</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">channel</span><span class="p">))</span>
+
+   <span class="k">for</span> <span class="n">ind</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">st</span><span class="p">)):</span>
+       <span class="c"># find all occurrences of a trace in combinations</span>
+       <span class="n">findex</span> <span class="o">=</span> <span class="p">[</span><span class="n">ii</span> <span class="k">for</span> <span class="n">ii</span><span class="p">,</span><span class="n">x</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">comb_list</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="k">if</span> <span class="n">x</span> <span class="o">==</span> <span class="n">stations</span><span class="p">[</span><span class="n">ind</span><span class="p">]]</span>
+       <span class="c"># for every occurrence ...</span>
+       <span class="k">for</span> <span class="n">find</span> <span class="ow">in</span> <span class="n">findex</span><span class="p">:</span>
+           <span class="k">try</span><span class="p">:</span>
+               <span class="c"># ... check whether the trace that is to be combined is present in the stream</span>
+               <span class="n">sind</span> <span class="o">=</span> <span class="n">stations</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">comb_list</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="n">find</span><span class="p">])</span>
+               <span class="n">combis</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">ind</span><span class="p">,</span><span class="n">sind</span><span class="p">))</span>
+           <span class="k">except</span><span class="p">:</span>
+               <span class="k">pass</span>
+
+   <span class="k">return</span> <span class="n">combis</span>
+</pre></div></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MIIC 1.0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2012, Eraldo Pomponi.
+      Last updated on 2017-11-13T15:33:45.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </div>
+  </body>
+</html>

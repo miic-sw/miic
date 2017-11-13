@@ -24,6 +24,7 @@ MIIC Library Reference
     stretch_mod
     inversion
     corr_mat_processing
+    script_utils
 
 .. rubric:: Macros
 

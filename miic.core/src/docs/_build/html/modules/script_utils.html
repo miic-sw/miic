@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>MIIC Library Reference &mdash; MIIC 1.0 documentation</title>
+    <title>Script Utilities &mdash; MIIC 1.0 documentation</title>
     
     <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -24,8 +24,9 @@
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
     <link rel="top" title="MIIC 1.0 documentation" href="../index.html" />
-    <link rel="next" title="Numpy array specific signal processing functions" href="ndarray_sigproc.html" />
-    <link rel="prev" title="MIIC Library documentation" href="../index.html" /> 
+    <link rel="up" title="MIIC Library Reference" href="core.html" />
+    <link rel="next" title="miic.core.script_utils.combine_station_channels" href="autogen/miic.core.script_utils.combine_station_channels.html" />
+    <link rel="prev" title="miic.core.corr_mat_processing.corr_mat_from_corr_stream" href="autogen/miic.core.corr_mat_processing.corr_mat_from_corr_stream.html" /> 
   </head>
   <body role="document">
     <div class="related" role="navigation" aria-label="related navigation">
@@ -38,20 +39,29 @@
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="ndarray_sigproc.html" title="Numpy array specific signal processing functions"
+          <a href="autogen/miic.core.script_utils.combine_station_channels.html" title="miic.core.script_utils.combine_station_channels"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="../index.html" title="MIIC Library documentation"
+          <a href="autogen/miic.core.corr_mat_processing.corr_mat_from_corr_stream.html" title="miic.core.corr_mat_processing.corr_mat_from_corr_stream"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">MIIC 1.0 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="../index.html">MIIC 1.0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="core.html" accesskey="U">MIIC Library Reference</a> &raquo;</li> 
       </ul>
     </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Script Utilities</a><ul>
+<li><a class="reference internal" href="#general-use">General Use</a></li>
+</ul>
+</li>
+</ul>
+
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
-      <li><a href="../_sources/modules/core.txt"
+      <li><a href="../_sources/modules/script_utils.txt"
             rel="nofollow">Show Source</a></li>
     </ul>
    </div>
@@ -76,39 +86,25 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="miic-library-reference">
-<h1>MIIC Library Reference<a class="headerlink" href="#miic-library-reference" title="Permalink to this headline">¶</a></h1>
-<p class="rubric">General</p>
-<div class="toctree-wrapper compound">
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="ndarray_sigproc.html">Numpy array specific signal processing functions</a></li>
-<li class="toctree-l1"><a class="reference internal" href="miic_utils.html">Utilities</a></li>
-</ul>
-</div>
-<p class="rubric">Correlation specific</p>
-<div class="toctree-wrapper compound">
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="pxcorr_func.html">Efficient parallel correlation of traces</a></li>
-<li class="toctree-l1"><a class="reference internal" href="stream.html">Manipulation of Data Streams</a></li>
-<li class="toctree-l1"><a class="reference internal" href="normalization.html">Normalization</a></li>
-<li class="toctree-l1"><a class="reference internal" href="corr_fun.html">Correlation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="stretch_mod.html">Signal stretching</a></li>
-<li class="toctree-l1"><a class="reference internal" href="inversion.html">Inversion</a></li>
-<li class="toctree-l1"><a class="reference internal" href="corr_mat_processing.html">Correlation matrix dictionary processing</a></li>
-<li class="toctree-l1"><a class="reference internal" href="script_utils.html">Script Utilities</a></li>
-</ul>
-</div>
-<p class="rubric">Macros</p>
-<div class="toctree-wrapper compound">
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="macro.html">Macros</a></li>
-</ul>
-</div>
-<p class="rubric">Plots (Experimental)</p>
-<div class="toctree-wrapper compound">
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="plot_fun.html">Plotting functions</a></li>
-</ul>
+  <div class="section" id="script-utilities">
+<h1>Script Utilities<a class="headerlink" href="#script-utilities" title="Permalink to this headline">¶</a></h1>
+<p>Set of utility functions for running scripts.</p>
+<span class="target" id="module-miic.core.script_utils"></span><div class="section" id="general-use">
+<h2>General Use<a class="headerlink" href="#general-use" title="Permalink to this headline">¶</a></h2>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="autogen/miic.core.script_utils.combine_station_channels.html#miic.core.script_utils.combine_station_channels" title="miic.core.script_utils.combine_station_channels"><code class="xref py py-obj docutils literal"><span class="pre">combine_station_channels</span></code></a></td>
+<td>Create a list of combination</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="autogen/miic.core.script_utils.select_available_combinations.html#miic.core.script_utils.select_available_combinations" title="miic.core.script_utils.select_available_combinations"><code class="xref py py-obj docutils literal"><span class="pre">select_available_combinations</span></code></a></td>
+<td>Estimate available subset of combinations</td>
+</tr>
+</tbody>
+</table>
 </div>
 </div>
 
@@ -128,12 +124,13 @@
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="ndarray_sigproc.html" title="Numpy array specific signal processing functions"
+          <a href="autogen/miic.core.script_utils.combine_station_channels.html" title="miic.core.script_utils.combine_station_channels"
              >next</a> |</li>
         <li class="right" >
-          <a href="../index.html" title="MIIC Library documentation"
+          <a href="autogen/miic.core.corr_mat_processing.corr_mat_from_corr_stream.html" title="miic.core.corr_mat_processing.corr_mat_from_corr_stream"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">MIIC 1.0 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="../index.html">MIIC 1.0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="core.html" >MIIC Library Reference</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">

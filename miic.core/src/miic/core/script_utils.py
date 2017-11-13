@@ -111,7 +111,8 @@ def combine_station_channels(stations,channels,method):
         ``'betweenComponents'``: Traces are combined if their components (last
             letter of channel name) names are different and their station and
             network names are identical (single station cross-correlation).
-        ``'autoComponents'``: Traces are combined only with themselves.
+        ``'autoComponents'``: Traces are combined only with themselves. 
+        
         ``'allSimpleCombinations'``: All Traces are combined once (onle one of
             (0,1) and (1,0))
         ``'allCombinations'``: All traces are combined in both orders ((0,1)

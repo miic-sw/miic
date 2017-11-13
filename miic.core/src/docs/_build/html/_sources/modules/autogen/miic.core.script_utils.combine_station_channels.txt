@@ -1,0 +1,6 @@
+miic.core.script_utils.combine_station_channels
+===============================================
+
+.. currentmodule:: miic.core.script_utils
+
+.. autofunction:: combine_station_channels
