@@ -1996,7 +1996,7 @@ def corr_mat_create_from_traces(base_dir, save_dir, corr_length=0,
     # Collect the files
     # loop over all the combinations that match the conditions (different IDs)
     for comb_idx, tcombination in enumerate(combinations):
-        X = None
+        X = "undefined"
         time_vect = []
         sampling_rate = None
         files_used = []
@@ -2095,7 +2095,7 @@ def corr_mat_create_from_traces(base_dir, save_dir, corr_length=0,
 
                     time_vect.append(mtime)
 
-                    if X == None:
+                    if X == "undefined":
                         X = np.atleast_2d(result1).T
                     else:
                         X = np.vstack((X, np.atleast_2d(result1).T))
