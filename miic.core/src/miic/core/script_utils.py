@@ -109,6 +109,7 @@ def combinations_in_dist_range(comb_list,stations,lle_df,min_distance,max_distan
     :return: list containing two list [[IDs of first trace],[IDs of second trace]]
     """
 
+
     # Find locations from coordinates file for station set defined in parameter file
     lats,lons=[],[]
     for s in stations :
@@ -139,7 +140,7 @@ def combinations_in_dist_range(comb_list,stations,lle_df,min_distance,max_distan
             filt_second.append(second[i])
     return [filt_first,filt_second]
 
-def combine_station_channels(stations,channels,method,dist_args=None):
+def combine_station_channels(stations,channels,par_co,lle_df):
     """Create a list of combination
 
     Combine stations given in a list of NET.STATION parts of the seedID
@@ -155,6 +156,9 @@ def combine_station_channels(stations,channels,method,dist_args=None):
         ``'betweenStations'``: Traces are combined if either their station or
             their network names are different including all possible channel
             combinations.
+        ``'betweenStations_distance'``: Same as betweenStations, but combinations
+            are then filtered between distance range 'combination_mindist' and
+            'combination_maxdist'.
         ``'betweenComponents'``: Traces are combined if their components (last
             letter of channel name) names are different and their station and
             network names are identical (single station cross-correlation).
@@ -167,6 +171,7 @@ def combine_station_channels(stations,channels,method,dist_args=None):
     :rtype: list
     :return: list containing two list [[IDs of first trace],[IDs of second trace]]
     """
+    method=par_co['combination_method']
     stations = sorted(deepcopy(stations))
     channels = sorted(deepcopy(channels))
     first = []
@@ -185,7 +190,7 @@ def combine_station_channels(stations,channels,method,dist_args=None):
                     for l in range(len(channels)):
                         first.append('%s..%s' % (stations[ii],channels[k]))
                         second.append('%s..%s' % (stations[jj],channels[l]))
-        lle_df,min_distance,max_distance=dist_args
+        min_distance,max_distance=par_co['combination_mindist'],par_co['combination_maxdist']
         first,second=combinations_in_dist_range([first,second],stations,lle_df,min_distance,max_distance)
     elif method == 'betweenComponents':
         for ii in range(len(stations)):
