@@ -354,11 +354,19 @@
 <span class="sd">    :return: 0</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">directory</span><span class="p">):</span>
-        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">directory</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">directory</span><span class="p">)</span> <span class="p">:</span>
+        <span class="c"># Use try in case another parallel process has made it in that time</span>
+        <span class="k">try</span> <span class="p">:</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">directory</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">OSError</span> <span class="k">as</span> <span class="n">e</span> <span class="p">:</span>
+            <span class="k">if</span> <span class="n">e</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">==</span><span class="mi">17</span> <span class="p">:</span>
+                <span class="k">pass</span>
+            <span class="k">else</span> <span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">OSError</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">assert</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">directory</span><span class="p">),</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s"> exists but is not a directory&quot;</span> <span class="o">%</span> <span class="n">subpath</span>
     <span class="k">return</span> <span class="mi">0</span>
+
 
 </div>
 <div class="viewcode-block" id="archive_code"><a class="viewcode-back" href="../../../modules/autogen/miic.core.miic_utils.archive_code.html#miic.core.miic_utils.archive_code">[docs]</a><span class="k">def</span> <span class="nf">archive_code</span><span class="p">(</span><span class="n">scriptname</span><span class="p">):</span>
@@ -2720,7 +2728,7 @@
     </div>
     <div class="footer" role="contentinfo">
         &copy; Copyright 2012, Eraldo Pomponi.
-      Last updated on 2017-11-15T09:39:32.
+      Last updated on 2017-11-15T10:08:24.
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
     </div>
   </body>

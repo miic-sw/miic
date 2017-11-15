@@ -83,7 +83,7 @@
 <h1>miic.core.script_utils.combine_station_channels<a class="headerlink" href="#miic-core-script-utils-combine-station-channels" title="Permalink to this headline">¶</a></h1>
 <dl class="function">
 <dt id="miic.core.script_utils.combine_station_channels">
-<code class="descname">combine_station_channels</code><span class="sig-paren">(</span><em>stations</em>, <em>channels</em>, <em>method</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/miic/core/script_utils.html#combine_station_channels"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#miic.core.script_utils.combine_station_channels" title="Permalink to this definition">¶</a></dt>
+<code class="descname">combine_station_channels</code><span class="sig-paren">(</span><em>stations</em>, <em>channels</em>, <em>par_co</em>, <em>lle_df</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/miic/core/script_utils.html#combine_station_channels"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#miic.core.script_utils.combine_station_channels" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a list of combination</p>
 <p>Combine stations given in a list of NET.STATION parts of the seedID
 and a list of channel names using a given method.</p>
@@ -94,11 +94,17 @@ and a list of channel names using a given method.</p>
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>stations</strong> (<em>list with items of the form &#8216;NET.STATION&#8217;</em>) &#8211; stations to be used if present</li>
 <li><strong>channels</strong> &#8211; channels to be used if present</li>
-<li><strong>method</strong> (<em>string</em>) &#8211; <p>Determines which traces of the strem are combined.</p>
+<li><strong>par_co</strong> (<em>dict</em>) &#8211; <p>Determines which traces of the strem are combined. It is
+expected to contain the key <code class="docutils literal"><span class="pre">combination_method</span></code> with the following
+possible values:</p>
 <dl class="docutils">
 <dt><code class="docutils literal"><span class="pre">'betweenStations'</span></code>: Traces are combined if either their station or</dt>
 <dd>their network names are different including all possible channel
 combinations.</dd>
+<dt><code class="docutils literal"><span class="pre">'betweenStations_distance'</span></code>: Same as betweenStations, but combinations</dt>
+<dd>are then filtered between distance range &#8216;combination_mindist&#8217; and
+&#8216;combination_maxdist&#8217; that are to be given as additional keys of
+<code class="docutils literal"><span class="pre">par_co</span></code>.</dd>
 <dt><code class="docutils literal"><span class="pre">'betweenComponents'</span></code>: Traces are combined if their components (last</dt>
 <dd>letter of channel name) names are different and their station and
 network names are identical (single station cross-correlation).</dd>
@@ -111,6 +117,8 @@ network names are identical (single station cross-correlation).</dd>
 <dd>and (1,0))</dd>
 </dl>
 </li>
+<li><strong>ll_df</strong> (<em>pandas.dataframe</em>) &#8211; dataframe containing the coordinate information of the stations
+as provided by <a class="reference internal" href="miic.core.miic_utils.lat_lon_ele_load.html#miic.core.miic_utils.lat_lon_ele_load" title="miic.core.miic_utils.lat_lon_ele_load"><code class="xref py py-func docutils literal"><span class="pre">lat_lon_ele_load()</span></code></a></li>
 </ul>
 </td>
 </tr>
@@ -154,7 +162,7 @@ network names are identical (single station cross-correlation).</dd>
     </div>
     <div class="footer" role="contentinfo">
         &copy; Copyright 2012, Eraldo Pomponi.
-      Last updated on 2017-11-13T15:33:45.
+      Last updated on 2017-11-15T10:08:24.
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
     </div>
   </body>

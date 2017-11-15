@@ -150,15 +150,18 @@ def combine_station_channels(stations,channels,par_co,lle_df):
     :param stations: stations to be used if present
     :type channel: list with the channel names
     :param channels: channels to be used if present
-    :type method: string
-    :param method: Determines which traces of the strem are combined.
-    
+    :type par_co: dict
+    :param par_co: Determines which traces of the strem are combined. It is
+        expected to contain the key ``combination_method`` with the following
+        possible values:
+ 
         ``'betweenStations'``: Traces are combined if either their station or
             their network names are different including all possible channel
             combinations.
         ``'betweenStations_distance'``: Same as betweenStations, but combinations
             are then filtered between distance range 'combination_mindist' and
-            'combination_maxdist'.
+            'combination_maxdist' that are to be given as additional keys of
+            ``par_co``.
         ``'betweenComponents'``: Traces are combined if their components (last
             letter of channel name) names are different and their station and
             network names are identical (single station cross-correlation).
@@ -168,6 +171,9 @@ def combine_station_channels(stations,channels,par_co,lle_df):
             (0,1) and (1,0))
         ``'allCombinations'``: All traces are combined in both orders ((0,1)
             and (1,0))
+    :type ll_df: pandas.dataframe
+    :param ll_df: dataframe containing the coordinate information of the stations
+        as provided by :func:`~miic.core.miic_utils.lat_lon_ele_load`
     :rtype: list
     :return: list containing two list [[IDs of first trace],[IDs of second trace]]
     """
