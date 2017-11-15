@@ -216,10 +216,17 @@ def combine_station_channels(stations,channels,par_co,lle_df):
                     for l in range(len(channels)):
                         first.append('%s..%s' % (stations[ii],channels[k]))
                         second.append('%s..%s' % (stations[jj],channels[l]))
+    elif method == 'allCombinations':
+        for ii in range(len(stations)):
+            for jj in range(len(stations)):
+                for k in range(len(channels)):
+                    for l in range(len(channels)):
+                        first.append('%s..%s' % (stations[ii],channels[k]))
+                        second.append('%s..%s' % (stations[jj],channels[l]))
     else:
         raise ValueError("Method has to be one of ('betweenStations', "
                          "'betweenComponents', 'autoComponents',"
-                         "'allSimpleCombinations').")
+                         "'allSimpleCombinations', 'allCombinations').")
     return [first, second]
 
 
