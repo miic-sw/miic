@@ -225,6 +225,7 @@ def combine_station_channels(stations,channels,par_co,lle_df):
                         second.append('%s..%s' % (stations[jj],channels[l]))
     else:
         raise ValueError("Method has to be one of ('betweenStations', "
+                        "'betweenStations_distance',"
                          "'betweenComponents', 'autoComponents',"
                          "'allSimpleCombinations', 'allCombinations').")
     return [first, second]
