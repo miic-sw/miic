@@ -1,0 +1,18 @@
+#### Plotting parameters
+
+#### parameters for plotting correlation matrices
+co_mat:
+    freqmin : 0.5
+    freqmax : 1.
+    scale : 0.2      # km
+    corr_len : 50    # s
+
+
+#### parameters for plotting trace distance section of correlation
+co_dist_section:
+    channel : 'HHZ-HHZ'
+    freqmin : 0.0625
+    freqmax : 8
+    freq_inc_fac : 2
+    stack : True
+    stack_interval : 0.1  #km
