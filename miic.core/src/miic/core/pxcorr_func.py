@@ -444,8 +444,6 @@ def clip(A,args,params):
     :rtype: numpy.ndarray
     :return: clipped time series data
     """
-    import pdb
-    pdb.set_trace()
     stds = np.nanstd(A,axis=0)
     for ind in range(A.shape[1]):
         ts = args['std_factor']*stds[ind]
