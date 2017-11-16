@@ -11,6 +11,11 @@ import obspy.signal as osignal
 from miic.core.corr_fun import combine_stats
 from miic.core.miic_utils import convert_to_matlab
 
+from numpy import (expand_dims, nanmean,reshape, transpose, take,
+             sort, ones, arange, dot, cast, asarray)
+from scipy import linalg
+
+
 zerotime = UTCDateTime(1971,1,1)
 
 
@@ -241,11 +246,8 @@ def pxcorr(comm,A,**kwargs):
     comm.Allreduce(MPI.IN_PLACE,[starttimes,MPI.DOUBLE],op=MPI.SUM)
     #print 'werqwer'
     return (C,starttimes)
-    
-    
 
-    
-    
+
 def detrend(A,args,params):
     """
     Remove trend from data
@@ -270,14 +272,59 @@ def detrend(A,args,params):
     :rtype: numpy.ndarray
     :return: detrended time series data
     """
-    # for compatibility with obspy
+    #for compatibility with obspy
     if args['type'] == 'demean':
         args['type'] = 'constant'
     if args['type'] == 'detrend':
         args['type'] = 'linear'
-    A = signal.detrend(A,axis=0,type=args['type'])
-    return A
 
+    # Detrend function taken from scipy and modified to account for nan
+    type=args['type']
+    axis=0
+    data=A
+    if type not in ['linear', 'l', 'constant', 'c']:
+        raise ValueError("Trend type must be 'linear' or 'constant'.")
+    data = asarray(data)
+    dtype = data.dtype.char
+    if dtype not in 'dfDF':
+        dtype = 'd'
+    if type in ['constant', 'c']:
+        ret = data - expand_dims(nanmean(data, axis), axis)
+        return ret
+    else:
+        dshape = data.shape
+        N = dshape[axis]
+        bp = sort(unique(r_[0, bp, N]))
+        if np.any(bp > N):
+            raise ValueError("Breakpoints must be less than length "
+                             "of data along given axis.")
+        Nreg = len(bp) - 1
+        # Restructure data so that axis is along first dimension and
+        #  all other dimensions are collapsed into second dimension
+        rnk = len(dshape)
+        if axis < 0:
+            axis = axis + rnk
+        newdims = r_[axis, 0:axis, axis + 1:rnk]
+        newdata = reshape(transpose(data, tuple(newdims)),
+                          (N, _prod(dshape) // N))
+        newdata = newdata.copy()  # make sure we have a copy
+        if newdata.dtype.char not in 'dfDF':
+            newdata = newdata.astype(dtype)
+        # Find leastsq fit and remove it for each piece
+        for m in range(Nreg):
+            Npts = bp[m + 1] - bp[m]
+            A = ones((Npts, 2), dtype)
+            A[:, 0] = cast[dtype](arange(1, Npts + 1) * 1.0 / Npts)
+            sl = slice(bp[m], bp[m + 1])
+            coef, resids, rank, s = linalg.lstsq(A, newdata[sl])
+            newdata[sl] = newdata[sl] - dot(A, coef)
+        # Put data back in original shape.
+        tdshape = take(dshape, newdims, 0)
+        ret = reshape(newdata, tuple(tdshape))
+        vals = list(range(1, rnk))
+        olddims = vals[:axis] + [0] + vals[axis:]
+        ret = transpose(ret, tuple(olddims))
+        return ret
 
 def TDnormalization(A,args,params):
     """
@@ -397,7 +444,7 @@ def clip(A,args,params):
     :rtype: numpy.ndarray
     :return: clipped time series data
     """
-    stds = np.std(A,axis=0)
+    stds = np.nanstd(A,axis=0)
     for ind in range(A.shape[1]):
         ts = args['std_factor']*stds[ind]
         A[A[:,ind]>ts,ind] = ts
@@ -858,7 +905,7 @@ def stream_pxcorr(st,options,comm=None):
     comm.Bcast([A,MPI.DOUBLE],root=0)
     options.update({'starttime':starttime,
                     'sampling_rate':st[0].stats['sampling_rate']})
-    
+
     # call pxcorr for correlation with direct output
     if 'direct_output' in options.keys():
         pxcorr_write(comm,A,st,**options)
