@@ -70,9 +70,6 @@ co:
         # recombine these subdivisions
         # type: boolean
         recombine_subdivision : True
-        # delete 
-        # type: booblean
-        delete_subdivisions : False
 
     # parameters for correlation preprocessing
     corr_args : {'TDpreProcessing':[#{'function':'miic.core.pxcorr_func.detrend',
