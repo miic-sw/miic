@@ -190,7 +190,7 @@ def paracorr(par):
                     get_valid_traces(sub_st)
                 else:
                     sub_st = st
-                targs['combinations'] = select_available_combinations(sub_st,comb_list)
+                targs['combinations'] = select_available_combinations(sub_st,comb_list,targs)
                 if len(targs['combinations']) == 0:
                     continue
                 cst = px.stream_pxcorr(sub_st,targs,comm=comm)

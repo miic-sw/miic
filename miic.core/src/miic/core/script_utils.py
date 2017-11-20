@@ -198,6 +198,17 @@ def combine_station_channels(stations,channels,par_co,lle_df):
                         second.append('%s..%s' % (stations[jj],channels[l]))
         min_distance,max_distance=par_co['combination_mindist'],par_co['combination_maxdist']
         first,second=combinations_in_dist_range([first,second],stations,lle_df,min_distance,max_distance)
+    elif method == 'betweenStations_distance_ant' :
+        allowed_comp_combinations=["ZZ","NN","NE","EN","EE"]
+        for ii in range(len(stations)):
+            for jj in range(ii+1,len(stations)):
+                for k in range(len(channels)):
+                    for l in range(len(channels)):
+                        if channels[k][-1]+channels[l][-1] in allowed_comp_combinations :
+                            first.append('%s..%s' % (stations[ii],channels[k]))
+                            second.append('%s..%s' % (stations[jj],channels[l]))
+        min_distance,max_distance=par_co['combination_mindist'],par_co['combination_maxdist']
+        first,second=combinations_in_dist_range([first,second],stations,lle_df,min_distance,max_distance)
     elif method == 'betweenComponents':
         for ii in range(len(stations)):
             for k in range(len(channels)):
@@ -231,26 +242,46 @@ def combine_station_channels(stations,channels,par_co,lle_df):
     return [first, second]
 
 
-def select_available_combinations(st,comb_list):
-   """Estimate available subset of combinations
-   """
-   stations = []
-   combis = []
-   for tr in st:
-       stations.append('%s.%s..%s' %(tr.stats.network,tr.stats.station,tr.stats.channel))
+def select_available_combinations(st,comb_list,targs):
+    """Estimate available subset of combinations
+    """
 
-   for ind in range(len(st)):
-       # find all occurrences of a trace in combinations
-       findex = [ii for ii,x in enumerate(comb_list[0]) if x == stations[ind]]
-       # for every occurrence ...
-       for find in findex:
-           try:
-               # ... check whether the trace that is to be combined is present in the stream
-               sind = stations.index(comb_list[1][find])
-               combis.append((ind,sind))
-           except:
-               pass
+    # For joint normalisation require all three channels to be present
+    # Check 3 channels for each station and if not remove from stream
+    joint_norm=False
+    for proc in targs['FDpreProcessing']:
+        if 'joint_norm' in proc['args'].keys():
+            if proc['args']['joint_norm']==True :
+                joint_norm=True
+    if joint_norm :
+        channels_per_station={}
+        for tr in st:
+            channels_per_station[tr.stats.network+'.'+tr.stats.station]=[]
+        for tr in st:
+            channels_per_station[tr.stats.network+'.'+tr.stats.station].append(tr.stats.channel)
+        for s in channels_per_station.keys() :
+            if not (len(channels_per_station[s]) % 3 == 0) :
+                rem_st=st.select(station=s.split('.')[1])
+                for rem_tr in rem_st.traces :
+                    st.remove(rem_tr)
 
-   return combis
+    stations = []
+    combis = []
+    for tr in st:
+        stations.append('%s.%s..%s' %(tr.stats.network,tr.stats.station,tr.stats.channel))
+
+    for ind in range(len(st)):
+        # find all occurrences of a trace in combinations
+        findex = [ii for ii,x in enumerate(comb_list[0]) if x == stations[ind]]
+        # for every occurrence ...
+        for find in findex:
+            try:
+                # ... check whether the trace that is to be combined is present in the stream
+                sind = stations.index(comb_list[1][find])
+                combis.append((ind,sind))
+            except:
+                pass
+
+    return combis
 
 
