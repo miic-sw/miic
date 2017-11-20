@@ -33,8 +33,21 @@ def pxcorr_write(comm,A,st,**kwargs):
     rank = comm.Get_rank()
     # time domain processing
     # map of traces on precesses
-    pmap = (np.arange(ntrc)*psize)/ntrc
-
+    # test if joint normalization per station is required
+    jnormflag = False
+    for proc in kwargs['FDpreProcessing']:
+        if proc['function'] == spectralWhitening:
+            if 'joint_norm' in proc['args']:
+                jnormflag = True
+    if jnormflag:
+        # for joint normalization all channels of a station must go to the same
+        # rank.
+        assert ntrc % 3 == 0, "for joint normalization in spectralWhitening "\
+                      "the number of traces needs to the multiple of 3: %d" % ntrc
+        Nst = ntrc/3
+	pmap = (np.arange(ntrc)*np.min((psize,Nst)))/ntrc 
+    else:
+        pmap = (np.arange(ntrc)*psize)/ntrc
     # indecies for traces to be worked on by each process
     ind = pmap == rank
 
@@ -686,7 +699,7 @@ def spectralWhitening(B,args,params):
     if 'joint_norm' in args.keys():
         if args['joint_norm'] == True:
             assert B.shape[1] % 3 == 0, "for joint normalization the number\
-                      of traces needs to the multiple of 3: %d" % B.shape[0]
+                      of traces needs to the multiple of 3: %d" % B.shape[1]
             for ii in np.arange(0,B.shape[1],3):
                 print 'ii', ii
                 absB[:,ii:ii+3] = np.tile(np.atleast_2d(
