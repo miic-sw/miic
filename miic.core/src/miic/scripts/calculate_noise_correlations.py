@@ -163,6 +163,8 @@ def paracorr(par):
         pathname = os.path.join(par['co']['res_dir'],correlation_subdir_name(sttime))
         if rank == 0:
             create_path(pathname)
+            print "\tCorrelating  %s combinations at %s:" % (str(len(comb_list[0])),UTCDateTime())
+            logger.debug("\tCorrelating  %s combinations at %s:" % (str(len(comb_list[0])),UTCDateTime()))
                 
         # broadcast every station to every process    
         st = Stream()
@@ -190,7 +192,7 @@ def paracorr(par):
                     get_valid_traces(sub_st)
                 else:
                     sub_st = st
-                targs.update({'combinations': select_available_combinations(sub_st,comb_list)})
+                targs.update({'combinations': select_available_combinations(sub_st,comb_list,targs)})
                 if len(targs['combinations']) == 0:
                     continue
                 cst = px.stream_pxcorr(sub_st,targs,comm=comm)
