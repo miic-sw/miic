@@ -501,13 +501,15 @@ def corr_to_hdf5(data,stats,stats_tr1,stats_tr2,base_name,base_dir) :
 
     # Determine file name and time
     corr_id=".".join([stats.network,stats.station,stats.location,stats.channel])
-    filename = os.path.join(base_dir,base_name + '_' + corr_id.replace('-', '')+'.h5')
+    out_dir=os.path.join(base_dir,stats.channel.replace('-',''))
+    filename = os.path.join(out_dir,base_name + '_' + corr_id.replace('-', '')+'.h5')
     t = max(_tr1dict['starttime'],_tr2dict['starttime'])
     time = '%s' % t
     time = time.replace('-', '').replace('.', '').replace(':', '')
 
     # If file doesn't exist create the stats groups and data in corr_data group
     if not os.path.exists(filename):
+        create_path(out_dir)
         h5dicts={'stats_tr1':_tr1dict, 'stats_tr2':_tr2dict, 'stats':_stats,
              'corr_data':{t:data} }
         save_dict_to_hdf5(h5dicts, filename)
