@@ -29,7 +29,7 @@ import time
 from cPickle import Pickler
 import shutil
 import importlib
-
+import h5py
 
 # Pandas import
 from pandas import DataFrame, Panel, Series
@@ -410,7 +410,114 @@ if BC_UI:
         flatten = Bool(True)
         trait_view = View(Item('filename'),
                           Item('flatten'))
-    
+
+def save_dict_to_hdf5(dic, filename):
+    """
+    ....
+    """
+    with h5py.File(filename, 'w') as h5file:
+        recursively_save_dict_contents_to_group(h5file, '/', dic)
+
+def recursively_save_dict_contents_to_group(h5file, path, dic):
+    """
+    ....
+    """
+    for key, item in dic.items():
+        if isinstance(item, (np.ndarray, np.int64, np.float64, unicode, float, int, str, bytes, long)):
+            h5file[path + key] = item
+        elif isinstance(item, dict):
+            recursively_save_dict_contents_to_group(h5file, path + key + '/', item)
+        else:
+            raise ValueError('Cannot save %s type'%type(item))
+
+def corr_to_hdf5(data,stats,stats_tr1,stats_tr2,base_name,base_dir) :
+    """ Output a correlation function to a hdf5 file.
+    The hdf5 file contains three groups for the 3 stats dictionaries,
+    and a "corr_data" group into which each correlation function
+    is appended as a HDF5-dataset
+
+    :type data: :class:`~numpy.ndarray`
+    :param data: Correlation function to be written to hdf5 file
+    :type stats: dictionary
+    :param stats: Correlation stats determined by miic.core.corr_fun.combine_stats
+    :type stats_tr1: dictionary
+    :param stats_tr1: Trace stats for tr1
+    :type stats_tr2: dictionary
+    :param stats_tr2: Trace stats for tr2
+
+    :type base_name: string
+    :param base_name: Common "root" for every generated filename.
+        It must not include underscores.
+    :type base_dir: directory
+    :param base_dir: Path where to save the files
+    """
+
+    _tr1dict = {'network': stats_tr1.network,
+                'station': stats_tr1.station,
+                'location': stats_tr1.location,
+                'channel': stats_tr1.channel,
+                'sampling_rate': stats_tr1.sampling_rate,
+                'starttime': '%s' % stats_tr1.starttime,
+                'endtime': '%s' % stats_tr1.endtime,
+                'npts': long(stats_tr1.npts)}
+    if 'sac' in stats_tr1:
+        _tr1dict['stla'] = stats_tr1.sac.stla
+        _tr1dict['stlo'] = stats_tr1.sac.stlo
+        _tr1dict['stel'] = stats_tr1.sac.stel
+
+    _tr2dict = {'network': stats_tr2.network,
+                'station': stats_tr2.station,
+                'location': stats_tr2.location,
+                'channel': stats_tr2.channel,
+                'sampling_rate': stats_tr2.sampling_rate,
+                'starttime': '%s' % stats_tr2.starttime,
+                'endtime': '%s' % stats_tr2.endtime,
+                'npts': long(stats_tr2.npts)}
+    if 'sac' in stats_tr2:
+        _tr2dict['stla'] = stats_tr2.sac.stla
+        _tr2dict['stlo'] = stats_tr2.sac.stlo
+        _tr2dict['stel'] = stats_tr2.sac.stel
+
+    _stats = {'network': stats.network,
+              'station': stats.station,
+              'location': stats.location,
+              'channel': stats.channel,
+              'sampling_rate': stats.sampling_rate,
+              'starttime': '%s' % stats.starttime,
+              'endtime': '%s' % stats.endtime,
+              'npts': long(stats.npts)}
+    if 'sac' in stats:
+        _stats['stla'] = stats.sac.stla
+        _stats['stlo'] = stats.sac.stlo
+        _stats['stel'] = stats.sac.stel
+        if np.all(map(lambda x: x in stats.sac, \
+                      ['evla', 'evlo', 'evel', 'az', 'baz', 'dist'])):
+            _stats['evla'] = stats.sac.evla
+            _stats['evlo'] = stats.sac.evlo
+            _stats['evel'] = stats.sac.evel
+            _stats['az'] = stats.sac.az
+            _stats['baz'] = stats.sac.baz
+            _stats['dist'] = stats.sac.dist
+
+    # Determine file name and time
+    corr_id=".".join([stats.network,stats.station,stats.location,stats.channel])
+    filename = os.path.join(base_dir,base_name + '_' + corr_id.replace('-', '')+'.h5')
+    t = max(_tr1dict['starttime'],_tr2dict['starttime'])
+    time = '%s' % t
+    time = time.replace('-', '').replace('.', '').replace(':', '')
+
+    # If file doesn't exist create the stats groups and data in corr_data group
+    if not os.path.exists(filename):
+        h5dicts={'stats_tr1':_tr1dict, 'stats_tr2':_tr2dict, 'stats':_stats,
+             'corr_data':{t:data} }
+        save_dict_to_hdf5(h5dicts, filename)
+    # Else append data to corr_data group
+    else :
+        with h5py.File(filename, 'a') as h5file:
+            h5file.create_dataset("corr_data/"+t, data=data)
+
+    return 0
+
 
 def convert_to_matlab(st,
                       base_name,
@@ -559,6 +666,7 @@ def convert_to_matlab(st,
         time = '%s' % t
         time = time.replace('-', '').replace('.', '').replace(':', '')
         sio.savemat(os.path.join(base_dir, time + '_' + filename), mat_struct,oned_as='column')
+
 
 if BC_UI:
     class _convert_to_matlab_view(HasTraits):
