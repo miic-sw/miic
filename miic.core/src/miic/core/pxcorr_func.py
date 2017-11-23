@@ -9,7 +9,7 @@ from obspy.core import UTCDateTime, stream, trace
 import obspy.signal as osignal
 
 from miic.core.corr_fun import combine_stats
-from miic.core.miic_utils import convert_to_matlab
+from miic.core.miic_utils import convert_to_matlab, corr_to_hdf5
 
 from numpy import (expand_dims, nanmean,reshape, transpose, take,
              sort, ones, arange, dot, cast, asarray)
@@ -45,7 +45,8 @@ def pxcorr_write(comm,A,st,**kwargs):
         assert ntrc % 3 == 0, "for joint normalization in spectralWhitening "\
                       "the number of traces needs to the multiple of 3: %d" % ntrc
         Nst = ntrc/3
-	pmap = (np.arange(ntrc)*np.min((psize,Nst)))/ntrc 
+        smap = (np.arange(Nst)*np.min((Nst,psize)))/Nst
+        pmap = np.sort(np.concatenate([smap,smap,smap]))
     else:
         pmap = (np.arange(ntrc)*psize)/ntrc
     # indecies for traces to be worked on by each process
@@ -132,18 +133,25 @@ def pxcorr_write(comm,A,st,**kwargs):
         starttime = zerotime -sampleToSave/kwargs['sampling_rate'] - roffset
 
 
-        # put trace into a stream
-        cst = stream.Stream()
         cstats = combine_stats(st[kwargs['combinations'][ii][0]],
                                st[kwargs['combinations'][ii][1]])
         cstats['starttime'] = starttime
         cstats['npts'] = len(out)
-        cst.append(trace.Trace(data=out, header=cstats))
-        cst[0].stats_tr1 = st[kwargs['combinations'][ii][0]].stats
-        cst[0].stats_tr2 = st[kwargs['combinations'][ii][1]].stats
+
         if kwargs['direct_output']['function'] == 'convert_to_matlab':
+            # put trace into a stream
+            cst = stream.Stream()
+            cst.append(trace.Trace(data=out, header=cstats))
+            cst[0].stats_tr1 = st[kwargs['combinations'][ii][0]].stats
+            cst[0].stats_tr2 = st[kwargs['combinations'][ii][1]].stats
             convert_to_matlab(cst,kwargs['direct_output']['base_name'],
                               kwargs['direct_output']['base_dir'])
+        elif kwargs['direct_output']['function'] == 'corr_to_hdf5':
+            stats_tr1 = st[kwargs['combinations'][ii][0]].stats
+            stats_tr2 = st[kwargs['combinations'][ii][1]].stats
+            corr_to_hdf5(out,cstats,stats_tr1,stats_tr2,
+                            kwargs['direct_output']['base_name'],
+                            kwargs['direct_output']['base_dir'])
     return 0
 
 
@@ -701,10 +709,17 @@ def spectralWhitening(B,args,params):
             assert B.shape[1] % 3 == 0, "for joint normalization the number\
                       of traces needs to the multiple of 3: %d" % B.shape[1]
             for ii in np.arange(0,B.shape[1],3):
-                print 'ii', ii
+                #print 'ii', ii
                 absB[:,ii:ii+3] = np.tile(np.atleast_2d(
                                     np.mean(absB[:,ii:ii+3],axis=1)).T,[1,3])
     B /= absB
+    # with np.errstate(divide='raise') :
+    #     try :
+    #         B /= absB
+    #     except Error as e :
+    #         print e
+    #         import pdb
+    #         pdb.set_trace()
     # remove zero freq component 
     #B[0,:] = 0.j
     return B
