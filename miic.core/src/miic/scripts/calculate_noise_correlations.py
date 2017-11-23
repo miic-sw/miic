@@ -159,6 +159,7 @@ def paracorr(par):
             for procStep in par['co']['preProcessing']:
                 cst = procStep['function'](cst,**procStep['args'])
 
+
         # create output path
         pathname = os.path.join(par['co']['res_dir'],correlation_subdir_name(sttime))
         if rank == 0:
@@ -175,13 +176,18 @@ def paracorr(par):
             pst = comm.bcast(pst, root=pind)
             st += pst
 
+
         ## do correlations
         if len(st) == 0:
             logger.warning("%s: No traces to correlate." % (sttime))
         else:
             targs = deepcopy(par['co']['corr_args'])
             if 'direct_output' in targs.keys():
-                targs['direct_output']['base_dir'] = pathname
+                if targs['direct_output']['function'] == 'convert_to_matlab':
+                    targs['direct_output']['base_dir'] = pathname
+                if  targs['direct_output']['function'] == 'corr_to_hdf5':
+                    targs['direct_output']['base_dir'] = par['co']['res_dir']
+
             # loop over subdivisions
             for subn in range(nsub):
                 if nsub > 1:
