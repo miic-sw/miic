@@ -179,6 +179,77 @@ if BC_UI:
                           Item('axis'))
 
 
+
+
+def corr_mat_to_h5(corr_mat,filename):
+    """Save correlation matrix into an hdf5 file.
+    
+    Save correlation matrix dictionary into an hdf5 file.
+    The file can be loaded with :func:`corr_mat_from_h5`.
+    
+    :type mat: dict
+    :param mat: correlation matrix dictionary
+    :type filename: str
+    :param filename: file to save
+    """
+
+    # check input
+    if not isinstance(corr_mat, dict):
+        raise TypeError("corr_mat needs to be correlation matrix dictionary.")
+
+    if corr_mat_check(corr_mat)['is_incomplete']:
+        raise ValueError("Error: corr_mat is not a valid correlation_matix \
+            dictionary.")
+
+    for sta in ['stats','stats_tr1','stats_tr2']:
+        sk = corr_mat[sta].keys()
+        for s in sk:
+            if isinstance(corr_mat[sta][s],np.unicode_):
+                corr_mat[sta][s] = np.unicode(corr_mat[sta][s])
+            if isinstance(corr_mat[sta][s],list):
+                corr_mat[sta][s] = ''
+    stats = {}
+    for key in ['stats','stats_tr1','stats_tr2']:
+        stats.update({key: corr_mat[key]})
+    save_dict_to_hdf5(stats, filename, wa='w')
+    with h5py.File(filename,'a') as hf:
+        hf.create_group('corr_data')
+        for num in range(len(corr_mat['time'])):
+            tmp = corr_mat['corr_data'][num,:]
+            hf['corr_data'].create_dataset(corr_mat['time'][num],data = tmp)
+    return
+
+
+def corr_mat_from_h5(filename):
+    """Load a correlation matrix from hdf5 file
+
+    Load data from an hdf5 file written with :func:`corr_mat_to_h5`
+    into a correlation-matrix-dictionary.
+
+    :type filename: str
+    :param filename: file to load
+    :rtype: dict
+    :return: correlation matrix dictionary
+    """
+
+    with h5py.File(filename) as hf:
+        keys = hf.keys()
+        req_keys = ['stats','stats_tr1','stats_tr2','corr_data']
+        for req_key in req_keys:
+            assert req_key in keys, 'Missing item in %s: %s' % (filename, req_key)
+        for key in keys:
+            assert (key in req_keys) or key == 'time', 'Unrecognized item present in %s: %s' %(filename,key)
+        corr_mat = {'time':[]}
+        for key in ['stats','stats_tr1','stats_tr2']:
+            corr_mat.update({key:recursively_load_dict_contents_from_group(hf, key)})
+        tkeys = sorted(hf['corr_data'].keys())
+        corr_mat.update({'corr_data':np.zeros((len(tkeys),corr_mat['stats']['npts']))})
+        for num,tkey in enumerate(tkeys):
+            corr_mat['time'].append(tkey)
+            corr_mat['corr_data'][num,:] = hf['corr_data/'+tkey]
+    return corr_mat
+
+
 def corr_mat_filter(corr_mat, freqs, order=3):
     """ Filter a correlation matrix.
 
