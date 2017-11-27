@@ -23,6 +23,7 @@ from datetime import datetime, timedelta
 from glob import glob1
 from os.path import join
 import os
+import h5py
 
 # ETS imports
 try:
@@ -41,7 +42,9 @@ from obspy.core import trace, stream
 # Local imports
 from miic.core.miic_utils import convert_time, convert_time_to_string, \
     corr_mat_check, dv_check, flatten_recarray, nd_mat_center_part, mat_to_ndarray, \
-    select_var_from_dict, _check_stats, _stats_dict_from_obj
+    select_var_from_dict, _check_stats, _stats_dict_from_obj, save_dict_to_hdf5, \
+    recursively_save_dict_contents_to_group, load_dict_from_hdf5,  \
+    recursively_load_dict_contents_from_group
 
 from miic.core.stretch_mod import multi_ref_vchange_and_align, time_shift_estimate, \
     time_stretch_apply, time_shift_apply
@@ -178,8 +181,17 @@ if BC_UI:
                           Item('wtype'),
                           Item('axis'))
 
-
-
+def unicode_to_string(input):
+    """Convert all unicode strings to utf-8 strings
+    """
+    if isinstance(input, dict):
+        return {unicode_to_string(key): unicode_to_string(value) for key, value in input.iteritems()}
+    elif isinstance(input, list):
+        return [unicode_to_string(element) for element in input]
+    elif isinstance(input, unicode):
+        return input.encode('utf-8')
+    else:
+        return input
 
 def corr_mat_to_h5(corr_mat,filename):
     """Save correlation matrix into an hdf5 file.
@@ -247,6 +259,7 @@ def corr_mat_from_h5(filename):
         for num,tkey in enumerate(tkeys):
             corr_mat['time'].append(tkey)
             corr_mat['corr_data'][num,:] = hf['corr_data/'+tkey]
+        corr_mat = unicode_to_string(corr_mat)
     return corr_mat
 
 
