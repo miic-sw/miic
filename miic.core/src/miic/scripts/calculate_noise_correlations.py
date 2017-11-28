@@ -23,7 +23,7 @@ from miic.core.stream import stream_add_lat_lon_ele, corr_trace_to_obspy
 from miic.core.stream import read_from_filesystem
 from miic.core.corr_mat_processing import corr_mat_create_from_traces, \
         corr_mat_extract_trace, corr_mat_merge, corr_mat_extract_trace, \
-        corr_mat_resample, corr_mat_from_corr_stream
+        corr_mat_resample, corr_mat_from_corr_stream, corr_mat_from_h5
 import miic.core.pxcorr_func as px
 
 from miic.core.script_utils import ini_project, combine_station_channels, \
@@ -86,6 +86,11 @@ def paracorr(par):
     station_list = par['net']['stations']
     channel_list = par['net']['channels']
 
+    channel_dict={}
+    for station in station_list :
+        channel_dict[station]=map(lambda x: str.replace(x,x,x[-3:]),
+                   filter(lambda x:station+'.' in x, set(comb_list[0]+comb_list[1])))
+
 
     program_start = UTCDateTime()
 
@@ -93,7 +98,8 @@ def paracorr(par):
     stream_cache = {}
     for station in par['net']['stations']:
         stream_cache.update({station:{}})
-        for channel in par['net']['channels']:
+        #for channel in par['net']['channels']:
+        for channel in channel_dict[station] :
             stream_cache[station].update({channel:Stream().append(Trace())})
 
 
@@ -124,7 +130,8 @@ def paracorr(par):
         for this_ind in st_ind:
             station = station_list[this_ind]
             tst = Stream()
-            for channel in channel_list:
+            #for channel in channel_list:
+            for channel in channel_dict[station] :
                 print channel, station
                 try:
                     if ((len(stream_cache[station][channel])==0) or 
@@ -243,8 +250,6 @@ def paracorr(par):
     logger.debug('Rank %d of %d End execution.'  % (rank,psize))
 
 
-
-
 def merge_corr_results(par):
     """Combine traces and matrices
     
@@ -288,47 +293,64 @@ def merge_corr_results(par):
     # indecies for stations to be worked on by each process
     comb_ind = np.where(pmap == rank)[0]
 
-    for cind in comb_ind:
-        logger.debug("\n>>> Working on combination %s-%s at %s:" % \
-                    (comb_list[0][cind],comb_list[1][cind],UTCDateTime()))
-        ID0 = comb_list[0][cind].split('.')
-        ID1 = comb_list[1][cind].split('.')
-        comb_str = '*_%s%s.%s%s.*.%s%s.mat' % (ID0[0],ID1[0],ID0[1],ID1[1],ID0[3],ID1[3])
-        trl = []
-        year_list = dir_read(par['co']['res_dir'],'????')
-        year_list = sorted(year_list)
-        for year in year_list:
-            day_list = dir_read(year,'???')
-            day_list = sorted(day_list)
-            for day in day_list:
-                flist = glob.glob(os.path.join(day,comb_str))
-                flist = sorted(flist)
-                for fname in flist:
-                    try:
-                        # the following line avoids including traces after a change in the location code
-                        ID_str = os.path.split(fname)[1].split('_')[-1]
-                        tr = mat_to_ndarray(fname)
-                        if tr['stats']['sampling_rate'] != float(par['co']['sampling_rate'])/par['co']['decimation']:
-                            if np.abs(np.log10(tr['stats']['sampling_rate']/float(par['co']['sampling_rate'])/par['co']['decimation']))<1e-6:
-                                tr['stats']['sampling_rate'] = float(par['co']['sampling_rate'])/par['co']['decimation']
-                            else:
-                                logger.warning("Mismatching sampling rates %s" % fname)
-                                continue
-                        trl.append(tr)
-                    except:
-                        pass
-        try:
-            st = corr_trace_to_obspy(trl)
-            mat = corr_mat_from_corr_stream(st)
-            tr = corr_mat_extract_trace(mat,method='norm_mean')
-            save_dict_to_matlab_file(os.path.join(par['co']['res_dir'],'ctr__'+ID_str),tr)
-            rmat = corr_mat_resample(mat,sttimes)
-            rmat = mat
-            save_dict_to_matlab_file(os.path.join(par['co']['res_dir'],'mat__'+ID_str),rmat)
-        except:
-            logger.warning("Problem with combination %s-%s: %s" % 
-                            (comb_list[0][cind], comb_list[1][cind], sys.exc_info()[0]))
+    for cnt,cind in enumerate(comb_ind):
+        if par['co']['corr_args']['direct_output']['function'] == 'convert_to_matlab':
+            logger.debug("\n>>> Working on combination %s-%s (%s/%s) at %s:" % \
+                    (comb_list[0][cind],comb_list[1][cind],str(cnt+1),str(len(comb_ind)),UTCDateTime()))
+            ID0 = comb_list[0][cind].split('.')
+            ID1 = comb_list[1][cind].split('.')
+            comb_str = '*_%s%s.%s%s.*.%s%s.mat' % (ID0[0],ID1[0],ID0[1],ID1[1],ID0[3],ID1[3])
+            trl = []
+            year_list = dir_read(par['co']['res_dir'],'????')
+            year_list = sorted(year_list)
+            for year in year_list:
+                day_list = dir_read(year,'???')
+                day_list = sorted(day_list)
+                for day in day_list:
+                    flist = glob.glob(os.path.join(day,comb_str))
+                    flist = sorted(flist)
+                    for fname in flist:
+                        try:
+                            # the following line avoids including traces after a change in the location code
+                            ID_str = os.path.split(fname)[1].split('_')[-1]
+                            tr = mat_to_ndarray(fname)
+                            if tr['stats']['sampling_rate'] != float(par['co']['sampling_rate'])/par['co']['decimation']:
+                                if np.abs(np.log10(tr['stats']['sampling_rate']/float(par['co']['sampling_rate'])/par['co']['decimation']))<1e-6:
+                                    tr['stats']['sampling_rate'] = float(par['co']['sampling_rate'])/par['co']['decimation']
+                                else:
+                                    logger.warning("Mismatching sampling rates %s" % fname)
+                                    continue
+                            trl.append(tr)
+                        except:
+                            pass
+            try:
+                st = corr_trace_to_obspy(trl)
+                mat = corr_mat_from_corr_stream(st)
+                tr = corr_mat_extract_trace(mat,method='norm_mean')
+                save_dict_to_matlab_file(os.path.join(par['co']['res_dir'],'ctr__'+ID_str),tr)
+                rmat = corr_mat_resample(mat,sttimes)
+                rmat = mat
+                save_dict_to_matlab_file(os.path.join(par['co']['res_dir'],'mat__'+ID_str),rmat)
+            except:
+                logger.warning("Problem with combination %s-%s: %s" % 
+                                (comb_list[0][cind], comb_list[1][cind], sys.exc_info()[0]))
 
+        elif par['co']['corr_args']['direct_output']['function'] == 'corr_to_hdf5':
+            logger.debug("\n>>> Merging for combination %s-%s (%s/%s) at %s:" % \
+                    (comb_list[0][cind],comb_list[1][cind],str(cnt+1),str(len(comb_ind)),UTCDateTime()))
+            ID0 = comb_list[0][cind].split('.')
+            ID1 = comb_list[1][cind].split('.')
+            comb_str = '%s_%s%s.%s%s.*.%s%s.h5' % (par['co']['corr_args']['direct_output']['base_name'],
+                ID0[0],ID1[0],ID0[1],ID1[1],ID0[3],ID1[3])
+            h5lst=glob.glob(os.path.join(par['co']['res_dir'],"".join([ID0[3],ID1[3]]),comb_str))
+            if not len(h5lst) == 1 :
+                logger.debug("\n>>> Combination %s-%s  not found " % \
+                        (comb_list[0][cind],comb_list[1][cind],))
+            else :
+                mat = corr_mat_from_h5(h5lst[0])
+                tr = corr_mat_extract_trace(mat,method='norm_mean')
+                save_dict_to_matlab_file(h5lst[0].replace('h5','mat').replace(
+                    par['co']['corr_args']['direct_output']['base_name'],'ctr_'),tr)
 
     program_end = UTCDateTime()
     print 'rank %d execution time' % rank, program_end-program_start
