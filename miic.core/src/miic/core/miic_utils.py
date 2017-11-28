@@ -430,6 +430,50 @@ def recursively_save_dict_contents_to_group(h5file, path, dic):
         else:
             raise ValueError('Cannot save %s type'%type(item))
 
+def load_dict_from_hdf5(filename):
+    """
+    ....
+    """
+    with h5py.File(filename, 'r') as h5file:
+        return recursively_load_dict_contents_from_group(h5file, '/')
+
+def recursively_load_dict_contents_from_group(h5file, path):
+    """
+    ....
+    """
+    ans = {}
+    for key, item in h5file[path].items():
+        if isinstance(item, h5py._hl.dataset.Dataset):
+            ans[key] = item.value
+        elif isinstance(item, h5py._hl.group.Group):
+            ans[key] = recursively_load_dict_contents_from_group(h5file, path + key + '/')
+    return ans
+
+if __name__ == '__main__':
+
+    data = {'x': 'astring',
+            'y': np.arange(10),
+            'd': {'z': np.ones((2,3)),
+                  'b': b'bytestring'}}
+    print(data)
+    filename = 'test.h5'
+    save_dict_to_hdf5(data, filename)
+    dd = load_dict_from_hdf5(filename)
+    print(dd)
+    # should test for bad type
+
+def unicode_to_string(input):
+    """Convert all unicode strings to utf-8 strings
+    """
+    if isinstance(input, dict):
+        return {unicode_to_string(key): unicode_to_string(value) for key, value in input.iteritems()}
+    elif isinstance(input, list):
+        return [unicode_to_string(element) for element in input]
+    elif isinstance(input, unicode):
+        return input.encode('utf-8')
+    else:
+        return input
+
 def corr_to_hdf5(data,stats,stats_tr1,stats_tr2,base_name,base_dir) :
     """ Output a correlation function to a hdf5 file.
     The hdf5 file contains three groups for the 3 stats dictionaries,
@@ -510,8 +554,10 @@ def corr_to_hdf5(data,stats,stats_tr1,stats_tr2,base_name,base_dir) :
     # If file doesn't exist create the stats groups and data in corr_data group
     if not os.path.exists(filename):
         create_path(out_dir)
-        h5dicts={'stats_tr1':_tr1dict, 'stats_tr2':_tr2dict, 'stats':_stats,
-             'corr_data':{t:data} }
+        h5dicts={'stats_tr1':unicode_to_string(_tr1dict_), 
+                 'stats_tr2':unicode_to_string(_tr2dict), 
+                 'stats':unicode_to_string(_stats),
+                'corr_data':{t:data} }
         save_dict_to_hdf5(h5dicts, filename)
     # Else append data to corr_data group
     else :
