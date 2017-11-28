@@ -554,7 +554,7 @@ def corr_to_hdf5(data,stats,stats_tr1,stats_tr2,base_name,base_dir) :
     # If file doesn't exist create the stats groups and data in corr_data group
     if not os.path.exists(filename):
         create_path(out_dir)
-        h5dicts={'stats_tr1':unicode_to_string(_tr1dict_), 
+        h5dicts={'stats_tr1':unicode_to_string(_tr1dict), 
                  'stats_tr2':unicode_to_string(_tr2dict), 
                  'stats':unicode_to_string(_stats),
                 'corr_data':{t:data} }
