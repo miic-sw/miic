@@ -93,13 +93,12 @@ def correlation_subdir_name(date):
 
     return subpath
 
-def combinations_in_dist_range(comb_list,stations,lle_df,min_distance,max_distance) :
-
+def combinations_in_dist_range(comb_list,lle_df,min_distance,max_distance) :
     """Filters station combination list within a distance range
-    :type stations: list with items of the form 'NET.STATION'
-    :param stations: stations to be used if present
+    :type comb_list: list
+    :param comb_list: list containing two list [[IDs of first trace],[IDs of second trace]]
     :type lle_df: :class:`~pandas.DataFrame`
-    :param lle_df: The dataframe that has as index the stations name and 3 columns
+    :param lle_df: The dataframe that has as index the station names and 3 columns
         lat, lon and ele.
     :type min_distance: float
     :param min_distance: minimum distance separation (km) of station combination to accept
@@ -109,11 +108,15 @@ def combinations_in_dist_range(comb_list,stations,lle_df,min_distance,max_distan
     :return: list containing two list [[IDs of first trace],[IDs of second trace]]
     """
 
-
-    # Find locations from coordinates file for station set defined in parameter file
+    # From coordinates df create non-duplicated station list (in case of specified channels)
     lats,lons=[],[]
+    indices=lle_df.index.get_values()
+    stas={}
+    for i in indices :
+        stas['.'.join(i.split('.')[:2])]=str(i)
+    stations=sorted(stas.keys())
     for s in stations :
-        row=lle_df.ix[s+".*.*"]
+        row=lle_df.ix[stas[s]]
         lats.append(row['latitude'])
         lons.append(row['longitude'])
     m_lat,m_lon=np.array(lats),np.array(lons)
@@ -162,12 +165,18 @@ def combine_station_channels(stations,channels,par_co,lle_df):
             are then filtered between distance range 'combination_mindist' and
             'combination_maxdist' that are to be given as additional keys of
             ``par_co``.
+        ``'ant_betweenStations_distance'``: Same as betweenStations_distance, but
+            only component combinations ZZ NN NE EN EE are accepted.
+        ``'ant_from_coordinatefile_distance'``: The provided coordinatefile must 
+            list station-channels individually. Combinations are made between 
+            channels that are available at each station. Only combinations 
+            ZZ NN NE EN EE are accepted. Distance range filter is applied.
         ``'betweenComponents'``: Traces are combined if their components (last
             letter of channel name) names are different and their station and
             network names are identical (single station cross-correlation).
         ``'autoComponents'``: Traces are combined only with themselves. 
         
-        ``'allSimpleCombinations'``: All Traces are combined once (onle one of
+        ``'allSimpleCombinations'``: All Traces are combined once (only one of
             (0,1) and (1,0))
         ``'allCombinations'``: All traces are combined in both orders ((0,1)
             and (1,0))
@@ -198,7 +207,7 @@ def combine_station_channels(stations,channels,par_co,lle_df):
                         second.append('%s..%s' % (stations[jj],channels[l]))
         min_distance,max_distance=par_co['combination_mindist'],par_co['combination_maxdist']
         first,second=combinations_in_dist_range([first,second],stations,lle_df,min_distance,max_distance)
-    elif method == 'betweenStations_distance_ant' :
+    elif method == 'ant_betweenStations_distance' :
         allowed_comp_combinations=["ZZ","NN","NE","EN","EE"]
         for ii in range(len(stations)):
             for jj in range(ii+1,len(stations)):
@@ -208,7 +217,21 @@ def combine_station_channels(stations,channels,par_co,lle_df):
                             first.append('%s..%s' % (stations[ii],channels[k]))
                             second.append('%s..%s' % (stations[jj],channels[l]))
         min_distance,max_distance=par_co['combination_mindist'],par_co['combination_maxdist']
-        first,second=combinations_in_dist_range([first,second],stations,lle_df,min_distance,max_distance)
+        first,second=combinations_in_dist_range([first,second],lle_df,min_distance,max_distance)
+    elif method == 'ant_from_coordinatefile_distance' :
+        allowed_comp_combinations=["ZZ","NN","NE","EN","EE"]
+        avail_chnls=lle_df.index.get_values()
+        for ii in range(len(stations)) :
+            for jj in range(ii+1,len(stations)): 
+                for k in range(len(channels)) :
+                    for l in range(len(channels)):
+                        if ".".join([stations[ii],'*',channels[k]]) in avail_chnls :
+                            if ".".join([stations[jj],'*',channels[l]]) in avail_chnls :
+                                if channels[k][-1]+channels[l][-1] in allowed_comp_combinations :
+                                    first.append('%s..%s' % (stations[ii],channels[k]))
+                                    second.append('%s..%s' % (stations[jj],channels[l]))
+        min_distance,max_distance=par_co['combination_mindist'],par_co['combination_maxdist']
+        first,second=combinations_in_dist_range([first,second],lle_df,min_distance,max_distance)
     elif method == 'betweenComponents':
         for ii in range(len(stations)):
             for k in range(len(channels)):
