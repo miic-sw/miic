@@ -712,16 +712,19 @@ def spectralWhitening(B,args,params):
                 #print 'ii', ii
                 absB[:,ii:ii+3] = np.tile(np.atleast_2d(
                                     np.mean(absB[:,ii:ii+3],axis=1)).T,[1,3])
-    B /= absB
-    # with np.errstate(divide='raise') :
-    #     try :
-    #         B /= absB
-    #     except Error as e :
-    #         print e
-    #         import pdb
-    #         pdb.set_trace()
-    # remove zero freq component 
-    #B[0,:] = 0.j
+    with np.errstate(invalid='raise'):
+        try :
+            B /= absB
+        except FloatingPointError as e :
+            errargs=np.argwhere(absB==0)
+            # Report error where there is zero divides for a non-zero freq
+            if not np.all(errargs[:,0]==0) :
+                print e
+                print errargs
+
+    # Set zero frequency component to zero
+    B[0,:] = 0.j
+
     return B
     
     
