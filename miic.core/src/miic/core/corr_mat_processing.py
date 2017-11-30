@@ -257,11 +257,13 @@ def corr_mat_from_h5(filename):
         tkeys = sorted(hf['corr_data'].keys())
         corr_mat.update({'corr_data':np.zeros((len(tkeys),corr_mat['stats']['npts']))})
         for num,tkey in enumerate(tkeys):
-            corr_mat['time'].append(tkey)
+            # time string modified for consistency with those read from matlab files
+            tkey_mod=tkey.replace('T',' ').replace('Z','')
+            corr_mat['time'].append(tkey_mod)
             corr_mat['corr_data'][num,:] = hf['corr_data/'+tkey]
+        corr_mat['time']=np.array(corr_mat['time'])
         corr_mat = unicode_to_string(corr_mat)
     return corr_mat
-
 
 def corr_mat_filter(corr_mat, freqs, order=3):
     """ Filter a correlation matrix.
@@ -724,6 +726,7 @@ def corr_mat_time_select(corr_mat, starttime=None, endtime=None):
 
     # adopt time vector
     smat['time'] = corr_mat['time'][ind]
+    #smat['time'] = np.take(corr_mat['time'],ind)
 
     return smat
 
