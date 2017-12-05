@@ -20,6 +20,7 @@ from copy import copy, deepcopy
 from scipy.signal import butter, lfilter, hilbert, resample
 from scipy.io import savemat
 from datetime import datetime, timedelta
+from obspy.core import UTCDateTime
 from glob import glob1
 from os.path import join
 import os
@@ -223,7 +224,7 @@ def corr_mat_to_h5(corr_mat,filename):
     stats = {}
     for key in ['stats','stats_tr1','stats_tr2']:
         stats.update({key: corr_mat[key]})
-    save_dict_to_hdf5(stats, filename, wa='w')
+    save_dict_to_hdf5(stats, filename)
     with h5py.File(filename,'a') as hf:
         hf.create_group('corr_data')
         for num in range(len(corr_mat['time'])):
@@ -1440,9 +1441,16 @@ def corr_mat_rotate(corr_mat_list):
         raise InputError('IDs of stations in corr_mat_list[0] may not be identical.')
         
     for ind,cm in enumerate(corr_mat_list):
-        # check times
+        # check times match within 30 seconds
         if (cm['time'] != times).any():
-            raise InputError('Time vector of corr_mat_list[%d] does not match the first matrix.' % ind)
+            tol=30.0
+            for arg in np.where(cm['time'] != times) :
+                diff=np.abs(UTCDateTime(cm['time'][arg[0]])-UTCDateTime(times[arg[0]]))
+                if diff > tol :
+                    print('Time vector mismatch greater than %ss for %s-%s %s %s' % \
+                        (str(tol),cm['stats_tr1']['station'],cm['stats_tr2']['station'], \
+                                cm['time'][arg[0]],times[arg[0]]))
+                    #raise InputError('Time vector of corr_mat_list[%d] does not match the first matrix.' % ind)
         # check station IDs
         if (cm['stats_tr1']['network']+'.'+
             cm['stats_tr1']['station']+'.'+
@@ -1479,10 +1487,93 @@ def corr_mat_rotate(corr_mat_list):
     return _rotate_corr_dict(cmd)
     
 
-def _rotate_corr_dict(cmd):
+
+def corr_mat_rotate_horiz(corr_mat_list):
+    """ Rotate correlation matrices from the NE into the RT frame. Corr_mat_list
+    contains the NN,NE,EN,EE components of the Greens tensor. Time
+    vectors of all the correlation matricies must be identical.
+    """
+    
+    cmd = {}
+    required_comp = ['NN','NE','EN','EE']
+    times = corr_mat_list[0]['time']
+    
+    # quick fix the empty locations
+    for cm in corr_mat_list:
+        if cm['stats_tr1']['location'] == []: cm['stats_tr1']['location'] = ''
+        if cm['stats_tr2']['location'] == []: cm['stats_tr2']['location'] = ''
+        if cm['stats']['location'] == []: cm['stats']['location'] = ''
+    
+    # check IDs
+    ID1 = (corr_mat_list[0]['stats_tr1']['network']+'.'+
+           corr_mat_list[0]['stats_tr1']['station']+'.'+
+           corr_mat_list[0]['stats_tr1']['location']+'.'+
+           corr_mat_list[0]['stats_tr1']['channel'][:-1])
+    ID2 = (corr_mat_list[0]['stats_tr2']['network']+'.'+
+           corr_mat_list[0]['stats_tr2']['station']+'.'+
+           corr_mat_list[0]['stats_tr2']['location']+'.'+
+           corr_mat_list[0]['stats_tr2']['channel'][:-1])
+    if ID1 == ID2:
+        raise InputError('IDs of stations in corr_mat_list[0] may not be identical.')
+        
+    for ind,cm in enumerate(corr_mat_list):
+        # check times match within 30 seconds
+        if (cm['time'] != times).any():
+            tol=30.0
+            for arg in np.where(cm['time'] != times) :
+                diff=np.abs(UTCDateTime(cm['time'][arg[0]])-UTCDateTime(times[arg[0]]))
+                if diff > tol :
+                    print('Time vector mismatch greater than %ss for %s-%s %s %s' % \
+                        (str(tol),cm['stats_tr1']['station'],cm['stats_tr2']['station'], \
+                                cm['time'][arg[0]],times[arg[0]]))
+                    #raise InputError('Time vector of corr_mat_list[%d] does not match the first matrix.' % ind)
+        # check station IDs
+        if (cm['stats_tr1']['network']+'.'+
+            cm['stats_tr1']['station']+'.'+
+            cm['stats_tr1']['location']+'.'+
+            cm['stats_tr1']['channel'][:-1]) == ID1:
+            if (cm['stats_tr2']['network']+'.'+
+                cm['stats_tr2']['station']+'.'+
+                cm['stats_tr2']['location']+'.'+
+                cm['stats_tr2']['channel'][:-1]) != ID2:
+                raise InputError('IDs of stations in corr_mat_list[%d] do not match IDs of'
+                                 'corr_mat_list[0].' % ind)
+        if (cm['stats_tr1']['network']+'.'+
+            cm['stats_tr1']['station']+'.'+
+            cm['stats_tr1']['location']+'.'+
+            cm['stats_tr1']['channel'][:-1]) == ID2:
+            if (cm['stats_tr2']['network']+'.'+
+                cm['stats_tr2']['station']+'.'+
+                cm['stats_tr2']['location']+'.'+
+                cm['stats_tr2']['channel'][:-1]) != ID1:
+                raise InputError('IDs of stations in corr_mat_list[%d] do not match IDs of'
+                                 'corr_mat_list[0].' % ind)
+                # flip corrmat
+                cm = corr_mat_reverse(cm)
+        
+        cmd.update({cm['stats_tr1']['channel'][-1]+cm['stats_tr2']['channel'][-1]:cm})
+    
+    # check wheather all Greenstensor components are present
+    for rc in required_comp:
+        if rc not in cmd.keys():
+            print rc, 'not present'
+            #raise InputError('%s component is missing in corr_mat_list' % rc)
+
+    
+    return _rotate_corr_dict(cmd,horiz_only=True)
+
+
+def _rotate_corr_dict(cmd,horiz_only=False):
     """ Rotate correlation matrices in stream from the EE-EN-EZ-NE-NN-NZ-ZE-ZN-ZZ
     system to the RR-RT-RZ-TR-TT-TZ-ZR-ZT-ZZ system. Input matrices are assumed
     to be of same size and simultaneously sampled.
+    :type cmd: dictionary
+    :param cmd: dictionary of correlation matrix dictionares as produced by
+        :class:`~miic.core.macro.recombine_corr_data` where key names are the
+        component types listed above
+    :type horiz_only: boolean (default False)
+    :param horiz_only: If True, the input combinations in the stream are expected to
+    be EE-EN-NE-NN and are rotated into the RR-RT-TR-TT system.
     """
     
     # rotation angles
@@ -1510,12 +1601,6 @@ def _rotate_corr_dict(cmd):
     RT['stats']['channel'] = RT['stats_tr1']['channel']+'-'+RT['stats_tr2']['channel']
     RT['corr_data'] = (c1*s2*cmd['EE']['corr_data'] + c1*c2*cmd['EN']['corr_data'] - 
                        s1*s2*cmd['NE']['corr_data'] - s1*c2*cmd['NN']['corr_data'])
-    
-    RZ = deepcopy(cmd['EE'])
-    RZ['stats_tr1']['channel'] = RZ['stats_tr1']['channel'][:-1] + 'R'
-    RZ['stats_tr2']['channel'] = RZ['stats_tr2']['channel'][:-1] + 'Z'
-    RZ['stats']['channel'] = RZ['stats_tr1']['channel']+'-'+RZ['stats_tr2']['channel']
-    RZ['corr_data'] = (c1*cmd['EZ']['corr_data'] - s1*cmd['NZ']['corr_data'])
 
     TR = deepcopy(cmd['EE'])
     TR['stats_tr1']['channel'] = TR['stats_tr1']['channel'][:-1] + 'T'
@@ -1530,28 +1615,35 @@ def _rotate_corr_dict(cmd):
     TT['stats']['channel'] = TT['stats_tr1']['channel']+'-'+TT['stats_tr2']['channel']
     TT['corr_data'] = (s1*s2*cmd['EE']['corr_data'] + s1*c2*cmd['EN']['corr_data'] + 
                        c1*s2*cmd['NE']['corr_data'] + c1*c2*cmd['NN']['corr_data'])
-    
-    TZ = deepcopy(cmd['EE'])
-    TZ['stats_tr1']['channel'] = TZ['stats_tr1']['channel'][:-1] + 'T'
-    TZ['stats_tr2']['channel'] = TZ['stats_tr2']['channel'][:-1] + 'Z'
-    TZ['stats']['channel'] = TZ['stats_tr1']['channel']+'-'+TZ['stats_tr2']['channel']
-    TZ['corr_data'] = s1*cmd['EZ']['corr_data'] + c1*cmd['NZ']['corr_data']
-    
-    ZR = deepcopy(cmd['EE'])
-    ZR['stats_tr1']['channel'] = ZR['stats_tr1']['channel'][:-1] + 'Z'
-    ZR['stats_tr2']['channel'] = ZR['stats_tr2']['channel'][:-1] + 'R'
-    ZR['stats']['channel'] = ZR['stats_tr1']['channel']+'-'+ZR['stats_tr2']['channel']
-    ZR['corr_data'] = c2*cmd['ZE']['corr_data'] - s2*cmd['ZE']['corr_data']
-    
-    ZT = deepcopy(cmd['EE'])
-    ZT['stats_tr1']['channel'] = ZT['stats_tr1']['channel'][:-1] + 'Z'
-    ZT['stats_tr2']['channel'] = ZT['stats_tr2']['channel'][:-1] + 'T'
-    ZT['stats']['channel'] = ZT['stats_tr1']['channel']+'-'+ZT['stats_tr2']['channel']
-    ZT['corr_data'] = s2*cmd['ZE']['corr_data'] + c2*cmd['ZN']['corr_data']
-    
-    return RR,RT,RZ,TR,TT,TZ,ZR,ZT,deepcopy(cmd['ZZ'])
+    if horiz_only :
+        return RR,RT,TR,TT
 
+    elif not horiz_only :
+        RZ = deepcopy(cmd['EE'])
+        RZ['stats_tr1']['channel'] = RZ['stats_tr1']['channel'][:-1] + 'R'
+        RZ['stats_tr2']['channel'] = RZ['stats_tr2']['channel'][:-1] + 'Z'
+        RZ['stats']['channel'] = RZ['stats_tr1']['channel']+'-'+RZ['stats_tr2']['channel']
+        RZ['corr_data'] = (c1*cmd['EZ']['corr_data'] - s1*cmd['NZ']['corr_data'])
+        
+        TZ = deepcopy(cmd['EE'])
+        TZ['stats_tr1']['channel'] = TZ['stats_tr1']['channel'][:-1] + 'T'
+        TZ['stats_tr2']['channel'] = TZ['stats_tr2']['channel'][:-1] + 'Z'
+        TZ['stats']['channel'] = TZ['stats_tr1']['channel']+'-'+TZ['stats_tr2']['channel']
+        TZ['corr_data'] = s1*cmd['EZ']['corr_data'] + c1*cmd['NZ']['corr_data']
+        
+        ZR = deepcopy(cmd['EE'])
+        ZR['stats_tr1']['channel'] = ZR['stats_tr1']['channel'][:-1] + 'Z'
+        ZR['stats_tr2']['channel'] = ZR['stats_tr2']['channel'][:-1] + 'R'
+        ZR['stats']['channel'] = ZR['stats_tr1']['channel']+'-'+ZR['stats_tr2']['channel']
+        ZR['corr_data'] = c2*cmd['ZE']['corr_data'] - s2*cmd['ZE']['corr_data']
+        
+        ZT = deepcopy(cmd['EE'])
+        ZT['stats_tr1']['channel'] = ZT['stats_tr1']['channel'][:-1] + 'Z'
+        ZT['stats_tr2']['channel'] = ZT['stats_tr2']['channel'][:-1] + 'T'
+        ZT['stats']['channel'] = ZT['stats_tr1']['channel']+'-'+ZT['stats_tr2']['channel']
+        ZT['corr_data'] = s2*cmd['ZE']['corr_data'] + c2*cmd['ZN']['corr_data']
 
+        return RR,RT,RZ,TR,TT,TZ,ZR,ZT,deepcopy(cmd['ZZ'])
 
 def corr_mat_stretch(corr_mat, ref_trc=None, tw=None, stretch_range=0.1,
                           stretch_steps=100, sides='both',
