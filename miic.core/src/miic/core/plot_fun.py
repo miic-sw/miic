@@ -658,7 +658,7 @@ if BC_UI:
 
 def plot_trace_distance_section(traces, scale=0, azim=0,
                                 outfile=None, title=None, plot_type='wiggle',
-                                annotate=False, joint_norm=False,
+                                annotate=False, moveout_vels=False, joint_norm=False,
                                 figsize=(8, 6), dpi=72):
     """ Plot a time distance section of an obspy stream or list of traces.
 
@@ -710,10 +710,12 @@ def plot_trace_distance_section(traces, scale=0, azim=0,
             if jnorm < np.max(np.abs(tr.data)):
                 jnorm = np.max(np.abs(tr.data))
 
+    maxdist=0
     for tr in st:
         start = tr.stats['starttime'].datetime
         end = tr.stats['endtime'].datetime
         dist = tr.stats['sac']['dist']
+        maxdist=dist if (dist>maxdist) else maxdist
         if azim:
             azi = 2. * np.arctan(np.tan((tr.stats['sac']['az'] - azim) *
                                         np.pi / 360.))
@@ -756,6 +758,17 @@ def plot_trace_distance_section(traces, scale=0, azim=0,
             plt.annotate(tr.stats['station'], xy=(max(tim), dist),
                          horizontalalignment='right',
                          verticalalignment='middle')
+
+    if moveout_vels :
+        plt.plot([0,0],[0,maxdist],'k',linewidth=0.3)
+        plt.plot([0,maxdist/5.0],[0,maxdist],'r',linewidth=0.3)
+        plt.plot([0,-maxdist/5.0],[0,maxdist],'r',linewidth=0.3)
+        plt.plot([0,maxdist/4.0],[0,maxdist],'b',linewidth=0.3)
+        plt.plot([0,-maxdist/4.0],[0,maxdist],'b',linewidth=0.3)
+        plt.plot([0,maxdist/3.0],[0,maxdist],'g',linewidth=0.3)
+        plt.plot([0,-maxdist/3.0],[0,maxdist],'g',linewidth=0.3)
+        plt.plot([0,maxdist/2.0],[0,maxdist],'y',linewidth=0.3)
+        plt.plot([0,-maxdist/2.0],[0,maxdist],'y',linewidth=0.3)
     if title:
         plt.title(title)
 
