@@ -548,7 +548,7 @@ if BC_UI:
 
 def plot_single_corr_matrix(corr_mat, seconds=0, filename=None,
                             normalize=True, normtype='absmax', norm_time_win=[None, None],
-                            clim=[], cmap='viridis' figsize=(8, 6), dpi=72):
+                            clim=[], cmap='viridis', figsize=(8, 6), dpi=72):
     """ Plot a single correlation matrix.
 
     A simple plot of the correlation matrix `corr_mat` is generated and
