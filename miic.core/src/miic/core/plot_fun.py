@@ -762,14 +762,15 @@ def plot_trace_distance_section(traces, scale=0, azim=0,
 
     if moveout_vels :
         plt.plot([0,0],[0,maxdist],'k',linewidth=0.3)
-        plt.plot([0,maxdist/5.0],[0,maxdist],'r',linewidth=0.3)
+        plt.plot([0,maxdist/5.0],[0,maxdist],'r',linewidth=0.3,label='5 km/s')
         plt.plot([0,-maxdist/5.0],[0,maxdist],'r',linewidth=0.3)
-        plt.plot([0,maxdist/4.0],[0,maxdist],'b',linewidth=0.3)
+        plt.plot([0,maxdist/4.0],[0,maxdist],'b',linewidth=0.3,label='4 km/s')
         plt.plot([0,-maxdist/4.0],[0,maxdist],'b',linewidth=0.3)
-        plt.plot([0,maxdist/3.0],[0,maxdist],'g',linewidth=0.3)
+        plt.plot([0,maxdist/3.0],[0,maxdist],'g',linewidth=0.3,label='3 km/s')
         plt.plot([0,-maxdist/3.0],[0,maxdist],'g',linewidth=0.3)
-        plt.plot([0,maxdist/2.0],[0,maxdist],'y',linewidth=0.3)
+        plt.plot([0,maxdist/2.0],[0,maxdist],'y',linewidth=0.3,label='2 km/s')
         plt.plot([0,-maxdist/2.0],[0,maxdist],'y',linewidth=0.3)
+        plt.legend(loc=4)
     if title:
         plt.title(title)
 
