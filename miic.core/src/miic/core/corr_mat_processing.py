@@ -1385,10 +1385,10 @@ def corr_mat_extract_trace(corr_mat, method='mean', percentile=50.):
         mean_tr = np.mean(mm, 0).filled(np.nan)
         # calc similarity with mean trace
         tm_sq = np.sum(mean_tr ** 2)
-        cm_sq = np.sum(corr_mat['corr_data'] ** 2, axis=1)
+        cm_sq = np.sum(corr_mat['corr_data'] ** 2, axis=1).filled(np.nan)
         cor = np.zeros(corr_mat['corr_data'].shape[0])
         for ind in range(mm.shape[0]):
-            cor[ind] = (np.dot(corr_mat['corr_data'][ind, :], mean_tr) /
+            cor[ind] = (np.ma.dot(corr_mat['corr_data'][ind, :], mean_tr).filled(np.nan) /
                       np.sqrt(cm_sq[ind] * tm_sq))
         # esimate the percentile excluding nans
         tres = np.percentile(cor[~np.isnan(cor)], percentile)
