@@ -535,7 +535,12 @@ def corr_to_hdf5(data,stats,stats_tr1,stats_tr2,base_name,base_dir) :
     # Else append data to corr_data group
     else :
         with h5py.File(filename, 'a') as h5file:
-            h5file.create_dataset("corr_data/"+t, data=data)
+            try :
+                h5file.create_dataset("corr_data/"+t, data=data)
+            except RuntimeError as e :
+                print("The appending dataset is corr_data/"+t+" in file "+filename)
+                sys.exit()
+                raise e
 
     return 0
 
