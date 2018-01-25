@@ -22,6 +22,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import matplotlib.ticker as ticker
+import matplotlib.dates as mdates
 from copy import copy
 
 # ETS imports
@@ -548,7 +549,7 @@ if BC_UI:
 
 def plot_single_corr_matrix(corr_mat, seconds=0, filename=None,
                             normalize=True, normtype='absmax', norm_time_win=[None, None],
-                            clim=[], cmap='viridis', figsize=(8, 6), dpi=72):
+                            clim=[], cmap='inferno', figsize=(8, 6), dpi=72):
     """ Plot a single correlation matrix.
 
     A simple plot of the correlation matrix `corr_mat` is generated and
@@ -602,36 +603,42 @@ def plot_single_corr_matrix(corr_mat, seconds=0, filename=None,
                 zerotime).total_seconds(),
                 corr_mat['stats']['npts'])
 
-    plt.figure(figsize=figsize, dpi=dpi)
+    #plt.figure(figsize=figsize, dpi=dpi)
+
+    f, ax = plt.subplots(figsize=figsize, dpi=dpi)
     plt.gcf().subplots_adjust(left=0.35)
 
-    ax = plt.imshow(X,
+    img1 = ax.imshow(X,
                     aspect='auto',
                     origin='upper',
                     interpolation='nearest',
                     cmap=cmap,
-                    extent=(tlag[0], tlag[-1], X.shape[0], 0))
+                    extent=(tlag[0], tlag[-1], mdates.date2num(time[-1]), mdates.date2num(time[0]) ))
+#                    extent=(tlag[0], tlag[-1], X.shape[0], 0))
+    ax.yaxis.set_major_locator( mdates.MonthLocator() )
+    ax.yaxis.set_major_formatter( mdates.DateFormatter('%Y-%m-%d') )
+    ax.yaxis.set_minor_locator( mdates.DayLocator() )
     if clim:
         plt.clim(clim)
+    cbar = f.colorbar(img1,format='%1.2g')
+    #plt.colorbar(format='%1.2g')
 
-    plt.colorbar(format='%1.2g')
+    # ax.axes.xaxis.set_major_locator(ticker.MaxNLocator(nbins=7,
+    #                                                    integer=True,
+    #                                                    symmetric=True))
+    # try:
+    #     row, _ = X.shape
+    #     # number of ylabel from 2 to 15
+    #     ynbins = max(2, min(15, row // 15))
+    # except Exception:
+    #     ynbins = 1
 
-    ax.axes.xaxis.set_major_locator(ticker.MaxNLocator(nbins=7,
-                                                       integer=True,
-                                                       symmetric=True))
-    try:
-        row, _ = X.shape
-        # number of ylabel from 2 to 15
-        ynbins = max(2, min(15, row // 15))
-    except Exception:
-        ynbins = 1
+    # ax.axes.yaxis.set_major_locator(ticker.MaxNLocator(nbins=ynbins,
+    #                                                    integer=True,
+    #                                                    prune='upper'))
 
-    ax.axes.yaxis.set_major_locator(ticker.MaxNLocator(nbins=ynbins,
-                                                       integer=True,
-                                                       prune='upper'))
-
-    ytickpos = np.array(ax.axes.yaxis.get_ticklocs()).astype('i')
-    _ = ax.axes.yaxis.set_ticklabels(time[ytickpos])
+    # ytickpos = np.array(ax.axes.yaxis.get_ticklocs()).astype('i')
+    # _ = ax.axes.yaxis.set_ticklabels(time[ytickpos])
 
     plt.ylabel('Days')
     plt.title('Correlation Matrix')
