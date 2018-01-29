@@ -993,12 +993,12 @@ def corr_mat_mirrow(corr_mat):
         return 0
 
     # estimate size of mirrowed array
-    acausal_samples = (zerotime -
+    acausal_samples = int((zerotime -
             convert_time([corr_mat['stats']['starttime']])[0]). \
-            total_seconds() * corr_mat['stats']['sampling_rate'] + 1
-    causal_samples = corr_mat['stats']['npts'] - acausal_samples + 1
+            total_seconds() * corr_mat['stats']['sampling_rate'] + 1)
+    causal_samples = int(corr_mat['stats']['npts'] - acausal_samples + 1)
     # +1 because sample a zerotime counts twice
-    size = int(np.max([acausal_samples, causal_samples]))
+    size = np.max([acausal_samples, causal_samples])
     both = np.min([acausal_samples, causal_samples])
 
     # allocate array
