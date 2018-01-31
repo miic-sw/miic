@@ -1421,13 +1421,13 @@ def corr_trace_maskband(corr_trace,method='all') :
     :return **trace**: trace with nans 
     """
     # Sample points for definitions of arrival time bands
-    c=(len(corr_trace['corr_trace'][0])-1)/2
+    c=(len(corr_trace['corr_trace'])-1)/2
     w1=(corr_trace['stats']['dist']/4.0)*corr_trace['stats']['sampling_rate']
     w2=(corr_trace['stats']['dist']/1.0)*corr_trace['stats']['sampling_rate']
     w3=(corr_trace['stats']['dist']/0.75)*corr_trace['stats']['sampling_rate']
     cd=np.max((w3,corr_trace['stats']['sampling_rate']*100))
     z=np.min((20*corr_trace['stats']['sampling_rate'],w1))
-    masktrace=deepcopy(corr_trace['corr_trace'][0])
+    masktrace=deepcopy(corr_trace['corr_trace'])
     if method == 'ballistic' :
         # Masked array for ballistic wave band
         masktrace[:int(c-w2)]=np.nan
@@ -1443,7 +1443,7 @@ def corr_trace_maskband(corr_trace,method='all') :
     elif method == 'all' :
         pass
     mask_corr_trace=deepcopy(corr_trace)
-    mask_corr_trace['corr_trace'][0]=masktrace
+    mask_corr_trace['corr_trace']=masktrace
     return mask_corr_trace
 
 
