@@ -24,6 +24,7 @@ import matplotlib.gridspec as gridspec
 import matplotlib.ticker as ticker
 import matplotlib.dates as mdates
 from copy import copy
+from miic.core.corr_mat_processing import corr_trace_maskband
 
 # ETS imports
 try:
@@ -805,6 +806,33 @@ if BC_UI:
                           Item('title'),
                           Item('plot_type'))
                           
+
+
+def plot_single_corr_trace(trace,band_plot=False) :
+    """ Plot a single correlation trace
+
+    :type trace: trace dictionary of type correlation trace
+    :param trace: Dictionary with trace in field ['corr_trace'] 
+    :type band_plot: bool
+    :param band_plot: If True the different bands of the corr_trace
+        are plotted in different colors
+    """
+    x=np.arange(-(trace['stats']['npts']-1)/2, \
+        ((trace['stats']['npts']-1)/2)+1,1)*trace['stats']['sampling_rate']
+    plt.plot(x,trace['corr_trace'])
+
+    if band_plot :
+        bal_trace=corr_trace_maskband(trace,method='ballistic')
+        coda_trace=corr_trace_maskband(trace,method='coda')
+        plt.plot(x,bal_trace['corr_trace'],label="ballistic")
+        plt.plot(x,coda_trace['corr_trace'],label="coda")
+        plt.legend()
+
+    plt.xlabel("time / s")
+    plt.title(trace['stats']['station']+'.'+trace['stats']['channel'])
+    plt.show()
+
+
 
 def plot_spectrogram(spectrogram, filename=None, freq_range=[],
                             clim=[], figsize=(8, 6), dpi=72):
