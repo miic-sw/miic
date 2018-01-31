@@ -1404,6 +1404,49 @@ def corr_mat_extract_trace(corr_mat, method='mean', percentile=50.):
     trace.pop('time')
     return trace
 
+def corr_trace_maskband(corr_trace,method='all') :
+    """ Mask a corr trace by applying nans to isolate specific
+    bands of the correlation function trace. Available methods:
+
+    'ballistic' - Isolate just the ballistic wave arrivals
+    'coda' - Leave just the coda (long time lag) 
+    'zero' - Leave just the band around zero time lag. 
+
+    :type trace dictionary of type correlation trace
+    :param corr_trace
+    :type method: string
+    :param method: method to extract the trace
+
+    :rtype: trace dictionary of type correlation trace
+    :return **trace**: trace with nans 
+    """
+    # Sample points for definitions of arrival time bands
+    c=(len(corr_trace['corr_trace'][0])-1)/2
+    w1=(corr_trace['stats']['dist']/4.0)*corr_trace['stats']['sampling_rate']
+    w2=(corr_trace['stats']['dist']/1.0)*corr_trace['stats']['sampling_rate']
+    w3=(corr_trace['stats']['dist']/0.75)*corr_trace['stats']['sampling_rate']
+    cd=np.max((w3,corr_trace['stats']['sampling_rate']*100))
+    z=np.min((20*corr_trace['stats']['sampling_rate'],w1))
+    masktrace=deepcopy(corr_trace['corr_trace'][0])
+    if method == 'ballistic' :
+        # Masked array for ballistic wave band
+        masktrace[:int(c-w2)]=np.nan
+        masktrace[int(c-w1):int(c+w1)]=np.nan
+        masktrace[int(c+w2):]=np.nan
+    elif method ==  'zero' :
+        # Masked array for zero band
+        masktrace[:int(c-z)]=np.nan
+        masktrace[int(c+z):]=np.nan
+    elif method == 'coda' :
+        # Masked array for coda band
+        masktrace[int(c-cd):int(c+cd)]=np.nan
+    elif method == 'all' :
+        pass
+    mask_corr_trace=deepcopy(corr_trace)
+    mask_corr_trace['corr_trace'][0]=masktrace
+    return mask_corr_trace
+
+
 
 class Error(Exception):
     pass
