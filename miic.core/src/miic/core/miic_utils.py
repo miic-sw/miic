@@ -400,6 +400,10 @@ def mat_to_ndarray(filename, flatten=True):
                 flat_var = flatten_recarray(load_var[key])
                 load_var.update({key: flat_var})
 
+    if load_var.has_key('corr_trace') :
+        if not len(load_var['corr_trace']) == load_var['stats']['npts'] :
+            load_var['corr_trace']=np.squeeze(load_var['corr_trace'])
+
     return load_var
 
 
