@@ -1028,6 +1028,67 @@ if BC_UI:
     
         trait_view = View()
 
+def corr_trace_mirrow(corr_tr):
+    """ Average the causal and acausal parts of a correlation trace.
+
+    :type corr_tr: dictionary
+    :param corr_tr: correlation trace dictionary as produced by
+        :class:`~miic.core.corr_mat_processing.corr_mat_extract_trace`
+
+    :rtype: dictionary
+    :return: **corr_tr**: is the same dictionary as the input but with
+        averaged causal and acausal parts of the correlation data.
+    """
+
+    zerotime = datetime(1971, 1, 1)
+
+    # copy input
+    mir_tr = deepcopy(corr_tr)
+
+    # check whether there is a sample at the zerotime
+    zero_sample = (zerotime -
+            convert_time([corr_tr['stats']['starttime']])[0]). \
+            total_seconds() * corr_tr['stats']['sampling_rate']
+    if zero_sample <= 0:
+        print 'No data present for mirrowing: starttime > zerotime.'
+        return corr_tr
+    if convert_time([corr_tr['stats']['endtime']])[0] <= zerotime:
+        print 'No data present for mirrowing: endtime < zerotime.'
+        return corr_tr
+    if np.fmod(zero_sample, 1) != 0:
+        print 'need to shift for mirrowing'
+        return 0
+
+    # estimate size of mirrowed array
+    acausal_samples = int((zerotime -
+            convert_time([corr_tr['stats']['starttime']])[0]). \
+            total_seconds() * corr_tr['stats']['sampling_rate'] + 1)
+    causal_samples = int(corr_tr['stats']['npts'] - acausal_samples + 1)
+    # +1 because sample a zerotime counts twice
+    size = np.max([acausal_samples, causal_samples])
+    both = np.min([acausal_samples, causal_samples])
+
+    # allocate array
+    mir_tr['corr_trace'] = np.zeros(size)
+
+    # fill the array
+    mir_tr['corr_trace'][0:causal_samples] = \
+        corr_tr['corr_trace'][acausal_samples - 1:]
+    mir_tr['corr_trace'][0:acausal_samples] += \
+        corr_tr['corr_trace'][acausal_samples - 1::-1]
+
+    # divide by two where both are present
+    mir_tr['corr_trace'][0:both] /= 2.
+
+    # adopt the stats
+    mir_tr['stats']['starttime'] = convert_time_to_string([zerotime])[0]
+    mir_tr['stats']['npts'] = size
+    mir_tr['stats']['endtime'] = convert_time_to_string([zerotime +
+            timedelta(seconds=float(size) /
+            corr_tr['stats']['sampling_rate'])])[0]
+
+    return mir_tr
+
 
 def corr_mat_taper_center(corr_mat, width, slope_frac=0.05):
     """ Taper the central part of a correlation matrix.
