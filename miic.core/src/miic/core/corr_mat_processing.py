@@ -38,7 +38,7 @@ except ImportError:
 # Obspy imports
 from obspy.signal.invsim import cosine_taper
 from obspy.core import trace, stream
-
+from obspy.core import Stream, AttribDict
 
 # Local imports
 from miic.core.miic_utils import convert_time, convert_time_to_string, \
@@ -49,7 +49,8 @@ from miic.core.miic_utils import convert_time, convert_time_to_string, \
 
 from miic.core.stretch_mod import multi_ref_vchange_and_align, time_shift_estimate, \
     time_stretch_apply, time_shift_apply
-from miic.core.stream import _Selector
+from miic.core.stream import _Selector, corr_trace_to_obspy
+
 
 
 def _smooth(x, window_len=10, window='hanning'):
@@ -1027,6 +1028,26 @@ if BC_UI:
     class _corr_mat_mirrow_view(HasTraits):
     
         trait_view = View()
+
+def corr_trace_prep_aftan(corr_trace,outname) :
+    """ Prepare and write out a SAC file for analysis in aFTAN
+    The b , e and dist headers are set in the sac header
+
+    :type corr_trace: dictionary
+    :param corr_trace: correlation trace dictionary as produced by
+        :class:`~miic.core.corr_mat_processing.corr_mat_extract_trace`
+    :type outname: string
+    :param outname: string for outputfilename
+    """
+    trace = Stream()
+    trace.append(corr_trace_to_obspy(corr_trace))
+    sacstats=AttribDict({'b':-(trace[0].stats.npts-1)/2,'e':(trace[0].stats.npts-1)/2,
+                        'dist':corr_trace['stats']['dist']})
+    trace[0].stats.sac=sacstats
+    trace.write(outname,format="SAC")
+    return
+
+
 
 def corr_trace_mirrow(corr_tr):
     """ Average the causal and acausal parts of a correlation trace.
