@@ -37,8 +37,11 @@ def pxcorr_write(comm,A,st,**kwargs):
     jnormflag = False
     for proc in kwargs['FDpreProcessing']:
         if proc['function'] == spectralWhitening:
-            if 'joint_norm' in proc['args']:
-                jnormflag = True
+            try :
+                if proc['args']['joint_norm'] :
+                    jnormflag = True
+            except :
+                pass
     if jnormflag:
         # for joint normalization all channels of a station must go to the same
         # rank.
