@@ -1504,7 +1504,7 @@ def corr_trace_maskband(corr_trace,method='all') :
     """
     # Sample points for definitions of arrival time bands
     c=(len(corr_trace['corr_trace'])-1)/2
-    w1=(corr_trace['stats']['dist']/5.0)*corr_trace['stats']['sampling_rate']
+    w1=(corr_trace['stats']['dist']/4.0)*corr_trace['stats']['sampling_rate']
     w2=(corr_trace['stats']['dist']/1.0)*corr_trace['stats']['sampling_rate']
     w3=(corr_trace['stats']['dist']/0.75)*corr_trace['stats']['sampling_rate']
     cd=np.max((w3,corr_trace['stats']['sampling_rate']*100))
