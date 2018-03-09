@@ -1111,6 +1111,58 @@ def corr_trace_mirrow(corr_tr):
     return mir_tr
 
 
+def corr_trace_mirror_one_side(corr_tr,method) :
+    """ Mirror the causal or acausal parts of a correlation trace
+        to the other side
+
+    :type corr_tr: dictionary
+    :param corr_tr: correlation trace dictionary as produced by
+        :class:`~miic.core.corr_mat_processing.corr_mat_extract_trace`
+
+    :rtype: dictionary
+    :return: **corr_tr**: is the same dictionary as the input but with
+        averaged causal and acausal parts of the correlation data.
+    """
+
+    zerotime = datetime(1971, 1, 1)
+
+    # copy input
+    mir_tr = deepcopy(corr_tr)
+
+    # check whether there is a sample at the zerotime
+    zero_sample = (zerotime -
+            convert_time([corr_tr['stats']['starttime']])[0]). \
+            total_seconds() * corr_tr['stats']['sampling_rate']
+    if zero_sample <= 0:
+        print 'No data present for mirrowing: starttime > zerotime.'
+        return corr_tr
+    if convert_time([corr_tr['stats']['endtime']])[0] <= zerotime:
+        print 'No data present for mirrowing: endtime < zerotime.'
+        return corr_tr
+    if np.fmod(zero_sample, 1) != 0:
+        print 'need to shift for mirrowing'
+        return 0
+
+    # estimate size of mirrowed array
+    acausal_samples = int((zerotime -
+            convert_time([corr_tr['stats']['starttime']])[0]). \
+            total_seconds() * corr_tr['stats']['sampling_rate'] + 1)
+    causal_samples = int(corr_tr['stats']['npts'] - acausal_samples + 1)
+    # +1 because sample a zerotime counts twice
+    size = np.max([acausal_samples, causal_samples])
+    both = np.min([acausal_samples, causal_samples])
+
+    # Fill array, mirroring one side to the other
+    mir_tr['corr_trace'] = np.zeros(corr_tr['corr_trace'].size)
+    if method=='causal' :
+        mir_tr['corr_trace'][causal_samples-1:]=corr_tr['corr_trace'][causal_samples-1:]
+        mir_tr['corr_trace'][:causal_samples]=corr_tr['corr_trace'][causal_samples-1:][::-1]
+    elif method=='acausal' :
+        mir_tr['corr_trace'][:acausal_samples]=corr_tr['corr_trace'][:acausal_samples]
+        mir_tr['corr_trace'][acausal_samples-1:]=corr_tr['corr_trace'][:acausal_samples][::-1]
+    return mir_tr
+
+
 def corr_mat_taper_center(corr_mat, width, slope_frac=0.05):
     """ Taper the central part of a correlation matrix.
 
@@ -1486,18 +1538,24 @@ def corr_mat_extract_trace(corr_mat, method='mean', percentile=50.):
     trace.pop('time')
     return trace
 
-def corr_trace_maskband(corr_trace,method='all') :
+def corr_trace_maskband(corr_trace,method='all',side='both') :
     """ Mask a corr trace by applying nans to isolate specific
-    bands of the correlation function trace. Available methods:
-
+    bands of the correlation function trace. 
+    Available methods:
     'ballistic' - Isolate just the ballistic wave arrivals
     'coda' - Leave just the coda (long time lag) 
     'zero' - Leave just the band around zero time lag. 
+    Available side methods:
+    'causal' -  Isolate just causal side (+ve time lag)
+    'acausal' -  Isolate just acausal side (-ve time lag)
+    'both' - use both sides of corr trace
 
-    :type trace dictionary of type correlation trace
-    :param corr_trace
+    :type corr_trace: dictionary
+    :param corr_trace: trace dictionary of type correlation trace
     :type method: string
     :param method: method to extract the trace
+    :type side: string
+    :param side: method for causal/acausal/both sided 
 
     :rtype: trace dictionary of type correlation trace
     :return **trace**: trace with nans 
@@ -1524,10 +1582,43 @@ def corr_trace_maskband(corr_trace,method='all') :
         masktrace[int(c-cd):int(c+cd)]=np.nan
     elif method == 'all' :
         pass
+
+    # Restrict to one side if appropriate
+    if side=='causal':
+        masktrace[:c]=np.nan
+    elif side=='acausal':
+        masktrace[c:]=np.nan
+    elif side=='both':
+        pass
+
     mask_corr_trace=deepcopy(corr_trace)
     mask_corr_trace['corr_trace']=masktrace
     return mask_corr_trace
 
+def corr_trace_snrs(corr_trace,method='both'):
+    """ Measures the snr of the ballistic arrival relative to the
+    coda noise level (coda snr) and relative to the noise level at
+    zero time-lag (zero snr)
+
+    :type corr_trace: dictionary
+    :param corr_trace: trace dictionary of type correlation trace
+    :type method: string
+    :param method: method for causal/acausal/both sided snr
+    :rtype: tuple
+    :return **(coda_snr,zero_snr)**: signal-to-noise ratios
+    """
+    bal_trace=corr_trace_maskband(corr_trace,method='ballistic',side=method)
+    coda_trace=corr_trace_maskband(corr_trace,method='coda',side=method)
+    zero_trace=corr_trace_maskband(corr_trace,method='zero',side=method)
+
+    # Find snrs and record in dictionary
+    bal_peak=np.nanmax(np.abs(bal_trace['corr_trace']))
+    coda_rms=np.power(np.nanmean(np.power(coda_trace['corr_trace'],2)),0.5)
+    zero_rms=np.power(np.nanmean(np.power(zero_trace['corr_trace'],2)),0.5)
+    coda_snr=bal_peak/coda_rms
+    zero_snr=bal_peak/zero_rms
+
+    return coda_snr,zero_snr
 
 
 class Error(Exception):
