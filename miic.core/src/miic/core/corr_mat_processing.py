@@ -1047,6 +1047,22 @@ def corr_trace_prep_aftan(corr_trace,outname) :
     trace.write(outname,format="SAC")
     return
 
+def corr_trace_to_avg_sac(corr_trace,sacfname) :
+    """ Write a SAC file for FTAN analysis on a
+    one-side correlation trace. 
+    :type corr_trace: dictionary
+    :param corr_trace: correlation trace dictionary as produced by
+        :class:`~miic.core.corr_mat_processing.corr_mat_extract_trace`
+    :type outname: string
+    :param outname: string for outputfilename
+    """
+    avg_corr_trace = corr_trace_mirrow(corr_trace)
+    trace = Stream()
+    trace.append(corr_trace_to_obspy(avg_corr_trace))
+    sacstats=AttribDict({'dist':corr_trace['stats']['dist']})
+    trace[0].stats.sac=sacstats
+    trace.write(sacfname,format="SAC")
+    return
 
 
 def corr_trace_mirrow(corr_tr):
