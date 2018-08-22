@@ -1012,6 +1012,45 @@ if BC_UI:
         trait_view = View()
 
 
+def corr_mat_taper(corr_mat, width):
+    """ Taper a correlation matrix.
+
+    Apply a taper to all traces in the correlation matrix.
+
+    :type corr_mat: dictionary
+    :param corr_mat: correlation matrix dictionary as produced by
+        :class:`~miic.core.macro.recombine_corr_data`
+    :type width: float
+    :param width: width to be tapered in seconds
+
+    :rtype: dictionary
+    :return: **corr_mat**: is the same dictionary as the input but with
+        tapered central part of the correlation data.
+    """
+    # check input
+    if not isinstance(corr_mat, dict):
+        raise TypeError("corr_mat needs to be correlation matrix dictionary.")
+
+    if corr_mat_check(corr_mat)['is_incomplete']:
+        raise ValueError("Error: corr_mat is not a valid correlation_matix \
+            dictionary.")
+
+    # definition of the source time of a Green's function (ie. zero correlation
+    # time)
+    zerotime = datetime(1971, 1, 1, 0, 0, 0)
+
+    # copy input
+    tmat = deepcopy(corr_mat)
+
+    # calculate taper
+    tap = cosine_taper(corr_mat['stats']['npts'],width*corr_mat['stats']['sampling_rate']/(corr_mat['stats']['npts']))
+
+    # apply taper
+    tmat['corr_data'] *= np.tile(np.atleast_2d(tap), (tmat['corr_data'].shape[0], 1))
+
+    return tmat
+
+
 def corr_mat_taper_center(corr_mat, width, slope_frac=0.05):
     """ Taper the central part of a correlation matrix.
 

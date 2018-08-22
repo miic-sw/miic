@@ -10,10 +10,13 @@ from datetime import datetime
 from scipy.optimize import fmin
 import pdb
 
-from miic.core.miic_utils import serial_date_from_datetime, convert_time
+from miic.core.miic_utils import corr_mat_check, dv_check, zerotime, serial_date_from_datetime, convert_time
+import miic.core.corr_mat_processing as cm
 from miic.core.plot_fun import plot_dv
-
+from miic.core.stream import corr_trace_to_obspy
+import miic.core.dtype_mod as dm
 from obspy.signal.util import next_pow_2
+from obspy import Trace, UTCDateTime
 
 
 
@@ -108,7 +111,7 @@ def dv_combine(dv_list, method='average_sim_mat'):
     return res_dv
     
     
-def dv_combine_multi_ref(dv_list,max_shift=0.01,method='shift'):
+def dv_combine_multi_ref(dv_list,max_shift=0.01,method='shift',offset=[]):
     """Combine a list of change measuments with different reference traces
     
     Combine a list of change dictionaries obtained from different references
@@ -127,8 +130,12 @@ def dv_combine_multi_ref(dv_list,max_shift=0.01,method='shift'):
     :param dv_list: list of velociy change dictionaries to be combined
     :type max_shift: float
     :param max_shift: maximum shift to be tested beween different measuremants
-    :param method: str
+    :type method: str
     :param method: method to estimate the offset between two measurements
+    :type offset: list
+    :param offset: pre-estimated velocity offset between dv measurements in
+        units of setps in the dv_measurements. The first element in the dv_list
+        will be set to zero offset.
     
     :type: dict
     :return: combined dv_dict
@@ -137,24 +144,30 @@ def dv_combine_multi_ref(dv_list,max_shift=0.01,method='shift'):
     assert type(dv_list) == type([]), "dv_list is not a list"
     assert method in ['shift','diff'], "method has to be either 'shift' or "\
                 "'diff'."
+    if offset:
+        assert len(offset) == len(dv_list), "if given offset must be of the "\
+                "same length as dv_list"
     #stps should be at mostas large as the lagest second axis maller than max_shftp    
     
-    
-    steps = max_shift/(dv_list[0]['second_axis'][1]-dv_list[0]['second_axis'][0])
-    steps = int(np.floor(steps))     
-    shift = []
-    G = np.zeros(((len(dv_list)**2-len(dv_list))/2,len(dv_list)-1),dtype=float)
-    cnt = 0    
-    for ind1,dv1 in enumerate(dv_list):
-        for ind2,dv2 in enumerate(dv_list):
-            if ind2 > ind1:
-                shift.append(_dv_shift(dv1,dv2,steps,method))
-                if ind1 > 0:   # assume hat first refrence is not shifed
-                    G[cnt,ind1-1] = 1
-                G[cnt,ind2-1] = -1
-                cnt += 1
-    offset  = np.linalg.lstsq(G,shift)[0]
-    offset = np.concatenate(([0],(np.round(offset)).astype(int)))
+    if offset:
+        offset = np.array(offset)
+        offset -= offset[0]
+    else:
+        steps = max_shift/(dv_list[0]['second_axis'][1]-dv_list[0]['second_axis'][0])
+        steps = int(np.floor(steps))     
+        shift = []
+        G = np.zeros(((len(dv_list)**2-len(dv_list))/2,len(dv_list)-1),dtype=float)
+        cnt = 0    
+        for ind1,dv1 in enumerate(dv_list):
+            for ind2,dv2 in enumerate(dv_list):
+                if ind2 > ind1:
+                   shift.append(_dv_shift(dv1,dv2,steps,method))
+                   if ind1 > 0:   # assume hat first refrence is not shifed
+                       G[cnt,ind1-1] = 1
+                   G[cnt,ind2-1] = -1
+                   cnt += 1
+        offset  = np.linalg.lstsq(G,shift)[0]
+        offset = np.concatenate(([0],(np.round(offset)).astype(int)))
     cdv = deepcopy(dv_list[0])
     ns = int(len(cdv['second_axis']))
     for ind in range(1,len(dv_list)):
@@ -183,6 +196,284 @@ def _dv_shift(dv1,dv2,steps,method):
 
     return shift
     
+
+
+def create_stretch_mat(ref,stretch_range=0.03,stretch_steps=300,tw=None,sides='both'):
+    assert isinstance(ref,Trace), 'ref must be an obspy.Trace object'
+    stretch_values = dm.Spaced_values(-stretch_range,stretch_range/stretch_steps,\
+                                    length=2*stretch_steps+1, \
+                   s_type='stretch_values', name='stretch_values')
+    
+    # create time axis of original trace
+    time_values = dm.Spaced_values(start=ref.stats.starttime-zerotime, \
+                                   delta=ref.stats.delta, \
+                                   length=ref.stats.npts,\
+                                   s_type='lag_times',name='lag_times',unit=dm.Unit(['s']))
+    times = time_values.get_data()
+    # create spline object
+    ref_tr_spline = UnivariateSpline(times, ref.data, s=0)
+    # create time indices
+    if type(tw) == type(None):
+        twind = np.arange(time_values.length)
+    else:
+        twind = create_time_indices(ref.stats.starttime, ref.stats.sampling_rate, tw, sides)
+    # times for interpolation
+    str_times = times[twind]
+    str_time_ser = dm.Series(str_times,s_type='lag_times',name='lag_times',unit=time_values.unit)
+    # create space for stretching matrix
+    mat = np.zeros([stretch_values.length,len(str_times)],dtype=np.float64)
+    # populate stretching matrix
+    for (k, this_fac) in enumerate(np.exp(stretch_values.get_data())):
+        mat[k, :] = ref_tr_spline(str_times * this_fac)
+    # put it in a matrix structure
+    dmmat = dm.Matrix(data=mat,m_type='amplitude',first_axis=stretch_values,\
+                     second_axis=str_time_ser,name='stretch_matrix')
+    return dmmat
+
+
+def create_time_indices(starttime, sampling_rate, tw, sides='both'):
+    assert len(tw) == 2, 'time window tw must be a two item list: %s' % tw
+    assert (tw[0]>=0) or (tw[1]>=0), 'time window must be non-negative: %s' % tw
+    tind = (np.arange(tw[0]*sampling_rate,tw[1]*sampling_rate,1)).astype(int)
+    zind = int(np.round((zerotime - starttime) * sampling_rate))
+    if sides == 'left':
+        twind = zind - tind[::-1]
+    elif sides == 'right':
+        twind = zind + tind
+    elif sides == 'both':
+        if tind[0] == 0:
+            # zero lag time contanined
+            twind = np.concatenate((zind - tind[::-1],zind + tind[1:]))
+        else:
+            twind = np.concatenate((zind - tind[::-1],zind + tind))
+    else:
+        raise ValueError, 'Value for sides not recognized: %s' % sides
+    return twind
+
+
+def measure_change(mat,ref,normalize=False):
+    """Measure the similarity between rows in two matrices"""
+    
+    smat = np.dot(mat,ref.T)
+    if normalize:
+        m_sq = np.sum(mat ** 2, axis=1)
+        r_sq = np.sum(ref ** 2, axis=1)
+        norm = np.sqrt(np.dot(np.atleast_2d(m_sq).T,np.atleast_2d(r_sq)))
+        smat /= norm
+    
+    bfind = np.argmax(smat,axis=1)
+    bfval = smat[np.arange(len(bfind)),bfind]
+    return smat, bfind, bfval
+
+
+def change_time_select(dv, starttime=None, endtime=None, include_end=False):
+    """ Select time period from a change measurement.
+
+    Select a portion of a change measurement that falls into the
+    time period `starttime`<= selected times <= `endtime` and return it.
+
+    :type dv: dictionary
+    :param dv: change dictionary as produced e.g. by
+        `velocity_change`
+    :type starttime: datetime.datetime object or time string
+    :param starttime: beginning of the selected time period
+    :type endtime: datetime.datetime object or time string
+    :param endtime: end of the selected time period
+
+    :rtype: dictionary
+    :return: **dv**: velocity change dictionary restricted to the
+        selected time period.
+    """
+    # check input
+    if not isinstance(dv, dict):
+        raise TypeError("dv needs to be change dictionary.")
+
+    if dv_check(dv)['is_incomplete']:
+        raise ValueError("Error: dv is not a valid change \
+            dictionary.")
+    
+    sdv = deepcopy(dv)
+
+    # convert time vector
+    time = convert_time(sdv['time'])
+
+    # convert starttime and endtime input.
+    # if they are None take the first or last values of the time vector
+    if type(starttime) == type(None):
+        starttime = time[0]
+    else:
+        if not isinstance(starttime, datetime):
+            starttime = convert_time([starttime])[0]
+    if type(endtime) == type(None):
+        endtime = time[-1]
+    else:
+        if not isinstance(endtime, datetime):
+            endtime = convert_time([endtime])[0]
+
+    # select period
+    if include_end:
+        ind = np.nonzero((time >= starttime) * (time <= endtime))[0]
+    else:
+        ind = np.nonzero((time >= starttime) * (time < endtime))[0]
+
+    # trim the matrix
+    sdv['value'] = dv['value'][ind]
+    sdv['corr'] = dv['corr'][ind]
+    if 'sim_mat' in dv.keys():
+        sdv['sim_mat'] = dv['sim_mat'][ind, :]
+    # adopt time vector
+    sdv['time'] = dv['time'][ind]
+
+    return sdv
+   
+
+def change_average(dv, n_av):
+    """ Moving average of changes measurements.
+    
+    Calculate a moving average of the similarity matrix in a change dictionary
+    and resetimate the change.
+    """
+    # check input
+    if not isinstance(dv, dict):
+        raise TypeError("dv needs to be change dictionary.")
+
+    if dv_check(dv)['is_incomplete']:
+        raise ValueError("Error: dv is not a valid change \
+            dictionary.")
+    assert type(n_av), 'n_av must be an integer'
+    assert 1 == n_av % 2, 'n_av must be an odd number'
+    assert 'sim_mat' in dv.keys(), 'sim_mat must be contained in dv'
+    
+    dv['sim_mat'][np.isnan(dv['sim_mat'])] = 0.
+    adv = deepcopy(dv)
+    for shift in np.arange(-np.floor(float(n_av)/2.),0).astype(int):
+        adv['sim_mat'][:-shift,:] += dv['sim_mat'][shift:,:]
+    for shift in np.arange(1,np.ceil(float(n_av)/2.)).astype(int):
+        adv['sim_mat'][shift:,:] += dv['sim_mat'][:-shift,:]
+    adv['sim_mat'] /= n_av
+    bfind = np.argmax(adv['sim_mat'],axis=1)
+    adv['corr'] = adv['sim_mat'][np.arange(len(bfind)),bfind]
+    adv['value'] = adv['second_axis'][bfind]
+    return adv
+    
+    
+def change_interpolate(dv,search_range=None, fit_range=7):
+    """ Interpolate the similarity matrix to artificially decrease the
+    stretching increment
+    
+    fit_range: number of stretch values on each side of the maximum to be
+        included in the polynomial fitting to obtian the maximum
+    """
+    if not isinstance(dv, dict):
+        raise TypeError("dv needs to be change dictionary.")
+
+    if dv_check(dv)['is_incomplete']:
+        raise ValueError("Error: dv is not a valid change \
+            dictionary.")
+    idv = deepcopy(dv)
+    if type(search_range) == type(None):
+        bfind = np.argmax(dv['sim_mat'],axis=1)
+    else:
+        assert len(search_range) == 2, 'search_range must be a two element list'
+        smin = np.argmin(np.abs(dv['second_axis']-search_range[0]))
+        smax = np.argmin(np.abs(dv['second_axis']-search_range[1]))
+        bfind = np.argmax(dv['sim_mat'][:,smin:smax],axis=1) + smin
+    
+    #import pdb
+    #import matplotlib.pyplot as plt
+    #pdb.set_trace()
+    # interpolate over a larger range around the maximum
+    for ii in range(len(dv['time'])):
+        fitind = range(np.max((0,bfind[ii]-fit_range)),np.min((bfind[ii]+fit_range+1,len(dv['second_axis']))))
+        if len(fitind) == 2.*fit_range + 1:  # otherwise the range for fitting is to short
+            if not np.any(np.isnan(dv['sim_mat'][ii,fitind])):
+                p = np.polyfit(dv['second_axis'][fitind],dv['sim_mat'][ii,fitind],deg=2)
+                loc = -p[1]/(2.*p[0])
+                if p[0]<1 and loc>dv['second_axis'][fitind[0]] and loc<dv['second_axis'][fitind[-1]]: # otherwise it is not a maximum or extrapolation
+                    idv['value'][ii] = loc
+                    idv['corr'][ii] = p[0]*idv['value'][ii]**2 + p[1]*idv['value'][ii] + p[2]
+    #pdb.set_trace()
+                
+                
+    # handle the maxima at edges
+    """
+    maind = bfind==(dv['sim_mat'].shape[1]-1)
+    bfind[maind] -= 1
+    miind = bfind==0
+    bfind[miind] += 1    
+    lint = np.arange(len(dv['time']))
+    smval = dv['sim_mat'][lint,bfind-1]
+    val = dv['sim_mat'][lint,bfind]
+    gtval = dv['sim_mat'][lint,bfind+1]
+    c = val
+    a = val - (gtval+smval)/2.
+    b = gtval - c - a
+    iloc = -b/(2.*a)
+    import pdb
+    pdb.set_trace()
+    ind = iloc>1 or iloc<-1
+    idv['corr'] = a*(iloc**2) + b*iloc + c
+    idv['value'] = dv['second_axis'][bfind] + (dv['second_axis'][bfind+1] - dv['second_axis'][bfind])*iloc
+    # handle the maxima at edges
+    idv['value'][maind] = dv['value'][maind]
+    idv['value'][miind] = dv['value'][miind]
+    idv['corr'][maind] = dv['corr'][maind]
+    idv['corr'][miind] = dv['corr'][miind]
+    """
+    return idv
+
+
+def velocity_change(cmat,ref=None,tw=None,sides='both',stretch_range=0.03,\
+                    stretch_steps=100,return_simmat=True,stretch_mat=None):
+    """ Measure the velocity change in a correlation matrix
+    
+    cmat: correlation matrix dictionary
+    ref: obspy trace
+    tw: list with start and end time of time window in seconds
+    sides: 'both', 'left' or ''right'
+    stretch_range: range of stretching to be tested [-stretch_range, +stretch_range]"""
+
+    assert corr_mat_check(cmat), 'cmat must be a correlation matrix dictionary'
+    if type(ref) == type(None):
+        reftr = cm.corr_mat_extract_trace(cmat,method='norm_mean')
+        ref = corr_trace_to_obspy(reftr)
+    else:
+        assert isinstance(ref,Trace), 'refrence must be an obspy.trace.'
+        assert (ref.stats.sampling_rate == cmat['stats']['sampling_rate']),\
+                'sampling rates of cmat and ref must match'
+    if type(tw) != type(None):
+        assert len(tw) == 2, 'tw must be a 2 item list: %s' % tw
+    else:
+        tw = [0.,UTCDateTime(convert_time([cmat['stats']['endtime']])[0])-zerotime]
+
+    # create stretching matrix by stretching reference
+    if type(stretch_mat) == type(None):
+        stretch_mat = create_stretch_mat(ref,stretch_range=stretch_range,stretch_steps=stretch_steps,tw=tw, sides=sides)
+    # select required part from correlation matrix
+    twind = create_time_indices(UTCDateTime(convert_time([cmat['stats']['starttime']])[0]),
+                                    cmat['stats']['sampling_rate'],tw=tw, sides=sides)
+    tcmat = cmat['corr_data'][:,twind]
+    # calculate similarity
+    sim_mat, bfind, bfval = measure_change(tcmat,stretch_mat.get_data(),normalize=True)
+    # translate index into measurement
+    strvec = stretch_mat.first_axis.get_data()
+    dt = strvec[bfind]
+    # create dv structure
+    dv = {'time': cmat['time'],
+          'stats': cmat['stats'],
+          'corr': np.squeeze(bfval),
+          'value': -np.squeeze(dt),
+          'second_axis': strvec,
+          'value_type': np.array(['stretch']),
+          'method': np.array(['single_ref'])}
+    if return_simmat:
+        dv.update({'sim_mat': np.fliplr(sim_mat).astype(np.float16)})
+    return dv
+
+
+# Functions for modeling velocity changes
+
+
 
 def model_dv(dv,model_type,param=()):
     """Model velocity change measurements
