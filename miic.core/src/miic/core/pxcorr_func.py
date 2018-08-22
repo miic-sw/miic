@@ -37,8 +37,11 @@ def pxcorr_write(comm,A,st,**kwargs):
     jnormflag = False
     for proc in kwargs['FDpreProcessing']:
         if proc['function'] == spectralWhitening:
-            if 'joint_norm' in proc['args']:
-                jnormflag = True
+            try :
+                if proc['args']['joint_norm'] :
+                    jnormflag = True
+            except :
+                pass
     if jnormflag:
         # for joint normalization all channels of a station must go to the same
         # rank.
@@ -712,16 +715,19 @@ def spectralWhitening(B,args,params):
                 #print 'ii', ii
                 absB[:,ii:ii+3] = np.tile(np.atleast_2d(
                                     np.mean(absB[:,ii:ii+3],axis=1)).T,[1,3])
-    B /= absB
-    # with np.errstate(divide='raise') :
-    #     try :
-    #         B /= absB
-    #     except Error as e :
-    #         print e
-    #         import pdb
-    #         pdb.set_trace()
-    # remove zero freq component 
-    #B[0,:] = 0.j
+    with np.errstate(invalid='raise'):
+        try :
+            B /= absB
+        except FloatingPointError as e :
+            errargs=np.argwhere(absB==0)
+            # Report error where there is zero divides for a non-zero freq
+            if not np.all(errargs[:,0]==0) :
+                print e
+                print errargs
+
+    # Set zero frequency component to zero
+    B[0,:] = 0.j
+
     return B
     
     

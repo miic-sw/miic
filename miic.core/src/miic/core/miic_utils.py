@@ -19,7 +19,7 @@ Changes:
 
 
 # Main imports
-import os
+import os,sys
 import numpy as np
 import scipy.io as sio
 from scipy.io import loadmat, savemat
@@ -400,6 +400,10 @@ def mat_to_ndarray(filename, flatten=True):
                 flat_var = flatten_recarray(load_var[key])
                 load_var.update({key: flat_var})
 
+    if load_var.has_key('corr_trace') :
+        if not len(load_var['corr_trace']) == load_var['stats']['npts'] :
+            load_var['corr_trace']=np.squeeze(load_var['corr_trace'])
+
     return load_var
 
 
@@ -429,6 +433,25 @@ def recursively_save_dict_contents_to_group(h5file, path, dic):
             recursively_save_dict_contents_to_group(h5file, path + key + '/', item)
         else:
             raise ValueError('Cannot save %s type'%type(item))
+
+def load_dict_from_hdf5(filename):
+    """
+    ....
+    """
+    with h5py.File(filename, 'r') as h5file:
+        return recursively_load_dict_contents_from_group(h5file, '/')
+
+def recursively_load_dict_contents_from_group(h5file, path):
+    """
+    ....
+    """
+    ans = {}
+    for key, item in h5file[path].items():
+        if isinstance(item, h5py._hl.dataset.Dataset):
+            ans[key] = item.value
+        elif isinstance(item, h5py._hl.group.Group):
+            ans[key] = recursively_load_dict_contents_from_group(h5file, path + key + '/')
+    return ans
 
 def corr_to_hdf5(data,stats,stats_tr1,stats_tr2,base_name,base_dir) :
     """ Output a correlation function to a hdf5 file.
@@ -511,12 +534,17 @@ def corr_to_hdf5(data,stats,stats_tr1,stats_tr2,base_name,base_dir) :
     if not os.path.exists(filename):
         create_path(out_dir)
         h5dicts={'stats_tr1':_tr1dict, 'stats_tr2':_tr2dict, 'stats':_stats,
-             'corr_data':{t:data} }
+                'corr_data':{t:data} }
         save_dict_to_hdf5(h5dicts, filename)
     # Else append data to corr_data group
     else :
         with h5py.File(filename, 'a') as h5file:
-            h5file.create_dataset("corr_data/"+t, data=data)
+            try :
+                h5file.create_dataset("corr_data/"+t, data=data)
+            except RuntimeError as e :
+                print("The appending dataset is corr_data/"+t+" in file "+filename)
+                sys.exit()
+                raise e
 
     return 0
 

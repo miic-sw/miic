@@ -20,9 +20,11 @@ from copy import copy, deepcopy
 from scipy.signal import butter, lfilter, hilbert, resample
 from scipy.io import savemat
 from datetime import datetime, timedelta
+from obspy.core import UTCDateTime
 from glob import glob1
 from os.path import join
 import os
+import h5py
 
 # ETS imports
 try:
@@ -36,16 +38,19 @@ except ImportError:
 # Obspy imports
 from obspy.signal.invsim import cosine_taper
 from obspy.core import trace, stream
-
+from obspy.core import Stream, AttribDict
 
 # Local imports
 from miic.core.miic_utils import convert_time, convert_time_to_string, \
     corr_mat_check, dv_check, flatten_recarray, nd_mat_center_part, mat_to_ndarray, \
-    select_var_from_dict, _check_stats, _stats_dict_from_obj
+    select_var_from_dict, _check_stats, _stats_dict_from_obj, save_dict_to_hdf5, \
+    recursively_save_dict_contents_to_group, load_dict_from_hdf5,  \
+    recursively_load_dict_contents_from_group
 
 from miic.core.stretch_mod import multi_ref_vchange_and_align, time_shift_estimate, \
     time_stretch_apply, time_shift_apply
-from miic.core.stream import _Selector
+from miic.core.stream import _Selector, corr_trace_to_obspy
+
 
 
 def _smooth(x, window_len=10, window='hanning'):
@@ -178,8 +183,17 @@ if BC_UI:
                           Item('wtype'),
                           Item('axis'))
 
-
-
+def unicode_to_string(input):
+    """Convert all unicode strings to utf-8 strings
+    """
+    if isinstance(input, dict):
+        return {unicode_to_string(key): unicode_to_string(value) for key, value in input.iteritems()}
+    elif isinstance(input, list):
+        return [unicode_to_string(element) for element in input]
+    elif isinstance(input, unicode):
+        return input.encode('utf-8')
+    else:
+        return input
 
 def corr_mat_to_h5(corr_mat,filename):
     """Save correlation matrix into an hdf5 file.
@@ -211,7 +225,7 @@ def corr_mat_to_h5(corr_mat,filename):
     stats = {}
     for key in ['stats','stats_tr1','stats_tr2']:
         stats.update({key: corr_mat[key]})
-    save_dict_to_hdf5(stats, filename, wa='w')
+    save_dict_to_hdf5(stats, filename)
     with h5py.File(filename,'a') as hf:
         hf.create_group('corr_data')
         for num in range(len(corr_mat['time'])):
@@ -245,10 +259,13 @@ def corr_mat_from_h5(filename):
         tkeys = sorted(hf['corr_data'].keys())
         corr_mat.update({'corr_data':np.zeros((len(tkeys),corr_mat['stats']['npts']))})
         for num,tkey in enumerate(tkeys):
-            corr_mat['time'].append(tkey)
+            # time string modified for consistency with those read from matlab files
+            tkey_mod=tkey.replace('T',' ').replace('Z','')
+            corr_mat['time'].append(tkey_mod)
             corr_mat['corr_data'][num,:] = hf['corr_data/'+tkey]
+        corr_mat['time']=np.array(corr_mat['time'])
+        corr_mat = unicode_to_string(corr_mat)
     return corr_mat
-
 
 def corr_mat_filter(corr_mat, freqs, order=3):
     """ Filter a correlation matrix.
@@ -711,6 +728,7 @@ def corr_mat_time_select(corr_mat, starttime=None, endtime=None):
 
     # adopt time vector
     smat['time'] = corr_mat['time'][ind]
+    #smat['time'] = np.take(corr_mat['time'],ind)
 
     return smat
 
@@ -976,10 +994,10 @@ def corr_mat_mirrow(corr_mat):
         return 0
 
     # estimate size of mirrowed array
-    acausal_samples = (zerotime -
+    acausal_samples = int((zerotime -
             convert_time([corr_mat['stats']['starttime']])[0]). \
-            total_seconds() * corr_mat['stats']['sampling_rate'] + 1
-    causal_samples = corr_mat['stats']['npts'] - acausal_samples + 1
+            total_seconds() * corr_mat['stats']['sampling_rate'] + 1)
+    causal_samples = int(corr_mat['stats']['npts'] - acausal_samples + 1)
     # +1 because sample a zerotime counts twice
     size = np.max([acausal_samples, causal_samples])
     both = np.min([acausal_samples, causal_samples])
@@ -1010,6 +1028,170 @@ if BC_UI:
     class _corr_mat_mirrow_view(HasTraits):
     
         trait_view = View()
+
+def corr_trace_prep_aftan(corr_trace,outname) :
+    """ Prepare and write out a SAC file for analysis in aFTAN
+    The b , e and dist headers are set in the sac header
+
+    :type corr_trace: dictionary
+    :param corr_trace: correlation trace dictionary as produced by
+        :class:`~miic.core.corr_mat_processing.corr_mat_extract_trace`
+    :type outname: string
+    :param outname: string for outputfilename
+    """
+    trace = Stream()
+    trace.append(corr_trace_to_obspy(corr_trace))
+    sacstats=AttribDict({'b':-(trace[0].stats.npts-1)/2,'e':(trace[0].stats.npts-1)/2,
+                        'dist':corr_trace['stats']['dist']})
+    trace[0].stats.sac=sacstats
+    trace.write(outname,format="SAC")
+    return
+
+def corr_trace_to_avg_sac(corr_trace,sacfname) :
+    """ Write a SAC file for FTAN analysis on a
+    one-side correlation trace. 
+    :type corr_trace: dictionary
+    :param corr_trace: correlation trace dictionary as produced by
+        :class:`~miic.core.corr_mat_processing.corr_mat_extract_trace`
+    :type outname: string
+    :param outname: string for outputfilename
+    """
+    avg_corr_trace = corr_trace_mirrow(corr_trace)
+    trace = Stream()
+    trace.append(corr_trace_to_obspy(avg_corr_trace))
+    sacstats=AttribDict({'dist':corr_trace['stats']['dist']})
+    trace[0].stats.sac=sacstats
+    trace.write(sacfname,format="SAC")
+    return
+
+def corr_trace_to_full_sac(corr_trace,sacfname) :
+    """ Write a SAC file for FTAN analysis on a
+    two-sided correlation trace. 
+    :type corr_trace: dictionary
+    :param corr_trace: correlation trace dictionary as produced by
+        :class:`~miic.core.corr_mat_processing.corr_mat_extract_trace`
+    :type outname: string
+    :param outname: string for outputfilename
+    """
+    trace = Stream()
+    trace.append(corr_trace_to_obspy(corr_trace))
+    sacstats=AttribDict({'dist':corr_trace['stats']['dist']})
+    trace[0].stats.sac=sacstats
+    trace.write(sacfname,format="SAC")
+    return
+
+def corr_trace_mirrow(corr_tr):
+    """ Average the causal and acausal parts of a correlation trace.
+
+    :type corr_tr: dictionary
+    :param corr_tr: correlation trace dictionary as produced by
+        :class:`~miic.core.corr_mat_processing.corr_mat_extract_trace`
+
+    :rtype: dictionary
+    :return: **corr_tr**: is the same dictionary as the input but with
+        averaged causal and acausal parts of the correlation data.
+    """
+
+    zerotime = datetime(1971, 1, 1)
+
+    # copy input
+    mir_tr = deepcopy(corr_tr)
+
+    # check whether there is a sample at the zerotime
+    zero_sample = (zerotime -
+            convert_time([corr_tr['stats']['starttime']])[0]). \
+            total_seconds() * corr_tr['stats']['sampling_rate']
+    if zero_sample <= 0:
+        print 'No data present for mirrowing: starttime > zerotime.'
+        return corr_tr
+    if convert_time([corr_tr['stats']['endtime']])[0] <= zerotime:
+        print 'No data present for mirrowing: endtime < zerotime.'
+        return corr_tr
+    if np.fmod(zero_sample, 1) != 0:
+        print 'need to shift for mirrowing'
+        return 0
+
+    # estimate size of mirrowed array
+    acausal_samples = int((zerotime -
+            convert_time([corr_tr['stats']['starttime']])[0]). \
+            total_seconds() * corr_tr['stats']['sampling_rate'] + 1)
+    causal_samples = int(corr_tr['stats']['npts'] - acausal_samples + 1)
+    # +1 because sample a zerotime counts twice
+    size = np.max([acausal_samples, causal_samples])
+    both = np.min([acausal_samples, causal_samples])
+
+    # allocate array
+    mir_tr['corr_trace'] = np.zeros(size)
+
+    # fill the array
+    mir_tr['corr_trace'][0:causal_samples] = \
+        corr_tr['corr_trace'][acausal_samples - 1:]
+    mir_tr['corr_trace'][0:acausal_samples] += \
+        corr_tr['corr_trace'][acausal_samples - 1::-1]
+
+    # divide by two where both are present
+    mir_tr['corr_trace'][0:both] /= 2.
+
+    # adopt the stats
+    mir_tr['stats']['starttime'] = convert_time_to_string([zerotime])[0]
+    mir_tr['stats']['npts'] = size
+    mir_tr['stats']['endtime'] = convert_time_to_string([zerotime +
+            timedelta(seconds=float(size) /
+            corr_tr['stats']['sampling_rate'])])[0]
+
+    return mir_tr
+
+
+def corr_trace_mirror_one_side(corr_tr,method) :
+    """ Mirror the causal or acausal parts of a correlation trace
+        to the other side
+
+    :type corr_tr: dictionary
+    :param corr_tr: correlation trace dictionary as produced by
+        :class:`~miic.core.corr_mat_processing.corr_mat_extract_trace`
+
+    :rtype: dictionary
+    :return: **corr_tr**: is the same dictionary as the input but with
+        averaged causal and acausal parts of the correlation data.
+    """
+
+    zerotime = datetime(1971, 1, 1)
+
+    # copy input
+    mir_tr = deepcopy(corr_tr)
+
+    # check whether there is a sample at the zerotime
+    zero_sample = (zerotime -
+            convert_time([corr_tr['stats']['starttime']])[0]). \
+            total_seconds() * corr_tr['stats']['sampling_rate']
+    if zero_sample <= 0:
+        print 'No data present for mirrowing: starttime > zerotime.'
+        return corr_tr
+    if convert_time([corr_tr['stats']['endtime']])[0] <= zerotime:
+        print 'No data present for mirrowing: endtime < zerotime.'
+        return corr_tr
+    if np.fmod(zero_sample, 1) != 0:
+        print 'need to shift for mirrowing'
+        return 0
+
+    # estimate size of mirrowed array
+    acausal_samples = int((zerotime -
+            convert_time([corr_tr['stats']['starttime']])[0]). \
+            total_seconds() * corr_tr['stats']['sampling_rate'] + 1)
+    causal_samples = int(corr_tr['stats']['npts'] - acausal_samples + 1)
+    # +1 because sample a zerotime counts twice
+    size = np.max([acausal_samples, causal_samples])
+    both = np.min([acausal_samples, causal_samples])
+
+    # Fill array, mirroring one side to the other
+    mir_tr['corr_trace'] = np.zeros(corr_tr['corr_trace'].size)
+    if method=='causal' :
+        mir_tr['corr_trace'][causal_samples-1:]=corr_tr['corr_trace'][causal_samples-1:]
+        mir_tr['corr_trace'][:causal_samples]=corr_tr['corr_trace'][causal_samples-1:][::-1]
+    elif method=='acausal' :
+        mir_tr['corr_trace'][:acausal_samples]=corr_tr['corr_trace'][:acausal_samples]
+        mir_tr['corr_trace'][acausal_samples-1:]=corr_tr['corr_trace'][:acausal_samples][::-1]
+    return mir_tr
 
 
 def corr_mat_taper(corr_mat, width):
@@ -1408,6 +1590,7 @@ def corr_mat_extract_trace(corr_mat, method='mean', percentile=50.):
         # calc similarity with mean trace
         tm_sq = np.sum(mean_tr ** 2)
         cm_sq = np.sum(corr_mat['corr_data'] ** 2, axis=1)
+        #cm_sq = np.sum(corr_mat['corr_data'] ** 2, axis=1).filled(np.nan)
         cor = np.zeros(corr_mat['corr_data'].shape[0])
         for ind in range(mm.shape[0]):
             cor[ind] = (np.dot(corr_mat['corr_data'][ind, :], mean_tr) /
@@ -1424,6 +1607,88 @@ def corr_mat_extract_trace(corr_mat, method='mean', percentile=50.):
     trace.pop('corr_data')
     trace.pop('time')
     return trace
+
+def corr_trace_maskband(corr_trace,method='all',side='both') :
+    """ Mask a corr trace by applying nans to isolate specific
+    bands of the correlation function trace. 
+    Available methods:
+    'ballistic' - Isolate just the ballistic wave arrivals
+    'coda' - Leave just the coda (long time lag) 
+    'zero' - Leave just the band around zero time lag. 
+    Available side methods:
+    'causal' -  Isolate just causal side (+ve time lag)
+    'acausal' -  Isolate just acausal side (-ve time lag)
+    'both' - use both sides of corr trace
+
+    :type corr_trace: dictionary
+    :param corr_trace: trace dictionary of type correlation trace
+    :type method: string
+    :param method: method to extract the trace
+    :type side: string
+    :param side: method for causal/acausal/both sided 
+
+    :rtype: trace dictionary of type correlation trace
+    :return **trace**: trace with nans 
+    """
+    # Sample points for definitions of arrival time bands
+    c=(len(corr_trace['corr_trace'])-1)/2
+    w1=(corr_trace['stats']['dist']/5.0)*corr_trace['stats']['sampling_rate']
+    w2=(corr_trace['stats']['dist']/1.0)*corr_trace['stats']['sampling_rate']
+    w3=(corr_trace['stats']['dist']/0.75)*corr_trace['stats']['sampling_rate']
+    cd=np.max((w3,corr_trace['stats']['sampling_rate']*100))
+    z=np.min((20*corr_trace['stats']['sampling_rate'],w1))
+    masktrace=deepcopy(corr_trace['corr_trace'])
+    if method == 'ballistic' :
+        # Masked array for ballistic wave band
+        masktrace[:int(c-w2)]=np.nan
+        masktrace[int(c-w1):int(c+w1)]=np.nan
+        masktrace[int(c+w2):]=np.nan
+    elif method ==  'zero' :
+        # Masked array for zero band
+        masktrace[:int(c-z)]=np.nan
+        masktrace[int(c+z):]=np.nan
+    elif method == 'coda' :
+        # Masked array for coda band
+        masktrace[int(c-cd):int(c+cd)]=np.nan
+    elif method == 'all' :
+        pass
+
+    # Restrict to one side if appropriate
+    if side=='causal':
+        masktrace[:c]=np.nan
+    elif side=='acausal':
+        masktrace[c:]=np.nan
+    elif side=='both':
+        pass
+
+    mask_corr_trace=deepcopy(corr_trace)
+    mask_corr_trace['corr_trace']=masktrace
+    return mask_corr_trace
+
+def corr_trace_snrs(corr_trace,method='both'):
+    """ Measures the snr of the ballistic arrival relative to the
+    coda noise level (coda snr) and relative to the noise level at
+    zero time-lag (zero snr)
+
+    :type corr_trace: dictionary
+    :param corr_trace: trace dictionary of type correlation trace
+    :type method: string
+    :param method: method for causal/acausal/both sided snr
+    :rtype: tuple
+    :return **(coda_snr,zero_snr)**: signal-to-noise ratios
+    """
+    bal_trace=corr_trace_maskband(corr_trace,method='ballistic',side=method)
+    coda_trace=corr_trace_maskband(corr_trace,method='coda',side=method)
+    zero_trace=corr_trace_maskband(corr_trace,method='zero',side=method)
+
+    # Find snrs and record in dictionary
+    bal_peak=np.nanmax(np.abs(bal_trace['corr_trace']))
+    coda_rms=np.power(np.nanmean(np.power(coda_trace['corr_trace'],2)),0.5)
+    zero_rms=np.power(np.nanmean(np.power(zero_trace['corr_trace'],2)),0.5)
+    coda_snr=bal_peak/coda_rms
+    zero_snr=bal_peak/zero_rms
+
+    return coda_snr,zero_snr
 
 
 class Error(Exception):
@@ -1463,9 +1728,16 @@ def corr_mat_rotate(corr_mat_list):
         raise InputError('IDs of stations in corr_mat_list[0] may not be identical.')
         
     for ind,cm in enumerate(corr_mat_list):
-        # check times
+        # check times match within 30 seconds
         if (cm['time'] != times).any():
-            raise InputError('Time vector of corr_mat_list[%d] does not match the first matrix.' % ind)
+            tol=30.0
+            for arg in np.where(cm['time'] != times) :
+                diff=np.abs(UTCDateTime(cm['time'][arg[0]])-UTCDateTime(times[arg[0]]))
+                if diff > tol :
+                    print('Time vector mismatch greater than %ss for %s-%s %s %s' % \
+                        (str(tol),cm['stats_tr1']['station'],cm['stats_tr2']['station'], \
+                                cm['time'][arg[0]],times[arg[0]]))
+                    #raise InputError('Time vector of corr_mat_list[%d] does not match the first matrix.' % ind)
         # check station IDs
         if (cm['stats_tr1']['network']+'.'+
             cm['stats_tr1']['station']+'.'+
@@ -1502,10 +1774,93 @@ def corr_mat_rotate(corr_mat_list):
     return _rotate_corr_dict(cmd)
     
 
-def _rotate_corr_dict(cmd):
+
+def corr_mat_rotate_horiz(corr_mat_list):
+    """ Rotate correlation matrices from the NE into the RT frame. Corr_mat_list
+    contains the NN,NE,EN,EE components of the Greens tensor. Time
+    vectors of all the correlation matricies must be identical.
+    """
+    
+    cmd = {}
+    required_comp = ['NN','NE','EN','EE']
+    times = corr_mat_list[0]['time']
+    
+    # quick fix the empty locations
+    for cm in corr_mat_list:
+        if cm['stats_tr1']['location'] == []: cm['stats_tr1']['location'] = ''
+        if cm['stats_tr2']['location'] == []: cm['stats_tr2']['location'] = ''
+        if cm['stats']['location'] == []: cm['stats']['location'] = ''
+    
+    # check IDs
+    ID1 = (corr_mat_list[0]['stats_tr1']['network']+'.'+
+           corr_mat_list[0]['stats_tr1']['station']+'.'+
+           corr_mat_list[0]['stats_tr1']['location']+'.'+
+           corr_mat_list[0]['stats_tr1']['channel'][:-1])
+    ID2 = (corr_mat_list[0]['stats_tr2']['network']+'.'+
+           corr_mat_list[0]['stats_tr2']['station']+'.'+
+           corr_mat_list[0]['stats_tr2']['location']+'.'+
+           corr_mat_list[0]['stats_tr2']['channel'][:-1])
+    if ID1 == ID2:
+        raise InputError('IDs of stations in corr_mat_list[0] may not be identical.')
+        
+    for ind,cm in enumerate(corr_mat_list):
+        # check times match within 30 seconds
+        if (cm['time'] != times).any():
+            tol=30.0
+            for arg in np.where(cm['time'] != times) :
+                diff=np.abs(UTCDateTime(cm['time'][arg[0]])-UTCDateTime(times[arg[0]]))
+                if diff > tol :
+                    print('Time vector mismatch greater than %ss for %s-%s %s %s' % \
+                        (str(tol),cm['stats_tr1']['station'],cm['stats_tr2']['station'], \
+                                cm['time'][arg[0]],times[arg[0]]))
+                    #raise InputError('Time vector of corr_mat_list[%d] does not match the first matrix.' % ind)
+        # check station IDs
+        if (cm['stats_tr1']['network']+'.'+
+            cm['stats_tr1']['station']+'.'+
+            cm['stats_tr1']['location']+'.'+
+            cm['stats_tr1']['channel'][:-1]) == ID1:
+            if (cm['stats_tr2']['network']+'.'+
+                cm['stats_tr2']['station']+'.'+
+                cm['stats_tr2']['location']+'.'+
+                cm['stats_tr2']['channel'][:-1]) != ID2:
+                raise InputError('IDs of stations in corr_mat_list[%d] do not match IDs of'
+                                 'corr_mat_list[0].' % ind)
+        if (cm['stats_tr1']['network']+'.'+
+            cm['stats_tr1']['station']+'.'+
+            cm['stats_tr1']['location']+'.'+
+            cm['stats_tr1']['channel'][:-1]) == ID2:
+            if (cm['stats_tr2']['network']+'.'+
+                cm['stats_tr2']['station']+'.'+
+                cm['stats_tr2']['location']+'.'+
+                cm['stats_tr2']['channel'][:-1]) != ID1:
+                raise InputError('IDs of stations in corr_mat_list[%d] do not match IDs of'
+                                 'corr_mat_list[0].' % ind)
+                # flip corrmat
+                cm = corr_mat_reverse(cm)
+        
+        cmd.update({cm['stats_tr1']['channel'][-1]+cm['stats_tr2']['channel'][-1]:cm})
+    
+    # check wheather all Greenstensor components are present
+    for rc in required_comp:
+        if rc not in cmd.keys():
+            print rc, 'not present'
+            #raise InputError('%s component is missing in corr_mat_list' % rc)
+
+    
+    return _rotate_corr_dict(cmd,horiz_only=True)
+
+
+def _rotate_corr_dict(cmd,horiz_only=False):
     """ Rotate correlation matrices in stream from the EE-EN-EZ-NE-NN-NZ-ZE-ZN-ZZ
     system to the RR-RT-RZ-TR-TT-TZ-ZR-ZT-ZZ system. Input matrices are assumed
     to be of same size and simultaneously sampled.
+    :type cmd: dictionary
+    :param cmd: dictionary of correlation matrix dictionares as produced by
+        :class:`~miic.core.macro.recombine_corr_data` where key names are the
+        component types listed above
+    :type horiz_only: boolean (default False)
+    :param horiz_only: If True, the input combinations in the stream are expected to
+    be EE-EN-NE-NN and are rotated into the RR-RT-TR-TT system.
     """
     
     # rotation angles
@@ -1533,12 +1888,6 @@ def _rotate_corr_dict(cmd):
     RT['stats']['channel'] = RT['stats_tr1']['channel']+'-'+RT['stats_tr2']['channel']
     RT['corr_data'] = (c1*s2*cmd['EE']['corr_data'] + c1*c2*cmd['EN']['corr_data'] - 
                        s1*s2*cmd['NE']['corr_data'] - s1*c2*cmd['NN']['corr_data'])
-    
-    RZ = deepcopy(cmd['EE'])
-    RZ['stats_tr1']['channel'] = RZ['stats_tr1']['channel'][:-1] + 'R'
-    RZ['stats_tr2']['channel'] = RZ['stats_tr2']['channel'][:-1] + 'Z'
-    RZ['stats']['channel'] = RZ['stats_tr1']['channel']+'-'+RZ['stats_tr2']['channel']
-    RZ['corr_data'] = (c1*cmd['EZ']['corr_data'] - s1*cmd['NZ']['corr_data'])
 
     TR = deepcopy(cmd['EE'])
     TR['stats_tr1']['channel'] = TR['stats_tr1']['channel'][:-1] + 'T'
@@ -1553,28 +1902,35 @@ def _rotate_corr_dict(cmd):
     TT['stats']['channel'] = TT['stats_tr1']['channel']+'-'+TT['stats_tr2']['channel']
     TT['corr_data'] = (s1*s2*cmd['EE']['corr_data'] + s1*c2*cmd['EN']['corr_data'] + 
                        c1*s2*cmd['NE']['corr_data'] + c1*c2*cmd['NN']['corr_data'])
-    
-    TZ = deepcopy(cmd['EE'])
-    TZ['stats_tr1']['channel'] = TZ['stats_tr1']['channel'][:-1] + 'T'
-    TZ['stats_tr2']['channel'] = TZ['stats_tr2']['channel'][:-1] + 'Z'
-    TZ['stats']['channel'] = TZ['stats_tr1']['channel']+'-'+TZ['stats_tr2']['channel']
-    TZ['corr_data'] = s1*cmd['EZ']['corr_data'] + c1*cmd['NZ']['corr_data']
-    
-    ZR = deepcopy(cmd['EE'])
-    ZR['stats_tr1']['channel'] = ZR['stats_tr1']['channel'][:-1] + 'Z'
-    ZR['stats_tr2']['channel'] = ZR['stats_tr2']['channel'][:-1] + 'R'
-    ZR['stats']['channel'] = ZR['stats_tr1']['channel']+'-'+ZR['stats_tr2']['channel']
-    ZR['corr_data'] = c2*cmd['ZE']['corr_data'] - s2*cmd['ZE']['corr_data']
-    
-    ZT = deepcopy(cmd['EE'])
-    ZT['stats_tr1']['channel'] = ZT['stats_tr1']['channel'][:-1] + 'Z'
-    ZT['stats_tr2']['channel'] = ZT['stats_tr2']['channel'][:-1] + 'T'
-    ZT['stats']['channel'] = ZT['stats_tr1']['channel']+'-'+ZT['stats_tr2']['channel']
-    ZT['corr_data'] = s2*cmd['ZE']['corr_data'] + c2*cmd['ZN']['corr_data']
-    
-    return RR,RT,RZ,TR,TT,TZ,ZR,ZT,deepcopy(cmd['ZZ'])
+    if horiz_only :
+        return RR,RT,TR,TT
 
+    elif not horiz_only :
+        RZ = deepcopy(cmd['EE'])
+        RZ['stats_tr1']['channel'] = RZ['stats_tr1']['channel'][:-1] + 'R'
+        RZ['stats_tr2']['channel'] = RZ['stats_tr2']['channel'][:-1] + 'Z'
+        RZ['stats']['channel'] = RZ['stats_tr1']['channel']+'-'+RZ['stats_tr2']['channel']
+        RZ['corr_data'] = (c1*cmd['EZ']['corr_data'] - s1*cmd['NZ']['corr_data'])
+        
+        TZ = deepcopy(cmd['EE'])
+        TZ['stats_tr1']['channel'] = TZ['stats_tr1']['channel'][:-1] + 'T'
+        TZ['stats_tr2']['channel'] = TZ['stats_tr2']['channel'][:-1] + 'Z'
+        TZ['stats']['channel'] = TZ['stats_tr1']['channel']+'-'+TZ['stats_tr2']['channel']
+        TZ['corr_data'] = s1*cmd['EZ']['corr_data'] + c1*cmd['NZ']['corr_data']
+        
+        ZR = deepcopy(cmd['EE'])
+        ZR['stats_tr1']['channel'] = ZR['stats_tr1']['channel'][:-1] + 'Z'
+        ZR['stats_tr2']['channel'] = ZR['stats_tr2']['channel'][:-1] + 'R'
+        ZR['stats']['channel'] = ZR['stats_tr1']['channel']+'-'+ZR['stats_tr2']['channel']
+        ZR['corr_data'] = c2*cmd['ZE']['corr_data'] - s2*cmd['ZE']['corr_data']
+        
+        ZT = deepcopy(cmd['EE'])
+        ZT['stats_tr1']['channel'] = ZT['stats_tr1']['channel'][:-1] + 'Z'
+        ZT['stats_tr2']['channel'] = ZT['stats_tr2']['channel'][:-1] + 'T'
+        ZT['stats']['channel'] = ZT['stats_tr1']['channel']+'-'+ZT['stats_tr2']['channel']
+        ZT['corr_data'] = s2*cmd['ZE']['corr_data'] + c2*cmd['ZN']['corr_data']
 
+        return RR,RT,RZ,TR,TT,TZ,ZR,ZT,deepcopy(cmd['ZZ'])
 
 def corr_mat_stretch(corr_mat, ref_trc=None, tw=None, stretch_range=0.1,
                           stretch_steps=100, sides='both',

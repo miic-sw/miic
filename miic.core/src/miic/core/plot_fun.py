@@ -22,7 +22,9 @@ import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import matplotlib.ticker as ticker
+import matplotlib.dates as mdates
 from copy import copy
+from miic.core.corr_mat_processing import corr_trace_maskband
 
 # ETS imports
 try:
@@ -548,7 +550,7 @@ if BC_UI:
 
 def plot_single_corr_matrix(corr_mat, seconds=0, filename=None,
                             normalize=True, normtype='absmax', norm_time_win=[None, None],
-                            clim=[], figsize=(8, 6), dpi=72):
+                            clim=[], cmap='inferno', figsize=(8, 6), dpi=72):
     """ Plot a single correlation matrix.
 
     A simple plot of the correlation matrix `corr_mat` is generated and
@@ -602,35 +604,42 @@ def plot_single_corr_matrix(corr_mat, seconds=0, filename=None,
                 zerotime).total_seconds(),
                 corr_mat['stats']['npts'])
 
-    plt.figure(figsize=figsize, dpi=dpi)
+    #plt.figure(figsize=figsize, dpi=dpi)
+
+    f, ax = plt.subplots(figsize=figsize, dpi=dpi)
     plt.gcf().subplots_adjust(left=0.35)
 
-    ax = plt.imshow(X,
+    img1 = ax.imshow(X,
                     aspect='auto',
                     origin='upper',
                     interpolation='nearest',
-                    extent=(tlag[0], tlag[-1], X.shape[0], 0))
+                    cmap=cmap,
+                    extent=(tlag[0], tlag[-1], mdates.date2num(time[-1]), mdates.date2num(time[0]) ))
+#                    extent=(tlag[0], tlag[-1], X.shape[0], 0))
+    ax.yaxis.set_major_locator( mdates.MonthLocator() )
+    ax.yaxis.set_major_formatter( mdates.DateFormatter('%Y-%m-%d') )
+    ax.yaxis.set_minor_locator( mdates.DayLocator() )
     if clim:
         plt.clim(clim)
+    cbar = f.colorbar(img1,format='%1.2g')
+    #plt.colorbar(format='%1.2g')
 
-    plt.colorbar(format='%1.2g')
+    # ax.axes.xaxis.set_major_locator(ticker.MaxNLocator(nbins=7,
+    #                                                    integer=True,
+    #                                                    symmetric=True))
+    # try:
+    #     row, _ = X.shape
+    #     # number of ylabel from 2 to 15
+    #     ynbins = max(2, min(15, row // 15))
+    # except Exception:
+    #     ynbins = 1
 
-    ax.axes.xaxis.set_major_locator(ticker.MaxNLocator(nbins=7,
-                                                       integer=True,
-                                                       symmetric=True))
-    try:
-        row, _ = X.shape
-        # number of ylabel from 2 to 15
-        ynbins = max(2, min(15, row // 15))
-    except Exception:
-        ynbins = 1
+    # ax.axes.yaxis.set_major_locator(ticker.MaxNLocator(nbins=ynbins,
+    #                                                    integer=True,
+    #                                                    prune='upper'))
 
-    ax.axes.yaxis.set_major_locator(ticker.MaxNLocator(nbins=ynbins,
-                                                       integer=True,
-                                                       prune='upper'))
-
-    ytickpos = np.array(ax.axes.yaxis.get_ticklocs()).astype('i')
-    _ = ax.axes.yaxis.set_ticklabels(time[ytickpos])
+    # ytickpos = np.array(ax.axes.yaxis.get_ticklocs()).astype('i')
+    # _ = ax.axes.yaxis.set_ticklabels(time[ytickpos])
 
     plt.ylabel('Days')
     plt.title('Correlation Matrix')
@@ -658,7 +667,7 @@ if BC_UI:
 
 def plot_trace_distance_section(traces, scale=0, azim=0,
                                 outfile=None, title=None, plot_type='wiggle',
-                                annotate=False, joint_norm=False,
+                                annotate=False, moveout_vels=False, joint_norm=False,
                                 figsize=(8, 6), dpi=72):
     """ Plot a time distance section of an obspy stream or list of traces.
 
@@ -710,10 +719,12 @@ def plot_trace_distance_section(traces, scale=0, azim=0,
             if jnorm < np.max(np.abs(tr.data)):
                 jnorm = np.max(np.abs(tr.data))
 
+    maxdist=0
     for tr in st:
         start = tr.stats['starttime'].datetime
         end = tr.stats['endtime'].datetime
         dist = tr.stats['sac']['dist']
+        maxdist=dist if (dist>maxdist) else maxdist
         if azim:
             azi = 2. * np.arctan(np.tan((tr.stats['sac']['az'] - azim) *
                                         np.pi / 360.))
@@ -756,6 +767,18 @@ def plot_trace_distance_section(traces, scale=0, azim=0,
             plt.annotate(tr.stats['station'], xy=(max(tim), dist),
                          horizontalalignment='right',
                          verticalalignment='middle')
+
+    if moveout_vels :
+        plt.plot([0,0],[0,maxdist],'k',linewidth=0.3)
+        plt.plot([0,maxdist/5.0],[0,maxdist],'r',linewidth=0.3,label='5 km/s')
+        plt.plot([0,-maxdist/5.0],[0,maxdist],'r',linewidth=0.3)
+        plt.plot([0,maxdist/4.0],[0,maxdist],'b',linewidth=0.3,label='4 km/s')
+        plt.plot([0,-maxdist/4.0],[0,maxdist],'b',linewidth=0.3)
+        plt.plot([0,maxdist/3.0],[0,maxdist],'g',linewidth=0.3,label='3 km/s')
+        plt.plot([0,-maxdist/3.0],[0,maxdist],'g',linewidth=0.3)
+        plt.plot([0,maxdist/2.0],[0,maxdist],'y',linewidth=0.3,label='2 km/s')
+        plt.plot([0,-maxdist/2.0],[0,maxdist],'y',linewidth=0.3)
+        plt.legend(loc=4)
     if title:
         plt.title(title)
 
@@ -783,6 +806,33 @@ if BC_UI:
                           Item('title'),
                           Item('plot_type'))
                           
+
+
+def plot_single_corr_trace(trace,band_plot=False) :
+    """ Plot a single correlation trace
+
+    :type trace: trace dictionary of type correlation trace
+    :param trace: Dictionary with trace in field ['corr_trace'] 
+    :type band_plot: bool
+    :param band_plot: If True the different bands of the corr_trace
+        are plotted in different colors
+    """
+    x=np.arange(-(trace['stats']['npts']-1)/2, \
+        ((trace['stats']['npts']-1)/2)+1,1)*trace['stats']['sampling_rate']
+    plt.plot(x,trace['corr_trace'])
+
+    if band_plot :
+        bal_trace=corr_trace_maskband(trace,method='ballistic')
+        coda_trace=corr_trace_maskband(trace,method='coda')
+        plt.plot(x,bal_trace['corr_trace'],label="ballistic")
+        plt.plot(x,coda_trace['corr_trace'],label="coda")
+        plt.legend()
+
+    plt.xlabel("time / s")
+    plt.title(trace['stats']['station']+'.'+trace['stats']['channel'])
+    plt.show()
+
+
 
 def plot_spectrogram(spectrogram, filename=None, freq_range=[],
                             clim=[], figsize=(8, 6), dpi=72):
