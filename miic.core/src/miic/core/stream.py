@@ -213,6 +213,7 @@ def _single_corr_trace_to_obspy_trace(trace):
     # special keys
     tr.stats['starttime'] = UTCDateTime(
                               convert_time([trace['stats']['starttime']])[0])
+    tr.stats['npts'] = int(tr.stats['npts'])
 
     # test for presence of geo information
     flag = 0
