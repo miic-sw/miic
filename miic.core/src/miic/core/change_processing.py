@@ -340,14 +340,16 @@ def change_average(dv, n_av):
     if dv_check(dv)['is_incomplete']:
         raise ValueError("Error: dv is not a valid change \
             dictionary.")
-    assert type(n_av), 'n_av must be an integer'
+    assert type(n_av) == int, 'n_av must be an integer'
     assert 1 == n_av % 2, 'n_av must be an odd number'
     assert 'sim_mat' in dv.keys(), 'sim_mat must be contained in dv'
     
     dv['sim_mat'][np.isnan(dv['sim_mat'])] = 0.
     adv = deepcopy(dv)
+    import pdb
+    pdb.set_trace()
     for shift in np.arange(-np.floor(float(n_av)/2.),0).astype(int):
-        adv['sim_mat'][:-shift,:] += dv['sim_mat'][shift:,:]
+        adv['sim_mat'][:shift,:] += dv['sim_mat'][-shift:,:]
     for shift in np.arange(1,np.ceil(float(n_av)/2.)).astype(int):
         adv['sim_mat'][shift:,:] += dv['sim_mat'][:-shift,:]
     adv['sim_mat'] /= n_av
@@ -379,20 +381,16 @@ def change_interpolate(dv,search_range=None, fit_range=7):
         smax = np.argmin(np.abs(dv['second_axis']-search_range[1]))
         bfind = np.argmax(dv['sim_mat'][:,smin:smax],axis=1) + smin
     
-    #import pdb
-    #import matplotlib.pyplot as plt
-    #pdb.set_trace()
     # interpolate over a larger range around the maximum
     for ii in range(len(dv['time'])):
         fitind = range(np.max((0,bfind[ii]-fit_range)),np.min((bfind[ii]+fit_range+1,len(dv['second_axis']))))
         if len(fitind) == 2.*fit_range + 1:  # otherwise the range for fitting is to short
             if not np.any(np.isnan(dv['sim_mat'][ii,fitind])):
-                p = np.polyfit(dv['second_axis'][fitind],dv['sim_mat'][ii,fitind],deg=2)
+                p = np.polyfit(np.squeeze(dv['second_axis'][fitind]),dv['sim_mat'][ii,fitind],deg=2)
                 loc = -p[1]/(2.*p[0])
                 if p[0]<1 and loc>dv['second_axis'][fitind[0]] and loc<dv['second_axis'][fitind[-1]]: # otherwise it is not a maximum or extrapolation
                     idv['value'][ii] = loc
                     idv['corr'][ii] = p[0]*idv['value'][ii]**2 + p[1]*idv['value'][ii] + p[2]
-    #pdb.set_trace()
                 
                 
     # handle the maxima at edges

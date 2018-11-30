@@ -914,7 +914,7 @@ def trace_sym_pad_shrink_to_npts(tr, npts):
 
 IDformat = ['%NET','%net','%STA','%sta','%LOC','%loc','%CHA','%cha']
 
-def read_from_filesystem(ID,starttime,endtime,fs,trim=True):
+def read_from_filesystem(ID,starttime,endtime,fs,trim=True,debug=False):
     """Function to read data from a filesystem with a give file structure
     just by specifying ID and time interval.
 
@@ -928,6 +928,8 @@ def read_from_filesystem(ID,starttime,endtime,fs,trim=True):
     :type fs: list
     :param trim: switch for trimming of the stream
     :type trim: bool
+    :param debug: print debugging information
+    :type debug: bool
 
     :rtype: `obspy.stream`
     :return: data stream of requested data
@@ -983,27 +985,41 @@ def read_from_filesystem(ID,starttime,endtime,fs,trim=True):
         (endtime, type(endtime))
     # translate file structure string
     fpattern = _current_filepattern(ID,starttime,fs)
-    st = _read_filepattern(fpattern, starttime, endtime,trim)
+    if debug:
+        print('Searching for files matching: %s\n at time %s\n' %
+              (fpattern, starttime))
+    st = _read_filepattern(fpattern, starttime, endtime,trim,debug)
 
     # if trace starts too late have a look in the previous section
     if (len(st)==0) or ((st[0].stats.starttime-st[0].stats.delta).datetime > starttime):
         fpattern, _ = _adjacent_filepattern(ID,starttime,fs,-1)
-        st += _read_filepattern(fpattern, starttime, endtime,trim)
+        if debug:
+            print('Searching for files matching: %s\n at time %s\n' %
+                  (fpattern, starttime))
+        st += _read_filepattern(fpattern, starttime, endtime,trim,debug)
         st.merge()
     thistime = starttime
     while ((len(st)==0) or (st[0].stats.endtime.datetime < endtime)) & (thistime < endtime):
         fpattern, thistime = _adjacent_filepattern(ID,thistime,fs,1)
+        if debug:
+            print('Searching for files matching: %s\n at time %s\n' %
+                  (fpattern, thistime))
         if thistime == starttime:
             break
-        st += _read_filepattern(fpattern, starttime, endtime,trim)
+        st += _read_filepattern(fpattern, starttime, endtime, trim, debug)
         st.merge()
     if trim:
         st.trim(starttime=UTCDateTime(starttime),endtime=UTCDateTime(endtime))
+    if debug:
+        print('Following IDs are in the stream: ')
+        for tr in st:
+            print(tr.id)
+        print('Selecting %s' % ID)
     st = st.select(id=ID)
     return st
 
 
-def _read_filepattern(fpattern, starttime, endtime, trim):
+def _read_filepattern(fpattern, starttime, endtime, trim, debug):
     """Read a stream from files whose names match a given pattern.
     """
     flist = glob.glob(fpattern)
@@ -1015,6 +1031,10 @@ def _read_filepattern(fpattern, starttime, endtime, trim):
         starttimes.append(st[0].stats.starttime.datetime)
         endtimes.append(st[-1].stats.endtime.datetime)
     # now read the stream from the files that contain the period
+    if debug:
+        print('Matching files:\n')
+        for (f,start,end) in zip(flist,starttimes,endtimes):
+            print('%s from %s to %s\n' % (f,start,end))
     st = Stream()
     for ind,fname in enumerate(flist):
         if (starttimes[ind] < endtime) and (endtimes[ind] > starttime):

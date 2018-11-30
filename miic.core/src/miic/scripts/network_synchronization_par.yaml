@@ -97,6 +97,10 @@ co:
                  'combinations':[],
                  'direct_output':{'function':'convert_to_matlab',
                                   'base_name':'trace'}
+                 #'direct_output':{'function':'corr_to_hdf5',
+                 #                 'base_name':'trace',
+                 #                 'separate':'channel'
+                 #                }
                 }
     # Method to combine different traces
     combination_method : 'betweenStations'

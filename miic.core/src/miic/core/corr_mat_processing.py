@@ -2021,7 +2021,7 @@ def corr_mat_stretch(corr_mat, ref_trc=None, tw=None, stretch_range=0.1,
     # In case a reference is provided but the matrix needs to be trimmed the
     # references also need to be trimmed. To do so we append the references to
     # the matrix, trimm it and remove the references again
-    if ref_trc != None:
+    if type(ref_trc) != type(None):
         rts = ref_trc.shape
         if len(rts) == 1:
             nr = 1
@@ -2042,7 +2042,7 @@ def corr_mat_stretch(corr_mat, ref_trc=None, tw=None, stretch_range=0.1,
         corr_mat = corr_mat_trim(corr_mat, zerotime - dt, zerotime + dt)
 
     # create or extract references
-    if ref_trc == None:
+    if type(ref_trc) == type(None):
         # ref_trc = np.atleast_2d(np.mean(corr_mat['corr_data'],0))
         ref_trc = corr_mat_extract_trace(corr_mat)['corr_trace']
         # ref_trc = np.mean(corr_mat['corr_data'], 0)
