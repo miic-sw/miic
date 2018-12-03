@@ -95,7 +95,7 @@ co:
                  'normalize_correlation':True,
                  'combinations':[],
                  'direct_output':{'function':'corr_to_hdf5',
-                                  'base_name':'trace'
+                                  'base_name':'trace',
                                   'separate':'channel'}
                 }
 
