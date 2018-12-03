@@ -131,7 +131,7 @@ def combinations_in_dist_range(comb_list,lle_df,min_distance,max_distance) :
     distance_df=pd.DataFrame(data=distance_matrix,index=pd.Index(stations),
                                 columns=pd.Index(stations))
 
-    # For each field of intital combination list, get station names, find separation
+    # For each field of initial combination list, get station names, find separation
     # from distance matrix, apply filter test and pass to output
     first,second=comb_list[0],comb_list[1]
     filt_first,filt_second=[],[]
@@ -220,6 +220,20 @@ def combine_station_channels(stations,channels,par_co,lle_df):
         first,second=combinations_in_dist_range([first,second],lle_df,min_distance,max_distance)
     elif method == 'ant_from_coordinatefile_distance' :
         allowed_comp_combinations=["ZZ","NN","NE","EN","EE"]
+        avail_chnls=lle_df.index.get_values()
+        for ii in range(len(stations)) :
+            for jj in range(ii+1,len(stations)): 
+                for k in range(len(channels)) :
+                    for l in range(len(channels)):
+                        if ".".join([stations[ii],'*',channels[k]]) in avail_chnls :
+                            if ".".join([stations[jj],'*',channels[l]]) in avail_chnls :
+                                if channels[k][-1]+channels[l][-1] in allowed_comp_combinations :
+                                    first.append('%s..%s' % (stations[ii],channels[k]))
+                                    second.append('%s..%s' % (stations[jj],channels[l]))
+        min_distance,max_distance=par_co['combination_mindist'],par_co['combination_maxdist']
+        first,second=combinations_in_dist_range([first,second],lle_df,min_distance,max_distance)
+    elif method == 'ADD_TO_ant_from_coordinatefile_distance' :
+        allowed_comp_combinations=["ZN","NZ","ZE","EZ"]
         avail_chnls=lle_df.index.get_values()
         for ii in range(len(stations)) :
             for jj in range(ii+1,len(stations)): 
