@@ -206,7 +206,7 @@ def combine_station_channels(stations,channels,par_co,lle_df):
                         first.append('%s..%s' % (stations[ii],channels[k]))
                         second.append('%s..%s' % (stations[jj],channels[l]))
         min_distance,max_distance=par_co['combination_mindist'],par_co['combination_maxdist']
-        first,second=combinations_in_dist_range([first,second],stations,lle_df,min_distance,max_distance)
+        first,second=combinations_in_dist_range([first,second],lle_df,min_distance,max_distance)
     elif method == 'ant_betweenStations_distance' :
         allowed_comp_combinations=["ZZ","NN","NE","EN","EE"]
         for ii in range(len(stations)):
