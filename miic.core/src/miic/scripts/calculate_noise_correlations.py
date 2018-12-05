@@ -201,7 +201,8 @@ def paracorr(par):
                     sub_st = st.copy().trim(starttime=UTCDateTime(sttime)+
                                     subn*par['co']['subdivision']['corr_inc'],
                                     endtime=UTCDateTime(sttime)+subn*par['co']['subdivision']['corr_inc']+
-                                    par['co']['subdivision']['corr_len'])
+                                    par['co']['subdivision']['corr_len']-
+                                    1./(par['co']['sampling_rate']/par['co']['decimation']))
                     get_valid_traces(sub_st)
                 else:
                     sub_st = st
