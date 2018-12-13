@@ -320,6 +320,57 @@ if BC_UI:
         trait_view = View(Item('freqs'),
                           Item('order'))
 
+def corr_trace_filter(corr_trace, freqs, order=3):
+    """ Filter a correlation trace.
+
+    Filters the correlation trace corr_trace in the frequency band specified in
+    freqs using a zero phase filter of twice the order given in order.
+
+    :type corr_trace: dictionary of the type correlation trace
+    :param corr_trace: correlation trace to be plotted
+    :type freqs: array-like of length 2
+    :param freqs: lower and upper limits of the pass band in Hertz
+    :type order: int
+    :param order: half the order of the Butterworth filter
+
+    :rtype tdat: dictionary of the type correlation trace
+    :return: **fdat**: filtered correlation trace
+    """
+
+    # check input
+    if not isinstance(corr_trace, dict):
+        raise TypeError("corr_trace needs to be correlation trace dictionary.")
+
+#    if corr_mat_check(corr_mat)['is_incomplete']:
+#        raise ValueError("Error: corr_mat is not a valid correlation_matix \
+#            dictionary.")
+
+    if len(freqs) != 2:
+        raise ValueError("freqs needs to be a two element array with the \
+            lower and upper limits of the filter band in Hz.")
+
+    # # end check
+
+    fe = float(corr_trace['stats']['sampling_rate']) / 2
+
+    (b, a) = butter(order,
+                    np.array(freqs, dtype='float') / fe,
+                    btype='band')
+
+    fdat = copy(corr_trace)
+    fdat['corr_trace'] = lfilter(b, a, fdat['corr_trace'])
+    fdat['corr_trace'] = lfilter(b, a, fdat['corr_trace'][::-1])[::-1]
+
+    return fdat
+
+
+if BC_UI:
+    class _corr_trace_filter_view(HasTraits):
+        freqs = Array(value=[0.8, 1.5])
+        order = Int(4)
+    
+        trait_view = View(Item('freqs'),
+                          Item('order'))
 
 def corr_mat_trim(corr_mat, starttime, endtime):
     """ Trim the correlation matrix to a given period.
@@ -2021,7 +2072,7 @@ def corr_mat_stretch(corr_mat, ref_trc=None, tw=None, stretch_range=0.1,
     # In case a reference is provided but the matrix needs to be trimmed the
     # references also need to be trimmed. To do so we append the references to
     # the matrix, trimm it and remove the references again
-    if ref_trc != None:
+    if type(ref_trc) != type(None):
         rts = ref_trc.shape
         if len(rts) == 1:
             nr = 1
@@ -2042,7 +2093,7 @@ def corr_mat_stretch(corr_mat, ref_trc=None, tw=None, stretch_range=0.1,
         corr_mat = corr_mat_trim(corr_mat, zerotime - dt, zerotime + dt)
 
     # create or extract references
-    if ref_trc == None:
+    if type(ref_trc) == type(None):
         # ref_trc = np.atleast_2d(np.mean(corr_mat['corr_data'],0))
         ref_trc = corr_mat_extract_trace(corr_mat)['corr_trace']
         # ref_trc = np.mean(corr_mat['corr_data'], 0)

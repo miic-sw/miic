@@ -4,12 +4,13 @@ import numpy as np
 import scipy.signal as signal
 from mpi4py import MPI
 from copy import deepcopy
+from os.path import join
 
 from obspy.core import UTCDateTime, stream, trace
 import obspy.signal as osignal
 
 from miic.core.corr_fun import combine_stats
-from miic.core.miic_utils import convert_to_matlab, corr_to_hdf5
+from miic.core.miic_utils import convert_to_matlab, corr_to_hdf5, InputError
 
 from numpy import (expand_dims, nanmean,reshape, transpose, take,
              sort, ones, arange, dot, cast, asarray)
@@ -150,11 +151,24 @@ def pxcorr_write(comm,A,st,**kwargs):
             convert_to_matlab(cst,kwargs['direct_output']['base_name'],
                               kwargs['direct_output']['base_dir'])
         elif kwargs['direct_output']['function'] == 'corr_to_hdf5':
+            if 'separate' in kwargs['direct_output'].keys():
+                allowed = ['network','station','location','channel']
+                if kwargs['direct_output']['separate'] not in allowed:
+                    raise InputError("'direct_output['separate']' must be " \
+                                     "in %s" % allowed)
+                out_dir = join(kwargs['direct_output']['base_dir'],
+                               cstats[kwargs['direct_output']['separate']].replace('-',''))
+            else:
+                out_dir = kwargs['direct_output']['base_dir']
+
             stats_tr1 = st[kwargs['combinations'][ii][0]].stats
             stats_tr2 = st[kwargs['combinations'][ii][1]].stats
             corr_to_hdf5(out,cstats,stats_tr1,stats_tr2,
                             kwargs['direct_output']['base_name'],
-                            kwargs['direct_output']['base_dir'])
+                            out_dir)
+        else:
+            raise InputError('Wrong name of output function: %s' %
+                             kwargs['direct_output']['function'])
     return 0
 
 

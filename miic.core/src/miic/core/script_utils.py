@@ -131,7 +131,7 @@ def combinations_in_dist_range(comb_list,lle_df,min_distance,max_distance) :
     distance_df=pd.DataFrame(data=distance_matrix,index=pd.Index(stations),
                                 columns=pd.Index(stations))
 
-    # For each field of intital combination list, get station names, find separation
+    # For each field of initial combination list, get station names, find separation
     # from distance matrix, apply filter test and pass to output
     first,second=comb_list[0],comb_list[1]
     filt_first,filt_second=[],[]
@@ -157,6 +157,9 @@ def combine_station_channels(stations,channels,par_co,lle_df):
     :param par_co: Determines which traces of the strem are combined. It is
         expected to contain the key ``combination_method`` with the following
         possible values:
+    :type lle_df: :class:`~pandas.DataFrame`
+    :param lle_df: Pandas DataFrame with stations name as index and lat, lon,
+        ele as columns
  
         ``'betweenStations'``: Traces are combined if either their station or
             their network names are different including all possible channel
@@ -165,17 +168,18 @@ def combine_station_channels(stations,channels,par_co,lle_df):
             are then filtered between distance range 'combination_mindist' and
             'combination_maxdist' that are to be given as additional keys of
             ``par_co``.
-        ``'ant_betweenStations_distance'``: Same as betweenStations_distance, but
-            only component combinations ZZ NN NE EN EE are accepted.
-        ``'ant_from_coordinatefile_distance'``: The provided coordinatefile must 
-            list station-channels individually. Combinations are made between 
-            channels that are available at each station. Only combinations 
-            ZZ NN NE EN EE are accepted. Distance range filter is applied.
+        ``'ANT'``: Combinations designed for Ambient Noise Tomography.
+            Combinations are made between stations and only between channels that
+            are available at each station. The provided coordinatefile must list 
+            station-channels individually. e.g. NET.STA.*.HHZ NET.STA.*.HHN 
+            Only the 5 combinations ZZ NN NE EN EE which are useful for ANT 
+            are used. Distance range filter is applied.
+        ``'ANT_extra_combs'``: 
+                Same as ANT, but only combinations ZN NZ ZE EZ are accepted.
         ``'betweenComponents'``: Traces are combined if their components (last
             letter of channel name) names are different and their station and
             network names are identical (single station cross-correlation).
         ``'autoComponents'``: Traces are combined only with themselves. 
-        
         ``'allSimpleCombinations'``: All Traces are combined once (only one of
             (0,1) and (1,0))
         ``'allCombinations'``: All traces are combined in both orders ((0,1)
@@ -206,19 +210,8 @@ def combine_station_channels(stations,channels,par_co,lle_df):
                         first.append('%s..%s' % (stations[ii],channels[k]))
                         second.append('%s..%s' % (stations[jj],channels[l]))
         min_distance,max_distance=par_co['combination_mindist'],par_co['combination_maxdist']
-        first,second=combinations_in_dist_range([first,second],stations,lle_df,min_distance,max_distance)
-    elif method == 'ant_betweenStations_distance' :
-        allowed_comp_combinations=["ZZ","NN","NE","EN","EE"]
-        for ii in range(len(stations)):
-            for jj in range(ii+1,len(stations)):
-                for k in range(len(channels)):
-                    for l in range(len(channels)):
-                        if channels[k][-1]+channels[l][-1] in allowed_comp_combinations :
-                            first.append('%s..%s' % (stations[ii],channels[k]))
-                            second.append('%s..%s' % (stations[jj],channels[l]))
-        min_distance,max_distance=par_co['combination_mindist'],par_co['combination_maxdist']
         first,second=combinations_in_dist_range([first,second],lle_df,min_distance,max_distance)
-    elif method == 'ant_from_coordinatefile_distance' :
+    elif method == 'ANT' :
         allowed_comp_combinations=["ZZ","NN","NE","EN","EE"]
         avail_chnls=lle_df.index.get_values()
         for ii in range(len(stations)) :
@@ -230,6 +223,24 @@ def combine_station_channels(stations,channels,par_co,lle_df):
                                 if channels[k][-1]+channels[l][-1] in allowed_comp_combinations :
                                     first.append('%s..%s' % (stations[ii],channels[k]))
                                     second.append('%s..%s' % (stations[jj],channels[l]))
+        if len(first) == 0 :
+            raise RuntimeError("ANT combination method found no available channels in coordinate file")
+        min_distance,max_distance=par_co['combination_mindist'],par_co['combination_maxdist']
+        first,second=combinations_in_dist_range([first,second],lle_df,min_distance,max_distance)
+    elif method == 'ANT_extra_combs' :
+        allowed_comp_combinations=["ZN","NZ","ZE","EZ"]
+        avail_chnls=lle_df.index.get_values()
+        for ii in range(len(stations)) :
+            for jj in range(ii+1,len(stations)): 
+                for k in range(len(channels)) :
+                    for l in range(len(channels)):
+                        if ".".join([stations[ii],'*',channels[k]]) in avail_chnls :
+                            if ".".join([stations[jj],'*',channels[l]]) in avail_chnls :
+                                if channels[k][-1]+channels[l][-1] in allowed_comp_combinations :
+                                    first.append('%s..%s' % (stations[ii],channels[k]))
+                                    second.append('%s..%s' % (stations[jj],channels[l]))
+        if len(first) == 0 :
+            raise RuntimeError("ANT combination method found no available channels in coordinate file")
         min_distance,max_distance=par_co['combination_mindist'],par_co['combination_maxdist']
         first,second=combinations_in_dist_range([first,second],lle_df,min_distance,max_distance)
     elif method == 'betweenComponents':

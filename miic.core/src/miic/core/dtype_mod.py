@@ -49,7 +49,7 @@ class Unit(object):
             index = SI_prefix['names'].index(prefix_str)
             dec_pref = SI_prefix['exp'][index]
         except ValueError:
-            print 'prefix not recognized: %s' % unit
+            print('prefix not recognized: %s' % unit)
             raise
         return dec_pref, baseunit
     
@@ -172,7 +172,7 @@ class Scalar(object):
         try:
             float(data)
         except ValueError:
-            print 'data must be a number.'
+            print('data must be a number.')
             return False
         self.data_type = 'scalar'
         self.type = s_type
