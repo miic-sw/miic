@@ -444,7 +444,7 @@ def plot_dv(dv,
         gs = [311, 312, 313]
 
     ax1 = f.add_subplot(gs[0])
-    imh = plt.imshow(sim_mat.T, interpolation='none', aspect='auto')
+    imh = plt.imshow(sim_mat.T.astype(float), interpolation='none', aspect='auto')
     ###
     scale = stretch_vect[1] - stretch_vect[0]
     offset = stretch_vect[0]
