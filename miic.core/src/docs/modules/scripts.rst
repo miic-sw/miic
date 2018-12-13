@@ -8,20 +8,16 @@ MIIC Scripts
     :maxdepth: 1
     :titlesonly:
     
-    paracorr
-
-.. rubric:: Correlation specific
+    calculate_noise_correlations
+    
+.. rubric:: Change measurements
 
 .. toctree::
     :maxdepth: 1
     :titlesonly:
 
-    pxcorr_func
-    stream 
-    normalization  
-    corr_fun
-    stretch_mod
-    inversion
-    corr_mat_processing
+    measure_velocity_change
+
+
 
 
