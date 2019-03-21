@@ -8,6 +8,7 @@ import numpy as np
 from copy import deepcopy
 from datetime import datetime
 from scipy.optimize import fmin
+from scipy.interpolate import UnivariateSpline
 import pdb
 
 from miic.core.miic_utils import corr_mat_check, dv_check, zerotime, serial_date_from_datetime, convert_time
@@ -148,7 +149,6 @@ def dv_combine_multi_ref(dv_list,max_shift=0.01,method='shift',offset=[]):
         assert len(offset) == len(dv_list), "if given offset must be of the "\
                 "same length as dv_list"
     #stps should be at mostas large as the lagest second axis maller than max_shftp    
-    
     if offset:
         offset = np.array(offset)
         offset -= offset[0]
@@ -172,7 +172,7 @@ def dv_combine_multi_ref(dv_list,max_shift=0.01,method='shift',offset=[]):
     ns = int(len(cdv['second_axis']))
     for ind in range(1,len(dv_list)):
         cdv['sim_mat'][:,np.max([0,offset[ind]]):np.min([ns,ns+offset[ind]])] += \
-            dv_list[ind]['sim_mat'][:,-np.min([0.,offset[ind]]):np.min([ns,ns-offset[ind]])]
+            dv_list[ind]['sim_mat'][:,-np.min([0,offset[ind]]):np.min([ns,ns-offset[ind]])]
     cdv['sim_mat'] /= len(dv_list)
     cdv['value'] = np.argmax(cdv['sim_mat'],axis=1)
     cdv['corr'] = np.max(cdv['sim_mat'],axis=1)
@@ -196,7 +196,6 @@ def _dv_shift(dv1,dv2,steps,method):
 
     return shift
     
-
 
 def create_stretch_mat(ref,stretch_range=0.03,stretch_steps=300,tw=None,sides='both'):
     assert isinstance(ref,Trace), 'ref must be an obspy.Trace object'
@@ -228,6 +227,39 @@ def create_stretch_mat(ref,stretch_range=0.03,stretch_steps=300,tw=None,sides='b
     # put it in a matrix structure
     dmmat = dm.Matrix(data=mat,m_type='amplitude',first_axis=stretch_values,\
                      second_axis=str_time_ser,name='stretch_matrix')
+    return dmmat
+
+
+def create_shift_mat(ref,shift_range=1,shift_steps=100,tw=None,sides='both'):
+    assert isinstance(ref,Trace), 'ref must be an obspy.Trace object'
+    shift_values = dm.Spaced_values(-shift_range,float(shift_range)/shift_steps,\
+                                    length=2*shift_steps+1, \
+                   s_type='shift_values', name='shift_values', unit=dm.Unit(['s']))
+
+    # create time axis of original trace
+    time_values = dm.Spaced_values(start=ref.stats.starttime-zerotime, \
+                                   delta=ref.stats.delta, \
+                                   length=ref.stats.npts,\
+                                   s_type='lag_times',name='lag_times',unit=dm.Unit(['s']))
+    times = time_values.get_data()
+    # create spline object
+    ref_tr_spline = UnivariateSpline(times, ref.data, s=0)
+    # create time indices
+    if type(tw) == type(None):
+        twind = np.arange(time_values.length)
+    else:
+        twind = create_time_indices(ref.stats.starttime, ref.stats.sampling_rate, tw, sides)
+    # times for interpolation
+    str_times = times[twind]
+    str_time_ser = dm.Series(str_times,s_type='lag_times',name='lag_times',unit=time_values.unit)
+    # create space for stretching matrix
+    mat = np.zeros([shift_values.length,len(str_times)],dtype=np.float64)
+    # populate stretching matrix
+    for (k, this_shift) in enumerate(shift_values.get_data()):
+        mat[k, :] = ref_tr_spline(str_times + this_shift)
+    # put it in a matrix structure
+    dmmat = dm.Matrix(data=mat,m_type='amplitude',first_axis=shift_values,\
+                     second_axis=str_time_ser,name='shift_matrix')
     return dmmat
 
 
@@ -346,8 +378,6 @@ def change_average(dv, n_av):
     
     dv['sim_mat'][np.isnan(dv['sim_mat'])] = 0.
     adv = deepcopy(dv)
-    import pdb
-    pdb.set_trace()
     for shift in np.arange(-np.floor(float(n_av)/2.),0).astype(int):
         adv['sim_mat'][:shift,:] += dv['sim_mat'][-shift:,:]
     for shift in np.arange(1,np.ceil(float(n_av)/2.)).astype(int):
@@ -419,6 +449,57 @@ def change_interpolate(dv,search_range=None, fit_range=7):
     idv['corr'][miind] = dv['corr'][miind]
     """
     return idv
+
+
+
+def time_shift(cmat,ref=None,tw=None,sides='both',shift_range=1,\
+                    shift_steps=100,return_simmat=True,shift_mat=None):
+    """ Measure the time shift in a correlation matrix
+
+    cmat: correlation matrix dictionary
+    ref: obspy trace
+    tw: list with start and end time of time window in seconds
+    sides: 'both', 'left' or ''right'
+    stretch_range: range of stretching to be tested [-stretch_range, +stretch_range]"""
+
+    assert corr_mat_check(cmat), 'cmat must be a correlation matrix dictionary'
+    if type(ref) == type(None):
+        reftr = cm.corr_mat_extract_trace(cmat,method='norm_mean')
+        ref = corr_trace_to_obspy(reftr)
+    else:
+        assert isinstance(ref,Trace), 'refrence must be an obspy.trace.'
+        assert (ref.stats.sampling_rate == cmat['stats']['sampling_rate']),\
+                'sampling rates of cmat and ref must match'
+    if type(tw) != type(None):
+        assert len(tw) == 2, 'tw must be a 2 item list: %s' % tw
+    else:
+        tw = [0.,UTCDateTime(convert_time([cmat['stats']['endtime']])[0])-zerotime]
+
+    # create shift matrix by shifting reference
+    if type(shift_mat) == type(None):
+        shift_mat = create_shift_mat(ref,shift_range=shift_range,shift_steps=shift_steps, tw=tw, sides=sides)
+    # select required part from correlation matrix
+    twind = create_time_indices(UTCDateTime(convert_time([cmat['stats']['starttime']])[0]),
+                                    cmat['stats']['sampling_rate'],tw=tw, sides=sides)
+    tcmat = cmat['corr_data'][:,twind]
+    # calculate similarity
+    sim_mat, bfind, bfval = measure_change(tcmat,shift_mat.get_data(),normalize=True)
+    # translate index into measurement
+    shivec = shift_mat.first_axis.get_data()
+    dt = shivec[bfind]
+    # create dv structure
+    dv = {'time': cmat['time'],
+          'stats': cmat['stats'],
+          'corr': np.squeeze(bfval),
+          'value': np.squeeze(dt),
+          'second_axis': shivec,
+          'value_type': np.array(['shift']),
+          'method': np.array(['time_shift'])}
+    if return_simmat:
+        dv.update({'sim_mat': np.fliplr(sim_mat).astype(np.float16)})
+    return dv
+
+
 
 
 def velocity_change(cmat,ref=None,tw=None,sides='both',stretch_range=0.03,\

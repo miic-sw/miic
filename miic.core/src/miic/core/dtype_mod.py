@@ -246,6 +246,55 @@ class Spaced_values(object):
         data = self.start + (self.delta * ind)
         return Scalar(data=data, s_type=self.type, name=self.name, unit=self.unit)
     
+    
+    def __eq__(self,other):
+        if not other.unit == self.unit:
+            return False
+        if isinstance(other,Spaced_values):
+            attribs = ['start','delta','length']
+            for attrib in attribs:
+                if not(getattr(self,attrib) == getattr(other,attrib)):
+                    return False
+        elif isinstance(other,Series):
+            if not np.array_equal(self.get_data(),other.data):
+                return False
+        else:
+            return False
+        return True
+    
+    def __add__(self, other):
+        out = self.copy()        
+        if isinstance(other,Spaced_values):
+            assert other.delta==self.delta, "Adding Spaced_values requires "\
+                    "the same delta."
+            try:
+                out.start += other.start
+            except ValueError:
+                raise ValueError("other must be a addable to type: %s." 
+                                 % type(out.start))
+        else:
+            try:
+                out.start += other
+            except ValueError:
+                raise ValueError("other must be a addable to type: %s." 
+                                 % type(out.start))
+        return out
+    
+    def __mul__(self, other):
+        out = self.copy()
+        try:
+            out.start *= other
+        except ValueError:
+            raise ValueError("other must be multiplyable to type: %s." 
+                                 % type(out.start))
+        try:
+            out.delta *= other
+        except ValueError:
+            raise ValueError("other must be multiplyable to type: %s." 
+                                 % type(out.delta))
+        return out
+                
+    
     def __str__(self):
         out = ''
         if self.length < 10:
@@ -258,6 +307,9 @@ class Spaced_values(object):
             for tind in [-3,-2,-1]:
                 out += str(self.get_Scalar(tind))+'\n'
         return out
+    
+    def __len__(self):
+        return self.length
         
     
 class Series(object):
@@ -289,15 +341,32 @@ class Series(object):
     def get_data(self):
         return deepcopy(self.data)
 
+    def __len__(self):
+        return self.length
+    
+    def __eq__(self,other):
+        attribs = ['unit','axis']
+        for attrib in attribs:
+            if not(getattr(self,attrib) == getattr(other,attrib)):
+                    return False
+        if isinstance(other,Spaced_values):
+            if not np.array_equal(self.data,other.get_data()):
+                return False
+        elif isinstance(other,Series):
+            if not np.array_equal(self.data,other.data):
+                return False
+        else:
+            return False
+        return True
+
 
 class Vector(object):
-    def __init__(self, data=np.ndarray((0,)), v_type='', axis=[], name='', unit=Unit()):
+    def __init__(self, data=np.ndarray((0,)), v_type='', axis=Spaced_values(), name='', unit=Unit()):
         assert type(v_type) == str, 'v_type must be a string.'
         assert type(name) == str, 'name must be a string.'
         assert isinstance(unit,Unit), 'unit must be a Unit object.'
-        assert type(axis) == list, 'axis must be a list.'
-        for point in axis:
-            assert type(point) == Scalar, 'All elements of axis must be dtype_mod.Scalar'
+        assert isinstance(axis,Spaced_values) or isinstance(axis,Series),\
+                'first_axis must be a dtype_mod.Spaced_values or dtype_mod.Series'
         assert type(data) == np.ndarray, 'data must be a numpy.ndarray'
         assert len(data.shape) == 1, 'data must be a single dimension numpy.ndarray'
         assert len(data) == len(axis), 'Length of data and axis must be equal'
@@ -307,12 +376,36 @@ class Vector(object):
         self.name = name
         self.data = data
         self.axis = axis
+        self.length = len(data)
     
     def copy(self):
         return deepcopy(self)
         
     def get_data(self):
         return deepcopy(self.data)
+    
+    def __len__(self):
+        return self.length
+    
+    def __eq__(self,other):
+        attribs = ['unit','axis']
+        for attrib in attribs:
+            if not(getattr(self,attrib) == getattr(other,attrib)):
+                return False
+        if not np.array_equal(self.data,other.data):
+            return False
+        return True
+        
+        
+        
+    
+    def plot(self):
+        fig,ax = plt.subplots()
+        ax.plot(self.axis.get_data(),self.data)
+        ax.set_xlabel('%s [%s]' % (self.axis.name,self.axis.unit))
+        ax.set_ylabel('%s [%s]' % (self.name,self.unit))
+        plt.title(self.name)
+        plt.show()
 
 
 class Matrix(object):
@@ -326,6 +419,8 @@ class Matrix(object):
                 'second_axis must be a dtype_mod.Spaced_values a dtype_mod.Series'
         assert type(data) == np.ndarray, 'data must be a numpy.ndarray'
         assert len(data.shape) == 2, 'data must be a two dimension numpy.ndarray'
+        assert(first_axis.length==data.shape[0]), "Length of first axis must equal data.shape[0]."
+        assert(second_axis.length==data.shape[1]), "Length of second axis must equal data.shape[1]."
         self.data_type = 'matrix'
         self.type = m_type
         self.unit = unit
@@ -335,6 +430,85 @@ class Matrix(object):
         self.data = data
         self.shape = data.shape
         
+    def __add__(self,other):
+        if isinstance(other,Matrix):
+            assert(other.first_axis == self.first_axis), "First axis must be equal."
+            assert(other.second_axis == self.second_axis), "First axis must be equal."
+            assert(other.shape == self.shape), "Shape of data must be equal"
+            out = self.copy()
+            out.data += other.data
+            out.unit += other.unit
+            out.type += '+'+other.type
+            out.name += '+'+other.name
+        elif isinstance(other,Scalar):
+            out = self.copy()
+            out.data += other.data
+            out.unit += other.unit
+            out.type += '+'+other.type
+            out.name += '+'+other.name
+        else:
+            try:
+                float(other)
+                out = self.copy()
+                out.data += other
+            except ValueError:
+                print('Other must be a Matrix, Scalar or number.')
+                return False        
+        return out
+    
+    def __mul__(self,other):
+        if isinstance(other,Matrix):
+            assert(other.first_axis == self.first_axis), "First axis must be equal."
+            assert(other.second_axis == self.second_axis), "First axis must be equal."
+            assert(other.shape == self.shape), "Shape of data must be equal"
+            out = self.copy()
+            out.data *= other.data
+            out.unit *= other.unit
+            out.type += '*'+other.type
+            out.name += '*'+other.name
+        elif isinstance(other,Scalar):
+            out = self.copy()
+            out.data *= other.data
+            out.unit *= other.unit
+            out.type += '*'+other.type
+            out.name += '*'+other.name
+        else:
+            try:
+                float(other)
+                out = self.copy()
+                out.data *= other
+            except ValueError:
+                print('Other must be a Matrix, Scalar or number.')
+                return False        
+        return out
+    
+    
+    def __div__(self,other):
+        if isinstance(other,Matrix):
+            assert(other.first_axis == self.first_axis), "First axis must be equal."
+            assert(other.second_axis == self.second_axis), "First axis must be equal."
+            assert(other.shape == self.shape), "Shape of data must be equal"
+            out = self.copy()
+            out.data /= other.data
+            out.unit /= other.unit
+            out.type += '/'+other.type
+            out.name += '/'+other.name
+        elif isinstance(other,Scalar):
+            out = self.copy()
+            out.data /= other.data
+            out.unit /= other.unit
+            out.type += '/'+other.type
+            out.name += '/'+other.name
+        else:
+            try:
+                float(other)
+                out = self.copy()
+                out.data /= other
+            except ValueError:
+                print('Other must be a Matrix, Scalar or number.')
+                return False        
+        return out
+    
     def copy(self):
         return deepcopy(self)
     
@@ -343,9 +517,8 @@ class Matrix(object):
         
     def plot(self):
         fig,ax = plt.subplots()
-        im = ax.imshow(self.data,aspect='auto',extent=[self.first_axis.get_Scalar(0).data,self.first_axis.get_Scalar(-1).data,\
-                       self.second_axis.get_Scalar(0).data,self.second_axis.get_Scalar(-1).data])
-        xt = ax.get_xticklabels()
+        im = ax.imshow(self.data,aspect='auto',extent=[self.second_axis.get_Scalar(0).data,self.second_axis.get_Scalar(-1).data,\
+                       self.first_axis.get_Scalar(0).data,self.first_axis.get_Scalar(-1).data])
         ax.set_xlabel('%s [%s]' % (self.second_axis.name,self.second_axis.unit))
         ax.set_ylabel('%s [%s]' % (self.first_axis.name,self.first_axis.unit))
         plt.colorbar(im,ax=ax,label='%s [%s]' % (self.type,self.unit))

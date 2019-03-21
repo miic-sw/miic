@@ -41,7 +41,7 @@ from obspy.core import trace, stream
 from obspy.core import Stream, AttribDict
 
 # Local imports
-from miic.core.miic_utils import convert_time, convert_time_to_string, \
+from miic.core.miic_utils import convert_time, convert_time_to_string, zerotime, \
     corr_mat_check, dv_check, flatten_recarray, nd_mat_center_part, mat_to_ndarray, \
     select_var_from_dict, _check_stats, _stats_dict_from_obj, save_dict_to_hdf5, \
     recursively_save_dict_contents_to_group, load_dict_from_hdf5,  \
@@ -402,10 +402,6 @@ def corr_mat_trim(corr_mat, starttime, endtime):
     # copy the dictionary
     tdat = deepcopy(corr_mat)
 
-    # definition of the source time of a Green's function (ie. zero correlation
-    # time)
-    zerotime = datetime(1971, 1, 1, 0, 0, 0)
-
     if isinstance(starttime, datetime):
         start = starttime - convert_time([corr_mat['stats']['starttime']])[0]
         end = endtime - convert_time([corr_mat['stats']['starttime']])[0]
@@ -414,9 +410,9 @@ def corr_mat_trim(corr_mat, starttime, endtime):
         stime = timedelta(float(starttime) / 86400)
         etime = timedelta(float(endtime) / 86400)
         # first and last sample
-        start = zerotime - \
+        start = zerotime.datetime - \
             convert_time([corr_mat['stats']['starttime']])[0] + stime
-        end = zerotime - \
+        end = zerotime.datetime - \
             convert_time([corr_mat['stats']['starttime']])[0] + etime
 
     start = int(np.floor(start.total_seconds() * \
@@ -1538,6 +1534,51 @@ def corr_mat_import_US_stream(st, pretrigger=0):
     corr_mat['stats_tr2'] = corr_mat['stats']
 
     corr_mat['time'] = np.array(time)
+
+    return corr_mat
+
+
+def corr_mat_from_stream(st):
+    """ Create a correlation matrix from repeating source observations.
+
+    Given an obspy stream that contains traces of repeating events
+    it combines the traces in a corr_mat dictionary.
+
+    :type st: obspy.core.stream
+    :param st: stream that contains the data
+
+    :rtype: dictionary of type correlation matrix
+    :return: **corr_mat**
+
+    """
+
+    ID = st[0].stats['network']+'.'+st[0].stats['station']+'.'+st[0].stats['location']+'.'+st[0].stats['channel']
+    sampling_rate = st[0].stats['sampling_rate']
+    corr_mat = {'stats':_stats_dict_from_obj(st[0].stats),
+                'stats_tr1':_stats_dict_from_obj(st[0].stats),
+                'stats_tr2':_stats_dict_from_obj(st[0].stats),
+                'corr_data':np.zeros((len(st),len(st[0].data))),
+                'time':np.zeros(len(st),dtype=datetime)}
+
+    length = np.min([tr.stats.npts for tr in st])
+    # make it an odd number
+    length = int(2*np.floor(length/2) + 1)
+    starttime = zerotime
+    corr_mat['stats']['starttime'] = str(starttime)
+    corr_mat['stats']['npts'] = length
+    corr_mat['stats']['endtime'] = str(starttime + 1./sampling_rate*(length-1))
+    for ind,tr in enumerate(st):
+        corr_mat['time'][ind] = '%s' % tr.stats['starttime']
+        tID = tr.stats['network']+'.'+tr.stats['station']+'.'+tr.stats['location']+'.'+tr.stats['channel']
+        if tID != ID:
+            print "ID %s of trace %d does not match the first trace %s." % (tID, ind, ID)
+            continue
+        tsampling_rate = tr.stats['sampling_rate']
+        if tsampling_rate != sampling_rate:
+            print "Sampling rate of trace %d does not match the first trace %s." % (ind, sampling_rate)
+            continue
+
+        corr_mat['corr_data'][ind,:] = tr.data[:length]
 
     return corr_mat
 
