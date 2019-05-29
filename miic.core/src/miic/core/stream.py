@@ -92,7 +92,8 @@ def stream_add_lat_lon_ele(st, df):
 
     for tr in st:
         selector = _Selector(tr.id)
-        tr_geo_info = df.select(selector, axis=0)
+        #tr_geo_info = df.select(selector, axis=0)
+        tr_geo_info = df.loc[df.index.map(selector)]
         if tr_geo_info.index.size > 0:
             if 'sac' not in tr.stats:
                 tr.stats['sac'] = {}
