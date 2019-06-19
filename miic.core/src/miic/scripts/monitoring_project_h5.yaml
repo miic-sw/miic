@@ -56,7 +56,7 @@ co:
                               'filter_option':{'freqmin':0.01,
                                                'freqmax':9},
                               'parallel':False}},
-                     {'function':,'miic.core.stream.apply_stream_method',
+                     {'function':'miic.core.stream.apply_stream_method',
                       'args':{'method_name':'detrend'.
                               'options':{'type':'simple'}}},
                      #{'function':'miic.core.stream.stream_mute',
