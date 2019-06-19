@@ -620,7 +620,7 @@ def plot_single_corr_matrix(corr_mat, seconds=0, filename=None,
     ax.yaxis.set_major_formatter( mdates.DateFormatter('%Y-%m-%d') )
     ax.yaxis.set_minor_locator( mdates.DayLocator() )
     if clim:
-        plt.clim(clim)
+        img1.set_clim(clim)
     cbar = f.colorbar(img1,format='%1.2g')
     #plt.colorbar(format='%1.2g')
 
