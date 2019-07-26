@@ -515,12 +515,17 @@ class Matrix(object):
     def get_data(self):
         return self.data
         
-    def plot(self):
+    def plot(self,clim=None):
         fig,ax = plt.subplots()
-        im = ax.imshow(self.data,aspect='auto',extent=[self.second_axis.get_Scalar(0).data,self.second_axis.get_Scalar(-1).data,\
-                       self.first_axis.get_Scalar(0).data,self.first_axis.get_Scalar(-1).data])
+        #im = ax.pcolor(self.first_axis.get_data(),self.second_axis.get_data(),self.data,aspect='auto')
+        im = ax.imshow(self.data,aspect='auto',
+                       extent=[self.second_axis.get_Scalar(0).data,self.second_axis.get_Scalar(-1).data,\
+                               self.first_axis.get_Scalar(0).data,self.first_axis.get_Scalar(-1).data],
+                       origin='lower')
         ax.set_xlabel('%s [%s]' % (self.second_axis.name,self.second_axis.unit))
         ax.set_ylabel('%s [%s]' % (self.first_axis.name,self.first_axis.unit))
+        if clim is not None:
+            im.set_clim(clim)
         plt.colorbar(im,ax=ax,label='%s [%s]' % (self.type,self.unit))
         plt.title(self.name)
         plt.show()

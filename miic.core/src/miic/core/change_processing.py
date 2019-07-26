@@ -166,7 +166,7 @@ def dv_combine_multi_ref(dv_list,max_shift=0.01,method='shift',offset=[]):
                        G[cnt,ind1-1] = 1
                    G[cnt,ind2-1] = -1
                    cnt += 1
-        offset  = np.linalg.lstsq(G,shift)[0]
+        offset  = np.linalg.lstsq(G,shift,rcond=None)[0]
         offset = np.concatenate(([0],(np.round(offset)).astype(int)))
     cdv = deepcopy(dv_list[0])
     ns = int(len(cdv['second_axis']))
