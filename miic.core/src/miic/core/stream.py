@@ -92,7 +92,8 @@ def stream_add_lat_lon_ele(st, df):
 
     for tr in st:
         selector = _Selector(tr.id)
-        tr_geo_info = df.select(selector, axis=0)
+        #tr_geo_info = df.select(selector, axis=0)
+        tr_geo_info = df.loc[df.index.map(selector)]
         if tr_geo_info.index.size > 0:
             if 'sac' not in tr.stats:
                 tr.stats['sac'] = {}
@@ -870,6 +871,25 @@ if BC_UI:
                                       'freqmax': self.freqmax_bs,
                                       'corners': self.corners_bs,
                                       'zerophase': self.zerophase_bs}
+
+
+def apply_stream_method(st, method_name, options):
+    """ Apply obspy stream methods as functions.
+    
+    Allows to apply a method of the obspy stream object as a function that
+    takes a stream as input, applies the method and returns a stream.
+    
+    :type st: :class:`~obspy.core.stream.Stream``
+    :param st: input stream
+    :type method_name: str
+    :param method_name: Name of the method to apply
+    :type kwargs: dict
+    :param kwargs: key word arguments to be passed to the stream method
+    """
+    func = getattr(Stream,method_name)
+    st = func(st,**options)
+    return st
+    
     
     
 def trace_sym_pad_shrink_to_npts(tr, npts):

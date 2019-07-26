@@ -179,7 +179,9 @@ def combine_station_channels(stations,channels,par_co,lle_df):
         ``'betweenComponents'``: Traces are combined if their components (last
             letter of channel name) names are different and their station and
             network names are identical (single station cross-correlation).
-        ``'autoComponents'``: Traces are combined only with themselves. 
+        ``'autoComponents'``: Traces are combined only with themselves.
+        ``'betweenAllComponents': Of each station combine all components
+            i.e. EE, EN, EZ, NN, NZ, ZZ.
         ``'allSimpleCombinations'``: All Traces are combined once (only one of
             (0,1) and (1,0))
         ``'allCombinations'``: All traces are combined in both orders ((0,1)
@@ -254,6 +256,12 @@ def combine_station_channels(stations,channels,par_co,lle_df):
             for k in range(len(channels)):
                 first.append('%s..%s' % (stations[ii],channels[k]))
                 second.append('%s..%s' % (stations[ii],channels[k]))
+    elif method == 'betweenAllComponents':
+        for ii in range(len(stations)):
+            for k in range(len(channels)):
+                for l in range(k,len(channels)):
+                    first.append('%s..%s' % (stations[ii],channels[k]))
+                    second.append('%s..%s' % (stations[ii],channels[l]))
     elif method == 'allSimpleCombinations':
         for ii in range(len(stations)):
             for jj in range(ii,len(stations)):
@@ -270,7 +278,8 @@ def combine_station_channels(stations,channels,par_co,lle_df):
                         second.append('%s..%s' % (stations[jj],channels[l]))
     else:
         raise ValueError("Method has to be one of ('betweenStations', "
-                        "'betweenStations_distance',"
+                        "'betweenStations_distance', 'ANT', "
+                        "'ANT_extra_combs', 'betweenAllComponents', "
                          "'betweenComponents', 'autoComponents',"
                          "'allSimpleCombinations', 'allCombinations').")
     return [first, second]
