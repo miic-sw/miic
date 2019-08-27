@@ -112,7 +112,7 @@ def dv_combine(dv_list, method='average_sim_mat'):
     return res_dv
     
     
-def dv_combine_multi_ref(dv_list,max_shift=0.01,method='shift',offset=[]):
+def dv_combine_multi_ref(dv_list,max_shift=0.01,method='shift',offset=None,return_offset=False):
     """Combine a list of change measuments with different reference traces
     
     Combine a list of change dictionaries obtained from different references
@@ -137,6 +137,8 @@ def dv_combine_multi_ref(dv_list,max_shift=0.01,method='shift',offset=[]):
     :param offset: pre-estimated velocity offset between dv measurements in
         units of setps in the dv_measurements. The first element in the dv_list
         will be set to zero offset.
+    :type return_offset: bool
+    :param return_offset: return estimated velocity offset
     
     :type: dict
     :return: combined dv_dict
@@ -145,11 +147,11 @@ def dv_combine_multi_ref(dv_list,max_shift=0.01,method='shift',offset=[]):
     assert type(dv_list) == type([]), "dv_list is not a list"
     assert method in ['shift','diff'], "method has to be either 'shift' or "\
                 "'diff'."
-    if offset:
+    if type(offset) != type(None):
         assert len(offset) == len(dv_list), "if given offset must be of the "\
                 "same length as dv_list"
     #stps should be at mostas large as the lagest second axis maller than max_shftp    
-    if offset:
+    if type(offset) != type(None):
         offset = np.array(offset)
         offset -= offset[0]
     else:
@@ -166,7 +168,7 @@ def dv_combine_multi_ref(dv_list,max_shift=0.01,method='shift',offset=[]):
                        G[cnt,ind1-1] = 1
                    G[cnt,ind2-1] = -1
                    cnt += 1
-        offset  = np.linalg.lstsq(G,shift,rcond=None)[0]
+        offset  = np.linalg.lstsq(G,shift,rcond=-1)[0]
         offset = np.concatenate(([0],(np.round(offset)).astype(int)))
     cdv = deepcopy(dv_list[0])
     ns = int(len(cdv['second_axis']))
@@ -178,7 +180,10 @@ def dv_combine_multi_ref(dv_list,max_shift=0.01,method='shift',offset=[]):
     cdv['corr'] = np.max(cdv['sim_mat'],axis=1)
     cdv['value']= cdv['second_axis'][cdv['value']]
 
-    return cdv
+    if return_offset:
+        return cdv, offset
+    else:
+        return cdv
 
 
 def _dv_shift(dv1,dv2,steps,method):

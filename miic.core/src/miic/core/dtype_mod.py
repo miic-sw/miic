@@ -1,6 +1,7 @@
 import numpy as np
 from copy import deepcopy
 import matplotlib.pyplot as plt
+from future.utils import isint
 
 SI_prefix = {'names':['E','P','T','G','M','k','h','da','','d','c','m','mu','n','p','f','a'],\
              'exp':[18, 15, 12, 9, 6, 3, 2, 1, 0, -1, -2, -3, -6, -9, -12, -15, -18]}
@@ -222,7 +223,7 @@ class Spaced_values(object):
         assert type(s_type) == str, 's_type must be a string.'
         assert type(name) == str, 'name must be a string.'
         assert isinstance(unit,Unit), 'unit must be a Unit object.'
-        assert type(length) == int, 'length must be an int.'
+        assert isint(length), 'length must be an int.'
         self.data_type = 'Spaced_values'
         self.type = s_type
         self.unit = unit
