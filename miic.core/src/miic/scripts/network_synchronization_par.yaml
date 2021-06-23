@@ -89,7 +89,7 @@ co:
                  'FDpreProcessing':[{'function':'spectralWhitening',
                                      'args':{'joint_norm':False}},
                                     {'function':'FDfilter',
-                                     'args':{'freqs':[0.01,0.02,4,5]}}
+                                     'args':{'flimit':[0.01,0.02,4,5]}}
                                     ],
                  'lengthToSave':800,
                  'center_correlation':True,      # make sure zero correlation time is in the center

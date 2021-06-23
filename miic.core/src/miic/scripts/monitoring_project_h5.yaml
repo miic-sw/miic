@@ -91,7 +91,7 @@ co:
                  'FDpreProcessing':[{'function':'miic.core.pxcorr_func.spectralWhitening',
                                      'args':{'joint_norm':False}},
                                     {'function':'miic.core.pxcorr_func.FDfilter',
-                                     'args':{'freqs':[0.01,0.02,9,10]}}
+                                     'args':{'flimit':[0.01,0.02,9,10]}}
                                     ],
                  'lengthToSave':100,
                  'center_correlation':True,      # make sure zero correlation time is in the center

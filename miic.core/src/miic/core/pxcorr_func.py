@@ -768,6 +768,10 @@ def FDfilter(B,args,params):
     :return: filtered spectal data
     """
     args = deepcopy(args)
+    assert 'freqs' not in args.keys(), "'freqs' must not be in args of "\
+        "'pxcorr_func.FDfilter'"
+    assert 'flimit' in args.keys(), "'args' of 'pxcorr_func.FDfilter' must "\
+        "contain 'flimit'"
     args.update({'freqs':params['freqs']})
     tap = osignal.invsim.cosine_taper(B.shape[0],**args)
     B *= np.tile(np.atleast_2d(tap).T,(1,B.shape[1]))
